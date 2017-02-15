@@ -65,6 +65,11 @@ Status and thoughts on various Racket subsystems:
  * The Racket and Chez numeric systems likely differ in some ways, and
    I don't know how much work that will be.
 
+ * For futures, Chez exposes OS-level threads with limited safety
+   guarantees. An implementation of futures can probably take
+   advantage of threads with thread-unsafe primitives wrapped to
+   divert to a barrier when called in a future.
+
  * Ephemerons probably require support from Chez, but I haven't
    investigated enough to be sure.
 
