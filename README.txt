@@ -40,13 +40,9 @@ Status and thoughts on various Racket subsystems:
    and so on in terms of Chez records. Applicable structs work by
    adding an indirection to each function call (in a little compiler
    from fully-expanded code to Chez) when the target is not obviously
-   a plain procedure; even with a simple analysis, the indirection is
-   not needed often in a typical program, and the overhead appears to
-   be light.
-
-   I think that `make-struct-type` needs to be different so that Chez
-   can see through structure accesses. Specifically, I think that's
-   why "port-demo.ss" runs slower in Chez than Racket.
+   a plain procedure; even with a simple analysis, which is currently
+   in "convert.rkt", the indirection is not needed often in a typical
+   program, and the overhead appears to be light when it is needed.
 
    The rest of the implementation of Racket structures looks
    straightforward.

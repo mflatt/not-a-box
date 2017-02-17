@@ -1,6 +1,12 @@
 *.so
 compiled/
 
+# Generated from .rktl:
+expander.scm
+path.scm
+port.scm
+regexp.scm
+
 # common backups, autosaves, lock files, OS meta-files
 *~
 \#*

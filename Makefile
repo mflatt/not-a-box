@@ -1,5 +1,5 @@
 
-COMP = echo '(reset-handler abort)'
+COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
 go: expander.so
 	scheme regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so expander.so

@@ -1,6 +1,7 @@
 (library (struct)
   (export make-struct-type-property
           make-struct-type
+          struct-type-install-properties!
           make-struct-field-accessor
           make-struct-field-mutator
           struct?
@@ -39,21 +40,23 @@
               (lambda (v)
                 (hashtable-ref table (record-rtd v) #f)))]))
 
+  (define (current-inspector) #f)
+
   (define make-struct-type
     (case-lambda 
      [(name parent-rtd fields auto-fields auto-val)
-      (make-struct-type name parent-rtd fields auto-fields auto-val '())]
-     [(name parent-rtd fields auto-fields auto-val props insp)
-      (make-struct-type name parent-rtd fields auto-fields auto-val props)]
-     [(name parent-rtd fields auto-fields auto-val props insp proc-spec)
-      (make-struct-type name parent-rtd fields auto-fields auto-val props)]
-     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables)
-      (make-struct-type name parent-rtd fields auto-fields auto-val props)]
-     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard)
-      (make-struct-type name parent-rtd fields auto-fields auto-val props)]
-     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard constructor-name)
-      (make-struct-type name parent-rtd fields auto-fields auto-val props)]
+      (make-struct-type name parent-rtd fields auto-fields auto-val '() (current-inspector) '() #f name)]
      [(name parent-rtd fields auto-fields auto-val props)
+      (make-struct-type name parent-rtd fields auto-fields auto-val props (current-inspector) '() #f name)]
+     [(name parent-rtd fields auto-fields auto-val props insp)
+      (make-struct-type name parent-rtd fields auto-fields auto-val props insp #f name)]
+     [(name parent-rtd fields auto-fields auto-val props insp proc-spec)
+      (make-struct-type name parent-rtd fields auto-fields auto-val props insp proc-spec '() #f name)]
+     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables)
+      (make-struct-type name parent-rtd fields auto-fields auto-val props insp proc-spec immutables #f name)]
+     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard)
+      (make-struct-type name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard name)]
+     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard constructor-name)
       (unless (zero? auto-fields)
         (error 'make-struct-type "auto fields not supported"))
       (let* ([fields (let loop ([fields fields])
@@ -66,41 +69,61 @@
                       (make-record-type (symbol->string name) fields))])
         (define accessor rtd) ; pseduo-accessor for accessor maker
         (define mutator rtd)  ; pseduo-mutator for mutator maker
-        (define parent-props
-          (cond
-           [parent-rtd
-            (let ([props (hashtable-ref rtd-props parent-rtd '())])
-              (for-each (lambda (prop)
-                          (define table (struct-type-prop-table prop))
-                          (hashtable-set! table rtd (hashtable-ref table parent-rtd #f)))
-                        props)
-              props)]
-           [else
-            '()]))
-        (hashtable-set! rtd-props rtd (append (map car props) parent-props))
-        (for-each (lambda (prop+val)
-                    (let ([prop (car prop+val)]
-                          [val (cdr prop+val)])
-                      (hashtable-set! (struct-type-prop-table prop)
-                                      rtd
-                                      (let ([guard (struct-type-prop-guard prop)])
-                                        (if guard
-                                            (guard val
-                                                   (list name
-                                                         fields
-                                                         auto-fields
-                                                         accessor
-                                                         mutator
-                                                         '()
-                                                         parent-rtd
-                                                         #f))
-                                            val)))))
-                  props)
+        (struct-type-install-properties! rtd name fields auto-fields parent-rtd
+                                         props insp proc-spec immutables guard name)
         (values rtd
                 (record-constructor rtd)
                 (lambda (v) (record? v rtd))
                 accessor
                 mutator))]))
+
+  (define struct-type-install-properties!
+    (case-lambda
+     [(rtd name fields auto-fields parent-rtd)
+      (struct-type-install-properties! rtd parent-rtd '() (current-inspector) '() #f name)]
+     [(rtd name fields auto-fields parent-rtd props)
+      (struct-type-install-properties! rtd parent-rtd props '(current-inspector) '() #f name)]
+     [(rtd name fields auto-fields parent-rtd props insp)
+      (struct-type-install-properties! rtd parent-rtd props insp #f name)]
+     [(rtd name fields auto-fields parent-rtd props insp proc-spec)
+      (struct-type-install-properties! rtd parent-rtd props insp proc-spec '() #f name)]
+     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables)
+      (struct-type-install-properties! rtd parent-rtd props insp proc-spec immutables #f name)]
+     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard)
+      (struct-type-install-properties! rtd parent-rtd props insp proc-spec immutables guard name)]
+     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard constructor-name)
+      (define accessor rtd) ; pseduo-accessor for accessor maker
+      (define mutator rtd)  ; pseduo-mutator for mutator maker
+      (define parent-props
+        (cond
+         [parent-rtd
+          (let ([props (hashtable-ref rtd-props parent-rtd '())])
+            (for-each (lambda (prop)
+                        (define table (struct-type-prop-table prop))
+                        (hashtable-set! table rtd (hashtable-ref table parent-rtd #f)))
+                      props)
+            props)]
+         [else
+          '()]))
+      (hashtable-set! rtd-props rtd (append (map car props) parent-props))
+      (for-each (lambda (prop+val)
+                  (let ([prop (car prop+val)]
+                        [val (cdr prop+val)])
+                    (hashtable-set! (struct-type-prop-table prop)
+                                    rtd
+                                    (let ([guard (struct-type-prop-guard prop)])
+                                      (if guard
+                                          (guard val
+                                                 (list name
+                                                       fields
+                                                       auto-fields
+                                                       accessor
+                                                       mutator
+                                                       '()
+                                                       parent-rtd
+                                                       #f))
+                                          val)))))
+                props)]))
   
   (define make-struct-field-accessor
     (case-lambda

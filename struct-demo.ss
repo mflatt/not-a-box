@@ -9,6 +9,8 @@
 
 (define-values (struct:a make-a a? a-ref a-set!)
   (make-struct-type 'x #f 2 0 #f (list (cons prop:x 5))))
+(define a-x (make-struct-field-accessor a-ref 0 'x))
+(define a-y (make-struct-field-accessor a-ref 1 'y))
 (define-values (struct:b make-b b? b-ref b-set!)
   (make-struct-type 'b #f 2 0 #f (list
                                   (cons prop:equal+hash
@@ -33,3 +35,39 @@
   (make-struct-type 'x #f 2 0 #f (list (cons prop:procedure 0))))
 
 (show (|#%app| (make-p (lambda (x) (cons x x)) 'whatever) 10))
+
+;; ----------------------------------------
+
+(let ()
+  (define-values (struct:s-a make-s-a s-a? s-a-ref s-a-set!)
+    (make-struct-type 'x #f 2 0 #f (list (cons prop:x 5))))
+  (define s-a-x (make-struct-field-accessor s-a-ref 0 'x))
+  (let ([an-a (make-s-a 1 2)])
+    (time
+     (let loop ([i 10000000] [v 0])
+       (if (zero? i)
+           v
+           (loop (sub1 i) (+ v (s-a-x an-a))))))))
+
+(let ()
+  (define struct:s-a (make-record-type-descriptor 's #f #f #f #f '#((mutable x) (mutable y))))
+  (define make-s-a (record-constructor
+                    (make-record-constructor-descriptor struct:s-a #f #f)))
+  (define s-a-x (record-accessor struct:s-a 0))
+  (let ([an-a (make-s-a 1 2)])
+    (time
+     (let loop ([i 10000000] [v 0])
+       (if (zero? i)
+           v
+           (loop (sub1 i) (+ v (s-a-x an-a))))))))
+
+(let ()
+  (define-record r-a (x y))
+
+  (let ([an-a (make-r-a 1 2)])
+    (time
+     (let loop ([i 10000000] [v 0])
+       (if (zero? i)
+           v
+           (loop (sub1 i) (+ v (r-a-x an-a))))))))
+

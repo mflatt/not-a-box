@@ -720,7 +720,7 @@
                 (let-values ((() (begin (set-input-port-position! p_0 1) (values))))
                   (let-values (((count-lines!_2) (input-port-count-lines! p_0)))
                     (if count-lines!_2 (let-values () (count-lines!_2)) (void)))))))))
-      (if (1/output-port?)
+      (if (1/output-port? p_0)
         (let-values ()
           (if (output-port-line p_0)
             (void)
@@ -1589,7 +1589,7 @@
           (let-values (((start_5) start14_0))
             (let-values (((end_5) end15_0))
               (let-values (((zero-ok?_2) (if zero-ok?6_0 zero-ok?1_1 #f)))
-                (let-values (((extra-bytes-amt_0) (if extra-bytes-amt7_0 extra-bytes-amt2_0 0)))
+                (let-values ()
                   (let-values (((keep-eof?_1) (if keep-eof?8_0 keep-eof?3_1 #f)))
                     (let-values (((just-peek?_0) (if just-peek?9_0 just-peek?4_0 #f)))
                       (let-values (((skip-k_19) (if skip10_0 skip5_0 0)))
@@ -3404,14 +3404,13 @@
      ((limit_1 input-name_1 output-name4_1) (make-pipe8_0 limit_1 input-name_1 output-name4_1 #t #t #t))
      ((limit_2 input-name3_1) (make-pipe8_0 limit_2 input-name3_1 #f #t #t #f))
      ((limit2_1) (make-pipe8_0 limit2_1 #f #f #t #f #f)))))
- (define-values (none) (gensym))
  (define-values
   (1/open-input-file)
   (let-values (((open-input-file6_0)
                 (lambda (path5_1 mode11_0 mode22_0 mode13_0 mode24_0)
                   (let-values (((path_1) path5_1))
-                    (let-values (((mode1_1) (if mode13_0 mode11_0 none)))
-                      (let-values (((mode2_0) (if mode24_0 mode22_0 none)))
+                    (let-values ()
+                      (let-values ()
                         (let-values ()
                           (let-values ((()
                                         (begin
@@ -3552,7 +3551,7 @@
                                          temp10_0)))))))))))))))
     (case-lambda
      ((path_2) (open-input-file6_0 path_2 #f #f #f #f))
-     ((path_3 mode1_2 mode22_1) (open-input-file6_0 path_3 mode1_2 mode22_1 #t #t))
+     ((path_3 mode1_1 mode22_1) (open-input-file6_0 path_3 mode1_1 mode22_1 #t #t))
      ((path_4 mode11_1) (open-input-file6_0 path_4 mode11_1 #f #t #f)))))
  (define-values
   (1/open-input-bytes)
@@ -3657,12 +3656,12 @@
                     (let-values ()
                       (let-values ()
                         (let-values ()
-                          (let-values (((get-progress-evt_1) (if get-progress-evt7_0 get-progress-evt1_0 #f)))
-                            (let-values (((commit_1) (if commit8_0 commit2_0 #f)))
-                              (let-values (((get-location_2) (if get-location9_0 get-location3_0 #f)))
-                                (let-values (((count-lines!_4) (if count-lines!10_0 count-lines!4_0 void)))
-                                  (let-values (((init-position_0) (if init-position11_0 init-position5_0 1)))
-                                    (let-values (((buffer-mode_0) (if buffer-mode12_0 buffer-mode6_0 #f)))
+                          (let-values ()
+                            (let-values ()
+                              (let-values ()
+                                (let-values ()
+                                  (let-values ()
+                                    (let-values ()
                                       (let-values () (error 'make-input-port "not yet implemented")))))))))))))))
     (case-lambda
      ((name_3 read-in_2 peek_0 close_2)
@@ -3671,22 +3670,22 @@
        read-in_3
        peek_1
        close_3
-       get-progress-evt_2
-       commit_2
-       get-location_3
-       count-lines!_5
-       init-position_1
+       get-progress-evt_1
+       commit_1
+       get-location_2
+       count-lines!_4
+       init-position_0
        buffer-mode6_1)
       (make-input-port17_0
        name_4
        read-in_3
        peek_1
        close_3
-       get-progress-evt_2
-       commit_2
-       get-location_3
-       count-lines!_5
-       init-position_1
+       get-progress-evt_1
+       commit_1
+       get-location_2
+       count-lines!_4
+       init-position_0
        buffer-mode6_1
        #t
        #t
@@ -3694,16 +3693,16 @@
        #t
        #t
        #t))
-     ((name_5 read-in_4 peek_2 close_4 get-progress-evt_3 commit_3 get-location_4 count-lines!_6 init-position5_1)
+     ((name_5 read-in_4 peek_2 close_4 get-progress-evt_2 commit_2 get-location_3 count-lines!_5 init-position5_1)
       (make-input-port17_0
        name_5
        read-in_4
        peek_2
        close_4
-       get-progress-evt_3
-       commit_3
-       get-location_4
-       count-lines!_6
+       get-progress-evt_2
+       commit_2
+       get-location_3
+       count-lines!_5
        init-position5_1
        #f
        #t
@@ -3712,15 +3711,15 @@
        #t
        #t
        #f))
-     ((name_6 read-in_5 peek_3 close_5 get-progress-evt_4 commit_4 get-location_5 count-lines!4_1)
+     ((name_6 read-in_5 peek_3 close_5 get-progress-evt_3 commit_3 get-location_4 count-lines!4_1)
       (make-input-port17_0
        name_6
        read-in_5
        peek_3
        close_5
-       get-progress-evt_4
-       commit_4
-       get-location_5
+       get-progress-evt_3
+       commit_3
+       get-location_4
        count-lines!4_1
        #f
        #f
@@ -3730,14 +3729,14 @@
        #t
        #f
        #f))
-     ((name_7 read-in_6 peek_4 close_6 get-progress-evt_5 commit_5 get-location3_1)
+     ((name_7 read-in_6 peek_4 close_6 get-progress-evt_4 commit_4 get-location3_1)
       (make-input-port17_0
        name_7
        read-in_6
        peek_4
        close_6
-       get-progress-evt_5
-       commit_5
+       get-progress-evt_4
+       commit_4
        get-location3_1
        #f
        #f
@@ -3748,8 +3747,8 @@
        #f
        #f
        #f))
-     ((name_8 read-in_7 peek_5 close_7 get-progress-evt_6 commit2_1)
-      (make-input-port17_0 name_8 read-in_7 peek_5 close_7 get-progress-evt_6 commit2_1 #f #f #f #f #t #t #f #f #f #f))
+     ((name_8 read-in_7 peek_5 close_7 get-progress-evt_5 commit2_1)
+      (make-input-port17_0 name_8 read-in_7 peek_5 close_7 get-progress-evt_5 commit2_1 #f #f #f #f #t #t #f #f #f #f))
      ((name_9 read-in_8 peek_6 close_8 get-progress-evt1_1)
       (make-input-port17_0 name_9 read-in_8 peek_6 close_8 get-progress-evt1_1 #f #f #f #f #f #t #f #f #f #f #f)))))
  (define-values
@@ -3777,14 +3776,13 @@
                     (let-values ()
                       (let-values ()
                         (let-values ()
-                          (let-values (((write-out-special_1) (if write-out-special8_0 write-out-special1_0 #f)))
-                            (let-values (((get-write-evt_1) (if get-write-evt9_0 get-write-evt2_0 #f)))
-                              (let-values (((get-write-special-evt_1)
-                                            (if get-write-special-evt10_0 get-write-special-evt3_0 #f)))
-                                (let-values (((get-location_6) (if get-location11_1 get-location4_0 #f)))
-                                  (let-values (((count-lines!_7) (if count-lines!12_1 count-lines!5_0 void)))
-                                    (let-values (((init-position_2) (if init-position13_0 init-position6_0 1)))
-                                      (let-values (((buffer-mode_1) (if buffer-mode14_0 buffer-mode7_0 #f)))
+                          (let-values ()
+                            (let-values ()
+                              (let-values ()
+                                (let-values ()
+                                  (let-values ()
+                                    (let-values ()
+                                      (let-values ()
                                         (let-values () (error 'make-output-port "not yet implemented"))))))))))))))))
     (case-lambda
      ((name_10 evt_1 write-out_2 close_9)
@@ -3793,24 +3791,24 @@
        evt_2
        write-out_3
        close_10
-       write-out-special_2
-       get-write-evt_2
-       get-write-special-evt_2
-       get-location_7
-       count-lines!_8
-       init-position_3
+       write-out-special_1
+       get-write-evt_1
+       get-write-special-evt_1
+       get-location_5
+       count-lines!_6
+       init-position_1
        buffer-mode7_1)
       (make-output-port19_0
        name_11
        evt_2
        write-out_3
        close_10
-       write-out-special_2
-       get-write-evt_2
-       get-write-special-evt_2
-       get-location_7
-       count-lines!_8
-       init-position_3
+       write-out-special_1
+       get-write-evt_1
+       get-write-special-evt_1
+       get-location_5
+       count-lines!_6
+       init-position_1
        buffer-mode7_1
        #t
        #t
@@ -3823,22 +3821,22 @@
        evt_3
        write-out_4
        close_11
-       write-out-special_3
-       get-write-evt_3
-       get-write-special-evt_3
-       get-location_8
-       count-lines!_9
+       write-out-special_2
+       get-write-evt_2
+       get-write-special-evt_2
+       get-location_6
+       count-lines!_7
        init-position6_1)
       (make-output-port19_0
        name_12
        evt_3
        write-out_4
        close_11
-       write-out-special_3
-       get-write-evt_3
-       get-write-special-evt_3
-       get-location_8
-       count-lines!_9
+       write-out-special_2
+       get-write-evt_2
+       get-write-special-evt_2
+       get-location_6
+       count-lines!_7
        init-position6_1
        #f
        #t
@@ -3852,20 +3850,20 @@
        evt_4
        write-out_5
        close_12
-       write-out-special_4
-       get-write-evt_4
-       get-write-special-evt_4
-       get-location_9
+       write-out-special_3
+       get-write-evt_3
+       get-write-special-evt_3
+       get-location_7
        count-lines!5_1)
       (make-output-port19_0
        name_13
        evt_4
        write-out_5
        close_12
-       write-out-special_4
-       get-write-evt_4
-       get-write-special-evt_4
-       get-location_9
+       write-out-special_3
+       get-write-evt_3
+       get-write-special-evt_3
+       get-location_7
        count-lines!5_1
        #f
        #f
@@ -3876,15 +3874,15 @@
        #t
        #f
        #f))
-     ((name_14 evt_5 write-out_6 close_13 write-out-special_5 get-write-evt_5 get-write-special-evt_5 get-location4_1)
+     ((name_14 evt_5 write-out_6 close_13 write-out-special_4 get-write-evt_4 get-write-special-evt_4 get-location4_1)
       (make-output-port19_0
        name_14
        evt_5
        write-out_6
        close_13
-       write-out-special_5
-       get-write-evt_5
-       get-write-special-evt_5
+       write-out-special_4
+       get-write-evt_4
+       get-write-special-evt_4
        get-location4_1
        #f
        #f
@@ -3896,14 +3894,14 @@
        #f
        #f
        #f))
-     ((name_15 evt_6 write-out_7 close_14 write-out-special_6 get-write-evt_6 get-write-special-evt3_1)
+     ((name_15 evt_6 write-out_7 close_14 write-out-special_5 get-write-evt_5 get-write-special-evt3_1)
       (make-output-port19_0
        name_15
        evt_6
        write-out_7
        close_14
-       write-out-special_6
-       get-write-evt_6
+       write-out-special_5
+       get-write-evt_5
        get-write-special-evt3_1
        #f
        #f
@@ -3916,13 +3914,13 @@
        #f
        #f
        #f))
-     ((name_16 evt_7 write-out_8 close_15 write-out-special_7 get-write-evt2_1)
+     ((name_16 evt_7 write-out_8 close_15 write-out-special_6 get-write-evt2_1)
       (make-output-port19_0
        name_16
        evt_7
        write-out_8
        close_15
-       write-out-special_7
+       write-out-special_6
        get-write-evt2_1
        #f
        #f

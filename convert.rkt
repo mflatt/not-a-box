@@ -12,6 +12,7 @@
        (eq? #f (car v))
        (hash? (cdr v))))
 
+;; Gather all literal regexps and hash tables
 (define (rx v)
   (cond
    [(or (regexp? v) (byte-regexp? v))
@@ -27,6 +28,8 @@
 
 (rx l)
 
+;; Set a hook to redirect literal regexps and
+;; hash tables to lifted bindings
 (pretty-print-size-hook
  (lambda (v display? out)
    (cond
@@ -44,6 +47,7 @@
     [(char? v) 5]
     [else #f])))
 
+;; This hook goes with `pretty-print-size-hook`
 (pretty-print-print-hook
  (lambda (v display? out)
    (cond
@@ -63,6 +67,7 @@
      (write-string (format "#\\x~x" (char->integer v)) out)]
     [else #f])))
 
+;; Write out lifted regexp and hash-table literals
 (for ([(k v) (in-hash rxes)])
   (pretty-write
    `(define ,v
@@ -84,9 +89,13 @@
           `(cons ,(loop (car k)) ,(loop (cdr k)))]
          [else k])))))
 
+;; Keep track of symbols that are known to be plain
+;; functions. This information is used to limit
+;; insersion of `#%app` forms that deal with applicable
+;; structs.
 (define procs (hasheq))
 
-;; Primitives:
+;; Register primitives:
 (let ([ns (make-base-namespace)])
   (parameterize ([current-namespace ns])
     (namespace-require 'racket/unsafe/ops)
@@ -107,33 +116,45 @@
     [`(letrec-values ,_ ,body) (lambda? body)]
     [else #f]))
 
-;; Defined functions:
+;; Also recognize and keep track of structure-type bindings
+(struct struct-type-info (name parent field-count rest))
+(define structs (make-hasheq))
+
+(define (make-struct-type-info v)
+  (match v
+    [`(make-struct-type (quote ,name) ,parent ,fields 0 #f . ,rest)
+     (and (symbol? name)
+          (or (not parent)
+              (hash-ref structs parent #f))
+          (exact-nonnegative-integer? fields)
+          (struct-type-info name
+                            parent
+                            fields
+                            rest))]
+    [`(let-values () ,body)
+     (make-struct-type-info body)]
+    [else #f]))
+
+;; Locate defined functions and structure types:
 (for ([v (in-list l)])
   (match v
     [`(define-values (,id) ,rhs)
      (when (lambda? rhs)
        (set! procs (hash-set procs id #t)))]
-    #;
-    [`(define-values ,ids
-       (let-values (((struct: ,make ,? .-ref ,-set!)
-                     ,(? make-struct-type? rhs)))
-         (let ()
-           (let ()
-             (make-struct-type
-              'input-port
-              #f
-              19
-              0
-              #f
-              null
-              (current-inspector)
-              #f
-              '(0 1 2 3 4 5 6 7 8 9 10)
-              #f
-              'input-port)))))
-     (void)]
+    [`(define-values (,struct:s ,make-s ,s? ,acc/muts ...)
+       (let-values (((,struct: ,make ,? ,-ref ,-set!) ,(? make-struct-type-info)))
+         (values ,struct:
+                 ,make
+                 ,?
+                 ,make-acc/muts ...)))
+     (hash-set! structs struct:s #t)
+     (set! procs
+           (for/fold ([procs procs]) ([id (in-list (list* make-s s? acc/muts))])
+             (hash-set procs id #t)))]
     [_ (void)]))
 
+;; Simplify `let-values` to `let`, etc., and
+;; reorganize struct bindings.
 (define ((make-rewrite procs) v)
   (let rewrite ([v v])
     (match v
@@ -143,6 +164,48 @@
        `(case-lambda ,@(for/list ([formals (in-list formalss)]
                              [body (in-list bodys)])
                     `[,formals ,@(map rewrite body)]))]
+      [`(define-values (,struct:s ,make-s ,s? ,acc/muts ...)
+         (let-values (((,struct: ,make ,? ,-ref ,-set!) ,mk))
+           (values ,struct:
+                   ,make
+                   ,?
+                   ,make-acc/muts ...)))
+       ;; Convert a `make-struct-type` binding into a 
+       ;; set of bindings that Chez's cp0 recognizes,
+       ;; and push the struct-specific extra work into
+       ;; `struct-type-install-properties!`
+       (define sti (make-struct-type-info mk))
+       (cond
+        [sti
+         `(begin
+           (define ,struct:s (make-record-type-descriptor ',(struct-type-info-name sti)
+                                                          ,(struct-type-info-parent sti)
+                                                           #f #f #f
+                                                          ',(for/vector ([i (in-range (struct-type-info-field-count sti))])
+                                                              `(mutable ,(string->symbol (format "f~a" i))))))
+           (define ,make-s (record-constructor
+                            (make-record-constructor-descriptor ,struct:s #f #f)))
+           (define ,s? (record-predicate ,struct:s))
+           ,@(for/list ([acc/mut (in-list acc/muts)]
+                        [make-acc/mut (in-list make-acc/muts)])
+               `(define ,acc/mut
+                 ,(match make-acc/mut
+                    [`(make-struct-field-accessor ,(? (lambda (v) (eq? v -ref))) ,pos ,_)
+                     `(record-accessor ,struct:s ,pos)]
+                    [`(make-struct-field-mutator ,(? (lambda (v) (eq? v -set!))) ,pos ,_)
+                     `(record-mutator ,struct:s ,pos)]
+                    [else (error "oops")])))
+           ,@(if (null? (struct-type-info-rest sti))
+                 null
+                 `((define ,(gensym)
+                     (struct-type-install-properties! ,struct:s
+                                                      ',(struct-type-info-name sti)
+                                                      ,(struct-type-info-field-count sti)
+                                                      0
+                                                      ,(struct-type-info-parent sti)
+                                                      ,@(map rewrite (struct-type-info-rest sti)))))))]
+        [else
+         `(define-values ,(cadr v) ,(rewrite (caddr v)))])]
       [`(define-values (,id) ,rhs)
        `(define ,id ,(rewrite rhs))]
       [`(define-values ,ids ,rhs)
@@ -200,6 +263,12 @@
              `(#%app ,(rewrite rator) . ,args)))]
       [_ v])))
 
+;; Write out converted forms
 (for ([v (in-list l)])
   (unless (equal? v '(void))
-    (pretty-write ((make-rewrite procs) v))))
+    (let loop ([v ((make-rewrite procs) v)])
+      (match v
+        [`(begin ,vs ...)
+         (for-each loop vs)]
+        [else
+         (pretty-write v)]))))
