@@ -411,6 +411,9 @@
 (define current-load-extension
   (make-parameter (lambda args (error "no extensions"))))
 
+(define (procedure-arity p)
+  (arity-at-least 0))
+
 ;; ----------------------------------------
 
 (define (primitive-table key)
