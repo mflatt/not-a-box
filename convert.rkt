@@ -106,6 +106,7 @@
       (when (procedure? (eval s ns))
         (set! procs (hash-set procs s #t))))))
 
+;; Recognize forms that produce plain procedures
 (define (lambda? v)
   (match v
     [`(lambda . ,_) #t]
@@ -153,17 +154,103 @@
              (hash-set procs id #t)))]
     [_ (void)]))
 
+;; Check whether an expression is simple in the sense that
+;; its order of evaluation isn't detectable.
+;; FIXME: incorrectly assumes that all variables are immutable
+(define (simple? e)
+  (match e
+    [`(lambda . ,_) #t]
+    [`(case-lambda . ,_) #t]
+    [`(quote . ,_) #t]
+    [`(let ([,ids ,rhss] ...) ,body)
+     (and (andmap simple? rhss)
+          (simple? body))]
+    [`(letrec* ([,ids ,rhss] ...) ,body)
+     (and (andmap simple? rhss)
+          (simple? body))]
+    [else
+     (or (symbol? e)
+         (integer? e)
+         (boolean? e)
+         (string? e)
+         (bytes? e)
+         (regexp? e))]))
+
+;; Convert a `let` to nested lets to enforce order; we
+;; rely on the fact that the Racket expander generates
+;; expressions that have no shadowing (and inroduce
+;; shadowing here)
+(define (left-to-right/let v)
+  (match v
+    [`(let (,_) . ,_) v]
+    [`(let ([,ids ,rhss] ...) . ,bodys)
+     (let loop ([ids ids] [rhss rhss] [binds null])
+       (cond
+        [(null? (cdr rhss))
+         (if (null? binds)
+             `(let ([,(car ids) ,(car rhss)])
+               . ,bodys)
+             `(let ([,(car ids) ,(car rhss)])
+               (let ,binds
+                    . ,bodys)))]
+        [(simple? (car rhss))
+         `(let ([,(car ids) ,(car rhss)])
+           ,(loop (cdr ids) (cdr rhss) binds))]
+        [else
+         (define id (car ids))
+         `(let ([,id ,(car rhss)])
+           ,(loop (cdr ids) (cdr rhss) (cons `[,id ,id] binds)))]))]))
+
+;; Convert a `lte-values` to nested `let-values`es to
+;; enforce order
+(define (left-to-right/let-values v)
+  (define (make-let-values ids rhs body)
+    (if (and (pair? ids) (null? (cdr ids)))
+        `(let ([,(car ids) ,rhs]) ,body)
+        `(let-values ([,ids ,rhs]) ,body)))
+  (match v
+    [`(let-values (,_) . ,_) v]
+    [`(let-values ([(,idss ...) ,rhss] ...) . ,bodys)
+     (let loop ([idss idss] [rhss rhss] [binds null])
+       (cond
+        [(null? (cdr rhss))
+         (make-let-values
+          (car idss) (car rhss)
+          `(let ,binds
+            . ,bodys))]
+        [else
+         (define ids (car idss))
+         (make-let-values
+          ids
+          (car rhss)
+          (loop (cdr idss) (cdr rhss) (append (map (lambda (id) `[,id ,id]) ids) binds)))]))]))
+
+;; Convert an application to enforce left-to-right
+;; evaluation order
+(define (left-to-right/app v)
+  (let loop ([l v] [accum null])
+    (cond
+     [(null? l) (reverse accum)]
+     [(simple? (car l))
+      (loop (cdr l) (cons (car l) accum))]
+     [(andmap simple? (cdr l))
+      (append (reverse accum) l)]
+     [else
+      (define g (gensym 'app_))
+      `(let ([,g ,(car l)])
+        ,(loop (cdr l) (cons g accum)))])))
+
 ;; Simplify `let-values` to `let`, etc., and
 ;; reorganize struct bindings.
-(define ((make-rewrite procs) v)
-  (let rewrite ([v v])
+(define ((make-simplify procs) v)
+  (let simplify ([v v])
     (match v
       [`(lambda ,formals ,body ...)
-       `(lambda ,formals ,@(map rewrite body))]
+       `(lambda ,formals ,@(map simplify body))]
       [`(case-lambda [,formalss ,bodys ...] ...)
        `(case-lambda ,@(for/list ([formals (in-list formalss)]
                              [body (in-list bodys)])
-                    `[,formals ,@(map rewrite body)]))]
+                    `[,formals ,@(map simplify body)]))]
       [`(define-values (,struct:s ,make-s ,s? ,acc/muts ...)
          (let-values (((,struct: ,make ,? ,-ref ,-set!) ,mk))
            (values ,struct:
@@ -203,29 +290,39 @@
                                                       ,(struct-type-info-field-count sti)
                                                       0
                                                       ,(struct-type-info-parent sti)
-                                                      ,@(map rewrite (struct-type-info-rest sti)))))))]
+                                                      ,@(map simplify (struct-type-info-rest sti)))))))]
         [else
-         `(define-values ,(cadr v) ,(rewrite (caddr v)))])]
+         `(define-values ,(cadr v) ,(simplify (caddr v)))])]
       [`(define-values (,id) ,rhs)
-       `(define ,id ,(rewrite rhs))]
+       `(define ,id ,(simplify rhs))]
       [`(define-values ,ids ,rhs)
-       `(define-values ,ids ,(rewrite rhs))]
+       `(define-values ,ids ,(simplify rhs))]
       [`(quote ,_) v]
       [`(let-values () ,body)
-       (rewrite body)]
+       (simplify body)]
       [`(let-values () ,bodys ...)
-       `(let () ,@(map rewrite bodys))]
-      [`(let-values ([(,id) ,rhs]) ,bodys ...)
-       (define new-procs (if (lambda? rhs)
-                             (hash-set procs id #t)
-                             procs))
-       (define rewrite (make-rewrite new-procs))
-       `(let ([,id ,(rewrite rhs)]) ,@(map rewrite bodys))]
+       `(begin ,@(map simplify bodys))]
+      [`(let-values ([(,ids) ,rhss] ...) ,bodys ...)
+       (define new-procs
+         (for/fold ([proc procs]) ([id (in-list ids)]
+                                   [rhs (in-list rhss)])
+           (if (lambda? rhs)
+               (hash-set procs id #t)
+               procs)))
+       (define body-simplify (make-simplify new-procs))
+       (left-to-right/let
+        `(let ,(for/list ([id (in-list ids)]
+                          [rhs (in-list rhss)])
+                 `[,id ,(simplify rhs)])
+          ,@(map body-simplify bodys)))]
+      [`(let-values ([() (begin ,rhss ... (values))]) ,bodys ...)
+       `(begin ,@(map simplify rhss) ,@(map simplify bodys))]
       [`(let-values ([(,idss ...) ,rhss] ...) ,bodys ...)
-       `(let-values ,(for/list ([ids (in-list idss)]
-                                [rhs (in-list rhss)])
-                       `[,ids ,(rewrite rhs)])
-         ,@(map rewrite bodys))]
+       (left-to-right/let-values
+        `(let-values ,(for/list ([ids (in-list idss)]
+                                 [rhs (in-list rhss)])
+                        `[,ids ,(simplify rhs)])
+          ,@(map simplify bodys)))]
       [`(letrec-values ([(,ids) ,rhss] ...) ,bodys ...)
        (define new-procs
          (for/fold ([proc procs]) ([id (in-list ids)]
@@ -233,40 +330,44 @@
            (if (lambda? rhs)
                (hash-set procs id #t)
                procs)))
-       (define rewrite (make-rewrite new-procs))
-       `(letrec ,(for/list ([id (in-list ids)]
-                            [rhs (in-list rhss)])
-                   `[,id ,(rewrite rhs)])
-         ,@(map rewrite bodys))]
+       (define simplify (make-simplify new-procs))
+       `(letrec* ,(for/list ([id (in-list ids)]
+                             [rhs (in-list rhss)])
+                    `[,id ,(simplify rhs)])
+         ,@(map simplify bodys))]
       [`(letrec-values ([(,idss ...) ,rhss] ...) ,bodys ...)
        `(letrec-values ,(for/list ([ids (in-list idss)]
                                    [rhs (in-list rhss)])
-                          `[,ids ,(rewrite rhs)])
-         ,@(map rewrite bodys))]
+                          `[,ids ,(simplify rhs)])
+         ,@(map simplify bodys))]
       [`(if ,tst ,thn ,els)
-       `(if ,(rewrite tst) ,(rewrite thn) ,(rewrite els))]
+       `(if ,(simplify tst) ,(simplify thn) ,(simplify els))]
       [`(with-continuation-mark ,key ,val ,body)
-       `(with-continuation-mark ,(rewrite key) ,(rewrite val) ,(rewrite body))]
+       `(with-continuation-mark ,(simplify key) ,(simplify val) ,(simplify body))]
       [`(begin ,exps ...)
-       `(begin . ,(map rewrite exps))]
+       `(begin . ,(map simplify exps))]
       [`(begin0 ,exps ...)
-       `(begin0 . ,(map rewrite exps))]
+       `(begin0 . ,(map simplify exps))]
       [`(set! ,id ,rhs)
-       `(set! ,id ,(rewrite rhs))]
+       `(set! ,id ,(simplify rhs))]
       [`(#%variable-reference . ,_)
        v]
       [`(,rator ,exps ...)
-       (let ([args (map rewrite exps)])
-         (if (or (hash-ref procs rator #f)
-                 (lambda? rator))
-             `(,(rewrite rator) . ,args)
-             `(#%app ,(rewrite rator) . ,args)))]
+       (let ([args (map simplify exps)])
+         (left-to-right/app
+          (if (or (hash-ref procs rator #f)
+                  (lambda? rator))
+              `(,(simplify rator) . ,args)
+              `(#%app ,(simplify rator) . ,args))))]
       [_ v])))
+
+(define (top-simplify v)
+  ((make-simplify procs) v))
 
 ;; Write out converted forms
 (for ([v (in-list l)])
   (unless (equal? v '(void))
-    (let loop ([v ((make-rewrite procs) v)])
+    (let loop ([v (top-simplify v)])
       (match v
         [`(begin ,vs ...)
          (for-each loop vs)]
