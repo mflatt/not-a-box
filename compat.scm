@@ -1,6 +1,8 @@
 
 (define null '())
 
+(define (void . args) (chez:void))
+
 (define-values (prop:custom-write custom-write? custom-write-ref)
   (make-struct-type-property 'custom-write))
 (define-values (prop:checked-procedure checked-procedure? checked-procedure-ref)
@@ -22,6 +24,7 @@
 (define continuation-mark-set-first
   (case-lambda
     [(marks k) (continuation-mark-set-first marks k #f)]
+    [(marks k none-v prompt-tag) (continuation-mark-set-first marks k none-v)]
     [(marks k none-v)
      (let loop ([marks marks])
        (cond
@@ -45,7 +48,13 @@
 (define (default-continuation-prompt-tag) 'default-prompt-tag)
 (define (continuation-prompt-available? s) #t)
 
-(define (call-with-continuation-prompt proc . args) (proc))
+(define call-with-continuation-prompt
+  (case-lambda
+   [(proc) (proc)]
+   [(proc tag) (proc)]
+   [(proc tag abort-handler) (proc)]
+   [(proc tag abort-handler . args) (apply proc args)]))
+
 (define (call-with-continuation-barrier proc) (proc))
 
 (define call-with-escape-continuation
@@ -64,7 +73,10 @@
 (define (unsafe-flvector-ref v i) 0)
 (define (flvector-set! v i val) (void))
 (define (unsafe-flvector-set! v i val) (void))
-(define (make-flvector n) 'no)
+(define make-flvector
+  (case-lambda
+   [(n) 'no-flvector]
+   [(n val) 'no-flvector]))
 
 (define unsafe-fxvector-ref fxvector-ref)
 (define unsafe-fxvector-set! fxvector-set!)
@@ -139,6 +151,20 @@
 (define unsafe-string-ref string-ref)
 (define unsafe-string-set! string-set!)
 
+(define substring
+  (case-lambda
+   [(s start) (chez:substring s start (if (string? s) (string-length s) 0))]
+   [(s start end) (chez:substring s start end)]))
+
+(define string-copy!
+  (case-lambda
+   [(dest dest-start src) (chez:string-copy! src 0 dest dest-start
+                                             (if (string? src) (string-length src) 0))]
+   [(dest dest-start src src-start) (chez:string-copy! src src-start dest dest-start
+                                                       (if (and (string? src) (number? src-start)) (- (string-length src) src-start) 0))]
+   [(dest dest-start src src-start src-end) (chez:string-copy! src src-start dest dest-start
+                                                               (if (and (number? src-start) (number? src-end)) (- src-end src-start) 0))]))
+
 (define (box-cas! b v1 v2)
   (and (eq? v1 (unbox b))
        (set-box! b v2)
@@ -162,7 +188,20 @@
 
 (define arithmetic-shift bitwise-arithmetic-shift)
 
-(define (system-type) 'macosx)
+(define system-type
+  (case-lambda
+   [() 'macosx]
+   [(mode)
+    (case mode
+      [(os) 'macosx]
+      [(word) 64]
+      [(gc) '3m]
+      [(link) 'framework]
+      [(machine) "localhost info..."]
+      [(so-suffix) (string->bytes/latin-1 ".dylib")]
+      [(so-mode) 'local]
+      [(fs-change) '#(#f #f #f #f)])]))
+      
 (define (system-library-subpath) "x86_64-macosx/3m")
 (define (system-path-convention-type) 'unix)
 
@@ -175,8 +214,16 @@
 (define (directory-exists? p)
   (file-directory? (->string p)))
 
-(define (file-or-directory-modify-seconds p)
-  (time-second (file-modification-time p)))
+(define file-or-directory-modify-seconds
+  (case-lambda
+   [(p)
+    (time-second (file-modification-time p))]
+   [(p secs)
+    (if secs
+        (error 'file-or-directory-modify-seconds "cannot set modify seconds")
+        (file-or-directory-modify-seconds p))]
+   [(p secs fail)
+    (file-or-directory-modify-seconds p secs)]))
 
 (define (resolve-path p) p)
 (define (expand-user-path p) p)
@@ -204,7 +251,7 @@
                parameterization-key
                mt-hasheq)
               self
-              v)]
+              (lambda () v))]
          [(v2) (set! v v2)]))
      self]))
 
@@ -242,7 +289,10 @@
 (define current-code-inspector
   (make-parameter #f))
 (define current-print
-  (make-parameter write))
+  (make-parameter (lambda (v)
+                    (unless (void? v)
+                      (write v)
+                      (newline)))))
 (define current-read-interaction
   (make-parameter #f))
 (define error-print-source-location
@@ -352,10 +402,16 @@
 (define (sync . args) #f)
 (define (sync/timeout t . args) #f)
 (define (semaphore-peek-evt sema) 'sema-peek)
-(define (filesystem-change-evt p) 'evt)
+(define filesystem-change-evt
+  (case-lambda
+   [(p) (error 'filesystem-change-evt "unsupported")]
+   [(p fail) (fail)]))
 (define (filesystem-change-evt-cancel e) (void))
-(define (call-with-semaphore s proc . args)
-  (apply proc args))
+(define call-with-semaphore
+  (case-lambda
+   [(s proc) (proc)]
+   [(s proc try-fail) (proc)]
+   [(s proc try-fail . args) (apply proc args)]))
 
 (define (prefab-key? v) #t)
 (define (prefab-struct-key v) #f)
@@ -418,6 +474,7 @@
 
 (define (primitive-table key)
   (case key
-    [(|#%linklet|) 'ok]))
+    [(|#%linklet|) '|not-yet-the-#%linklet-table|]
+    [else #f]))
 
 (include "kernel.scm")

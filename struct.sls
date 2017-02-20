@@ -56,10 +56,10 @@
       (make-struct-type name parent-rtd fields auto-fields auto-val props insp proc-spec immutables #f name)]
      [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard)
       (make-struct-type name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard name)]
-     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard constructor-name)
+     [(name parent-rtd fields-count auto-fields auto-val props insp proc-spec immutables guard constructor-name)
       (unless (zero? auto-fields)
         (error 'make-struct-type "auto fields not supported"))
-      (let* ([fields (let loop ([fields fields])
+      (let* ([fields (let loop ([fields fields-count])
                        (if (zero? fields)
                            '()
                            (cons (string->symbol (format "a~a" fields))
@@ -69,7 +69,7 @@
                       (make-record-type (symbol->string name) fields))])
         (define accessor rtd) ; pseduo-accessor for accessor maker
         (define mutator rtd)  ; pseduo-mutator for mutator maker
-        (struct-type-install-properties! rtd name fields auto-fields parent-rtd
+        (struct-type-install-properties! rtd name fields-count auto-fields parent-rtd
                                          props insp proc-spec immutables guard name)
         (values rtd
                 (record-constructor rtd)
@@ -119,7 +119,7 @@
                                                        auto-fields
                                                        accessor
                                                        mutator
-                                                       '()
+                                                       immutables
                                                        parent-rtd
                                                        #f))
                                           val)))))

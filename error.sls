@@ -13,23 +13,23 @@
      [(null? args)
       (cond
        [(symbol? init)
-        (error 'error (format "~s" init))]
+        (chez:error 'error (format "~s" init))]
        [(string? init)
-        (error 'error init)]
+        (chez:error 'error init)]
        [else
         (raise-argument-error 'error "(or/c symbol? string?)" init)])]
      [(symbol? init)
       (unless (string? (car args))
         (raise-argument-error 'error "string?" (car args)))
-      (error init (apply format args))]
+      (chez:error init (apply format args))]
      [(string? init)
-      (error 'error (apply string-append
-                           init
-                           (let loop ([args args])
-                             (cond
-                              [(null? args) '()]
-                              [else (cons (format " ~s" (car args))
-                                          (loop (cdr args)))]))))]
+      (chez:error 'error (apply string-append
+                                init
+                                (let loop ([args args])
+                                  (cond
+                                   [(null? args) '()]
+                                   [else (cons (format " ~s" (car args))
+                                               (loop (cdr args)))]))))]
      [else
       (raise-argument-error 'error "(or/c symbol? string?)" init)]))
 
@@ -69,4 +69,37 @@
     (error who "bad arguments: ~a" what))
   
   (define (raise-range-error who what . more)
-    (error who "bad arguments: ~a" what)))
+    (error who "bad arguments: ~a" what))
+
+  ;; ----------------------------------------
+
+  (define (eprintf fmt . args)
+    (apply fprintf (current-error-port) fmt args))
+
+  (base-exception-handler
+   (lambda (v)
+     (eprintf "~a: ~a"
+              (and (who-condition? v)
+                   (condition-who v))
+              (and (message-condition? v)
+                   (condition-message v)))
+     (when (continuation-condition? v)
+       (eprintf "\n  context...:")
+       (let loop ([i (inspect/object (condition-continuation v))] [n 100])
+         (unless (or (zero? n)
+                     (not (eq? (i 'type) 'continuation)))
+           (call-with-values (lambda () (i 'source-path))
+             (case-lambda
+              [()
+               (let* ([c (i 'code)]
+                      [n (c 'name)])
+                 (when n
+                   (eprintf "\n   ~a" n)))]
+              [(path line col)
+               (eprintf "\n   ~a:~a:~a" path line col)]
+              [(path pos)
+               (eprintf "\n   ~a::~a" path pos)]))
+           (unless (zero? (i 'depth))
+             (loop (i 'link) (sub1 n))))))
+     (eprintf "\n")
+     (abort))))

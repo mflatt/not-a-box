@@ -107,7 +107,12 @@
              [(and (struct? x)
                    (struct-equal-hashity x))
               => (lambda (h)
-                   (update hc (h x (lambda (v) (f v 0 i)))))]
+                   (let ([i i])
+                     (let ([hc (update hc (h x (lambda (v)
+                                                 (let-values ([(hc new-i) (f v 0 i)])
+                                                   (set! i new-i)
+                                                   hc))))])
+                       (values hc i))))]
              [else (values (update hc (eq-hash-code x)) i)])))
         (let-values ([(hc i) (f x 523658599 64)])
           (hcabs hc))))))

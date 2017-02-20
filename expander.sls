@@ -8,7 +8,10 @@
                          make-input-port make-output-port
                          close-input-port
                          error)
-                 [make-parameter chez:make-parameter])
+                 [make-parameter chez:make-parameter]
+                 [void chez:void]
+                 [substring chez:substring]
+                 [string-copy! chez:string-copy!])
          (regexp)
          (error)
          (hash)
