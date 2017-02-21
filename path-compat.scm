@@ -1,33 +1,9 @@
 
-(define-syntax begin0
-  (syntax-rules ()
-    [(_ expr0 expr ...)
-     (let ([l (call-with-values (lambda () expr0) list)])
-       expr ...
-       (apply values l))]))
-
-(define (exact-integer? n) (and (integer? n) (exact? n)))
-(define (exact-nonnegative-integer? n) (and (exact-integer? n) (>= n 0)))
-(define (exact-positive-integer? n) (and (exact-integer? n) (> n 0)))
-(define (byte? n) (and (exact-integer? n) (>= n 0) (<= n 255)))
-(define null '())
-(define (procedure-arity-includes? p n) #t)
-(define (vector->immutable-vector x) x)
 (define (current-inspector) #f)
 (define-values (prop:custom-write custom-write? custom-write-ref)
   (make-struct-type-property 'custom-write))
 
 (define (system-path-convention-type) 'unix)
-
-(define unsafe-car car)
-(define unsafe-cdr cdr)
-(define unsafe-fx< <)
-(define unsafe-fx+ +)
-(define unsafe-vector-length vector-length)
-(define unsafe-vector-ref vector-ref)
-(define unsafe-bytes-ref bytes-ref)
-(define unsafe-bytes-length bytes-length)
-(define unsafe-string-length string-length)
 
 ;; ----------------------------------------
 

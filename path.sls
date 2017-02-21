@@ -28,5 +28,6 @@
             (error)
             (bytes)
             (hash))
+  (include "compat.scm")
   (include "path-compat.scm")
   (include "path.scm"))

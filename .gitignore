@@ -6,6 +6,10 @@ expander.scm
 path.scm
 port.scm
 regexp.scm
+schemify.scm
+
+# Also generated:
+primitive-procs.sls
 
 # common backups, autosaves, lock files, OS meta-files
 *~
