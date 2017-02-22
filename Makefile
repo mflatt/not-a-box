@@ -1,8 +1,8 @@
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
-go: expander.so
-	scheme regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so expander.so
+expander-demo: expander.so expander-demo.ss
+	scheme regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so expander.so expander-demo.ss
 
 expander.so: expander.sls expander.scm expander-compat.scm compat.scm struct.so hash-code.so hash.so equal.so port.so bytes.so regexp.so linklet.so
 	$(COMP) '(compile-file "expander.sls")' | scheme -q error.so struct.so equal.so hash-code.so hash.so path.so port.so bytes.so regexp.so linklet.so

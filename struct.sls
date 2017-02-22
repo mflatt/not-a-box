@@ -161,8 +161,9 @@
 
   (define (struct-type-equality rtd)
     (define v (hashtable-ref (struct-type-prop-table prop:equal+hash) rtd #f))
-    (and v
-         (values (cadr v) (car v))))
+    (if v
+        (values (cadr v) (car v))
+        (values #f #f)))
 
   (define (struct-equal-hashity r)
     (define v (hashtable-ref (struct-type-prop-table prop:equal+hash) (record-rtd r) #f))

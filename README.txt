@@ -19,18 +19,20 @@ The files:
 
          For example, "regexp.rktl" is generated from `make
          regexp-src` in the "pkgs/regexp" in the "linklet" branch of
-         the Racket repo.
+         the Racket repo that's currently at
 
- convert.rkt - A stop-gap linklet-to-library-body compiler, which is
+            https://github.com/mflatt/racket
+
+ * convert.rkt - A stop-gap linklet-to-library-body compiler, which is
          used to convert a ".rktl" file to a ".sls" file.
 
  *.ss - Chez scripts to check that a library basically works. For
-        example "regexp-demo.ss" runs the regexp matcher on a few
-        examples.
+         example "regexp-demo.ss" runs the regexp matcher on a few
+         examples.
 
  *.rkt - Racket scripts like "convert.rkt" or comparisions like
-       "regexp-demo.rkt". For example, you can run "regexp-demo.rkt"
-       and compare the reported timing to "regexp-dem.ss".
+         "regexp-demo.rkt". For example, you can run "regexp-demo.rkt"
+         and compare the reported timing to "regexp-dem.ss".
 
 
 Status and thoughts on various Racket subsystems:

@@ -320,6 +320,17 @@
 
 (define (port-read-handler p) read)
 
+(define gensym
+  (case-lambda
+   [() (chez:gensym)]
+   [(s) (cond
+         [(string? s) (chez:gensym s)]
+         [(symbol? s) (chez:gensym (symbol->string s))]
+         [else (raise-argument-error
+                'gensym
+                "(or/c symbol? string?)"
+                s)])]))
+
 (define (symbol-interned? s) (not (gensym? s)))
 (define (string->uninterned-symbol s) (gensym s))
 (define (string->unreadable-symbol s) (string->symbol (format "$$~a$$" s)))
@@ -413,22 +424,65 @@
   (arity-at-least 0))
 
 ;; ----------------------------------------
+;; This `datum->syntax` layer is meant to be for just
+;; source locations and properties that the compiler might
+;; inspect. Probably it should map to Chez annotations.
+
+(define (host:datum->syntax ignored datum srcloc)
+  datum)
+
+(define (host:syntax->datum v)
+  v)
+
+(define (syntax-property-symbol-keys v)
+  null)
+
+(define (syntax-property v k)
+  #f)
+
+(define (syntax-e v) (raise-argument-error 'syntax-e "syntax?" v))
+(define (syntax-source v) #f)
+(define (syntax-line v) #f)
+(define (syntax-column v) #f)
+(define (syntax-position v) #f)
+(define (syntax-span v) #f)
+
+(define (syntax? v) #f)
+
+;; ----------------------------------------
+
+(define tbd-table (make-hasheq))
 
 (define (primitive-table key)
   (case key
     [(|#%linklet|) linklet-table]
     [(|#%kernel|) kernel-table]
+    [(|#%read|) tbd-table]
+    [(|#%paramz|) tbd-table]
+    [(|#%unsafe|) tbd-table]
+    [(|#%foreign|) tbd-table]
+    [(|#%futures|) tbd-table]
+    [(|#%place|) tbd-table]
+    [(|#%flfxnum|) tbd-table]
+    [(|#%extfl|) tbd-table]
+    [(|#%network|) tbd-table]
     [else #f]))
+
+(define-syntax hash-primitive-set!
+  (syntax-rules ()
+    [(_ ht [local prim]) (hash-set! ht 'prim local)]
+    [(_ ht prim) (hash-set! ht 'prim prim)]))
 
 (define-syntax make-primitive-table
   (syntax-rules ()
     [(_ prim ...)
      (let ([ht (make-hasheq)])
-       (hash-set! ht 'prim prim)
+       (hash-primitive-set! ht prim)
        ...
        ht)]))
 
 (include "kernel.scm")
+
 
 (define linklet-table
   (make-primitive-table

@@ -414,4 +414,10 @@
    current-thread
    unsafe-struct-ref
    read-decimal-as-inexact
-   max))
+   max
+
+   [host:datum->syntax datum->syntax]
+   [host:syntax->datum syntax->datum]
+   syntax-property-symbol-keys
+   syntax-property syntax-span syntax-position syntax-column
+   syntax-line syntax-source syntax-e syntax?))

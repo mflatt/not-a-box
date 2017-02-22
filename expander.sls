@@ -1,28 +1,70 @@
-(top-level-program
- (import (rename (except (chezscheme)
-                         member memv memq
-                         sort vector-sort vector-sort!
-                         filter force delay identifier?
-                         equal? read-char peek-char
-                         close-output-port open-input-file
-                         make-input-port make-output-port
-                         close-input-port
-                         error)
-                 [make-parameter chez:make-parameter]
-                 [void chez:void]
-                 [substring chez:substring]
-                 [string-copy! chez:string-copy!])
-         (regexp)
-         (error)
-         (hash)
-         (immutable-hash)
-         (bytes)
-         (hash-code)
-         (equal)
-         (struct)
-         (path)
-         (port)
-         (linklet))
- (include "compat.scm")
- (include "expander-compat.scm")
- (include "expander.scm"))
+(library (expander)
+  (export (rename (1/module-path-index? module-path-index?)
+                  (1/identifier-binding identifier-binding)
+                  (1/module-declared? module-declared?)
+                  (1/bound-identifier=? bound-identifier=?)
+                  (1/module-path? module-path?)
+                  (seal seal)
+                  (1/syntax-shift-phase-level syntax-shift-phase-level)
+                  (embedded-load embedded-load)
+                  (1/syntax->datum syntax->datum)
+                  (1/dynamic-require dynamic-require)
+                  (1/namespace-attach-module-declaration namespace-attach-module-declaration)
+                  (make-namespace make-namespace)
+                  (1/resolved-module-path? resolved-module-path?)
+                  (boot boot)
+                  (1/current-namespace current-namespace)
+                  (expand$1 expand)
+                  (1/namespace-mapped-symbols namespace-mapped-symbols)
+                  (1/namespace-attach-module namespace-attach-module)
+                  (compile-to-linklets compile-to-linklets)
+                  (1/module-compiled-indirect-exports module-compiled-indirect-exports)
+                  (1/read-accept-compiled read-accept-compiled)
+                  (datum->kernel-syntax datum->kernel-syntax)
+                  (identifier? identifier?)
+                  (1/syntax-e syntax-e)
+                  (1/syntax-debug-info syntax-debug-info)
+                  (namespace->instance namespace->instance)
+                  (1/namespace-module-identifier namespace-module-identifier)
+                  (1/eval eval)
+                  (1/namespace-require namespace-require)
+                  (maybe-syntax->datum maybe-syntax->datum)
+                  (maybe-raise-missing-module maybe-raise-missing-module)
+                  (syntax?$1 syntax?)
+                  (1/read read)
+                  (1/module-compiled-exports module-compiled-exports)
+                  (1/module-path-index-join module-path-index-join)
+                  (1/read-syntax read-syntax)
+                  (syntax-property$1 syntax-property)
+                  (1/module->language-info module->language-info)
+                  (1/namespace-syntax-introduce namespace-syntax-introduce)
+                  (1/compile compile)
+                  (1/datum->syntax datum->syntax)))
+  (import (rename (except (chezscheme)
+                          member memv memq
+                          sort vector-sort vector-sort!
+                          filter force delay identifier?
+                          equal? read-char peek-char
+                          close-output-port open-input-file
+                          make-input-port make-output-port
+                          close-input-port
+                          error)
+                  [make-parameter chez:make-parameter]
+                  [void chez:void]
+                  [substring chez:substring]
+                  [string-copy! chez:string-copy!]
+                  [gensym chez:gensym])
+          (regexp)
+          (error)
+          (hash)
+          (immutable-hash)
+          (bytes)
+          (hash-code)
+          (equal)
+          (struct)
+          (path)
+          (port)
+          (linklet))
+  (include "compat.scm")
+  (include "expander-compat.scm")
+  (include "expander.scm"))

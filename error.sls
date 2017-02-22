@@ -108,4 +108,5 @@
            (unless (zero? (i 'depth))
              (loop (i 'link) (sub1 n))))))
      (eprintf "\n")
-     (abort))))
+     (when (serious-condition? v)
+       ((reset-handler))))))

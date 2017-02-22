@@ -146,8 +146,8 @@
            [(null? (cdr content))
             (raise-arguments-error 'make-instance "odd number of arguments")]
            [else
-            (hash-set! ht (car content) (cdar content))
-            (loop (cdr content))]))
+            (hash-set! ht (car content) (cadr content))
+            (loop (cddr content))]))
         (new-instance name data ht))]))
 
   (define (instance-variable-names i)
@@ -160,8 +160,11 @@
      [(i sym)
       (instance-variable-value i sym (lambda () (error "instance variable not found:" sym)))]))
   
-  (define (instance-set-variable-value! i k v)
-    (hash-set! (instance-hash i) k v))
+  (define instance-set-variable-value!
+    (case-lambda
+     [(i k v) (instance-set-variable-value! i k v #f)]
+     [(i k v mode)
+      (hash-set! (instance-hash i) k v)]))
 
   (define (instance-unset-variable! i k)
     (hash-remove! (instance-hash i) k))
