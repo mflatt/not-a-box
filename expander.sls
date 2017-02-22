@@ -51,6 +51,7 @@
                           error)
                   [make-parameter chez:make-parameter]
                   [void chez:void]
+                  [string->number chez:string->number]
                   [substring chez:substring]
                   [string-copy! chez:string-copy!]
                   [gensym chez:gensym])
