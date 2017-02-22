@@ -1,6 +1,8 @@
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
+KNOT = ++knot read - ++knot main - ++knot core - ++knot boot - ++knot place-struct -
+
 expander-demo: expander.so expander-demo.ss
 	scheme regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so expander.so expander-demo.ss
 
@@ -82,3 +84,12 @@ struct.so: struct.sls
 
 error.so: error.sls
 	$(COMP) '(compile-file "error.sls")' | scheme -q
+
+file:
+	racket -l expander/bootstrap-run -- -c compiled/cache-src $(KNOT) -s -x -o compiled/$(ARGS).rktl -t $(ARGS)
+	echo ';; generated file' > compiled/$(ARGS).sls
+	echo '(top-level-program' >> compiled/$(ARGS).sls
+	cat prefix.scm >> compiled/$(ARGS).sls
+	racket convert.rkt < compiled/$(ARGS).rktl >> compiled/$(ARGS).sls
+	echo ')' >> compiled/$(ARGS).sls
+	$(COMP) | scheme -q regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so compiled/$(ARGS).sls
