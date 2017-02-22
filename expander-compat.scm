@@ -355,6 +355,12 @@
 
 (define (syntax? v) #f)
 
+(define-syntax (define/expr e)
+  (syntax-case e ()
+    [(_ e) #'(define x (begin e (void)))]))
+
+(define/expr (print-graph #t)) ;; not on by default in Chez
+
 ;; ----------------------------------------
 
 (define tbd-table (make-hasheq))
