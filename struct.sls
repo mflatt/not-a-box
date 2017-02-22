@@ -128,15 +128,15 @@
   (define make-struct-field-accessor
     (case-lambda
      [(rtd pos)
-      (record-field-accessor rtd pos)]
+      (record-field-accessor rtd (+ pos  (struct-type-parent-field-count rtd)))]
      [(rtd pos name)
-      (record-field-accessor rtd pos)]))
+      (make-struct-field-accessor rtd pos)]))
   (define make-struct-field-mutator
     (case-lambda
      [(rtd pos)
-      (record-field-mutator rtd pos)]
+      (record-field-mutator rtd (+ pos (struct-type-parent-field-count rtd)))]
      [(rtd pos name)
-      (record-field-mutator rtd pos)]))
+      (make-struct-field-mutator rtd pos)]))
 
   (define struct? record?)
   (define struct-type? record-type-descriptor?)
@@ -148,6 +148,12 @@
              (struct-type-field-count p-rtd)
              0))
        (vector-length (record-type-field-names rtd))))
+
+  (define (struct-type-parent-field-count rtd)
+    (let ([p-rtd (record-type-parent rtd)])
+      (if p-rtd
+          (struct-type-field-count p-rtd)
+          0)))
 
   (define (unsafe-struct-ref s i)
     (#3%vector-ref s i))

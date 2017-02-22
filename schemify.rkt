@@ -36,20 +36,20 @@
 (define (schemify-linklet lk init-procs)
   ;; For imports, map symbols to gensymed `variable` argument names:
   (define imports
-    (for*/fold ([imports (hasheq)]) ([ims (in-list (cdadr lk))]
+    (for*/fold ([imports (hasheq)]) ([ims (in-list (cadr lk))]
                                      [im (in-list ims)])
       (define id (if (pair? im) (car im) im))
       (hash-set imports id (gensym (symbol->string id)))))
   ;; Ditto for exports:
   (define exports
-    (for/fold ([exports (hasheq)]) ([ex (in-list (cdaddr lk))])
+    (for/fold ([exports (hasheq)]) ([ex (in-list (caddr lk))])
       (define id (if (pair? ex) (car ex) ex))
       (hash-set exports id (gensym (symbol->string id)))))
   ;; Build `lambda` with schemified body:
-  `(lambda (,@(for*/list ([ims (in-list (cdadr lk))]
+  `(lambda (,@(for*/list ([ims (in-list (cadr lk))]
                      [im (in-list ims)])
            (hash-ref imports (if (pair? im) (car im) im)))
-       ,@(for/list ([ex (in-list (cdaddr lk))])
+       ,@(for/list ([ex (in-list (caddr lk))])
            (hash-ref exports (if (pair? ex) (car ex) ex))))
     ,@(schemify-body (cdddr lk) init-procs imports exports)))
 
@@ -236,8 +236,8 @@
                            "result arity mismatch;\n"
                            " expected number of values not received\n"
                            "  received: ~a\n" 
-                           "  in: local-binding form"))
-                         (length args))]))))
+                           "  in: local-binding form")
+                          (length args)))]))))
   (match v
     [`(let-values ([,ids ,rhs]) ,body)
      (make-let-values ids rhs body)]

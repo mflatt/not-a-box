@@ -51,10 +51,14 @@
      [(c name import-keys get-import)
       (define (get-external-names l)
         (map (lambda (p) (if (pair? p) (cadr p) p)) l))
-      (make-linklet (expand (schemify-linklet c primitive-procs))
-                    name
-                    (map get-external-names (cdadr c))
-                    (get-external-names (cdaddr c)))]))
+      (define lk
+        (make-linklet (expand (schemify-linklet c primitive-procs))
+                      name
+                      (map get-external-names (cadr c))
+                      (get-external-names (caddr c))))
+      (if import-keys
+          (values lk import-keys)
+          lk)]))
 
   (define (recompile-linklet . args)
     (error 'recompile-linklet "no"))

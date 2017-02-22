@@ -26,7 +26,7 @@
     [(marks k) (continuation-mark-set-first marks k #f)]
     [(marks k none-v prompt-tag) (continuation-mark-set-first marks k none-v)]
     [(marks k none-v)
-     (let loop ([marks marks])
+     (let loop ([marks (or marks (current-continuation-marks))])
        (cond
         [(null? marks) none-v]
         [(eq? k (caar marks)) (cdar marks)]
@@ -120,7 +120,10 @@
 
 (define (make-weak-box v) (weak-cons v #t))
 (define (weak-box? v) (weak-pair? v))
-(define (weak-box-value v) (car v))
+(define (weak-box-value v) (let ([c (car v)])
+                             (if (eq? c #!bwp)
+                                 #f
+                                 c)))
 
 (define (integer->integer-bytes num size signed? big-endian?)
   (define bstr (make-bytes 4))
@@ -200,6 +203,9 @@
      self]))
 
 (define (reparameterize . args) (void))
+
+(define current-eval
+  (make-parameter (lambda args (error "eval not ready"))))
              
 (define read-decimal-as-inexact
   (make-parameter #t))

@@ -2,8 +2,8 @@
 
 (define l1 (compile-linklet
             '(linklet 
-              (import)
-              (export f x)
+              () ; imports
+              (f x) ; exports
               (define-values (f) (lambda (y) (add1 y)))
               (define-values (x) 5)
               'done)
@@ -11,8 +11,8 @@
 
 (define l2 (compile-linklet
             '(linklet 
-              (import (f x))
-              (export)
+              ((f x)) ; imports
+              () ; exports
               (display (f x))
               (newline))))
 

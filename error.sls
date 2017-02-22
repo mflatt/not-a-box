@@ -78,9 +78,10 @@
 
   (base-exception-handler
    (lambda (v)
-     (eprintf "~a: ~a"
-              (and (who-condition? v)
-                   (condition-who v))
+     (eprintf "~a~a"
+              (if (who-condition? v)
+                  (format "~a: " (condition-who v))
+                  "")
               (cond
                [(format-condition? v)
                 (apply format
@@ -88,7 +89,7 @@
                        (condition-irritants v))]
                [(message-condition? v)
                 (condition-message v)]
-               [else "???"]))
+               [else (format "~s" v)]))
      (when (continuation-condition? v)
        (eprintf "\n  context...:")
        (let loop ([i (inspect/object (condition-continuation v))] [n 100])

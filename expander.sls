@@ -48,7 +48,7 @@
                           close-output-port open-input-file
                           make-input-port make-output-port
                           close-input-port
-                          error)
+                          error current-eval)
                   [make-parameter chez:make-parameter]
                   [void chez:void]
                   [string->number chez:string->number]

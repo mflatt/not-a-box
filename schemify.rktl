@@ -206,7 +206,7 @@
   (schemify-linklet)
   (lambda (lk_0 init-procs_0)
     (let-values (((imports_0)
-                  (let-values (((lst_0) (cdadr lk_0)))
+                  (let-values (((lst_0) (cadr lk_0)))
                     (begin
                       (if (list? lst_0) (void) (let-values () (check-list lst_0)))
                       ((letrec-values (((for-loop_0)
@@ -260,7 +260,7 @@
                        (hasheq)
                        lst_0)))))
       (let-values (((exports_0)
-                    (let-values (((lst_4) (cdaddr lk_0)))
+                    (let-values (((lst_4) (caddr lk_0)))
                       (begin
                         (if (list? lst_4) (void) (let-values () (check-list lst_4)))
                         ((letrec-values (((for-loop_2)
@@ -288,7 +288,7 @@
         (list*
          'lambda
          (qq-append
-          (let-values (((lst_6) (cdadr lk_0)))
+          (let-values (((lst_6) (cadr lk_0)))
             (begin
               (if (list? lst_6) (void) (let-values () (check-list lst_6)))
               ((letrec-values (((for-loop_3)
@@ -327,7 +327,7 @@
                                     null))))
                  for-loop_3)
                lst_6)))
-          (let-values (((lst_10) (cdaddr lk_0)))
+          (let-values (((lst_10) (caddr lk_0)))
             (begin
               (if (list? lst_10) (void) (let-values () (check-list lst_10)))
               ((letrec-values (((for-loop_5)
