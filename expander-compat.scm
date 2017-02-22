@@ -9,6 +9,8 @@
   (make-struct-type-property 'impersonator-of))
 (define-values (prop:arity-string arity-string? arity-string-ref)
   (make-struct-type-property 'arity-string))
+(define-values (prop:incomplete-arity incomplete-arity? incomplete-arity-ref)
+  (make-struct-type-property 'incomplete-arity))
 
 (define current-marks (chez:make-parameter null))
 
@@ -316,7 +318,11 @@
   (hashtable-set! output-getters p g)
   p)
 (define (get-output-bytes p)
-  ((hashtable-ref output-getters p)))
+  ((hashtable-ref output-getters p (lambda ()
+                                     (raise-arguments-error
+                                      'get-output-bytes
+                                      "not a byte output port"
+                                      "port" p)))))
 
 (define (port-read-handler p) read)
 
@@ -422,6 +428,14 @@
 
 (define (procedure-arity p)
   (arity-at-least 0))
+
+(define string->number
+  (case-lambda [(s) (string->number s 10 #f 'decimal-as-inexact)]
+               [(s radix) (string->number s radix #f 'decimal-as-inexact)]
+               [(s radix mode) (string->number s radix mode 'decimal-as-inexact)]
+               [(s radix mode decimal)
+                ;; FIXME
+                (chez:string->number s radix)]))
 
 ;; ----------------------------------------
 ;; This `datum->syntax` layer is meant to be for just
