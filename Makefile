@@ -4,8 +4,8 @@ COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 go: expander.so
 	scheme regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so expander.so
 
-expander.so: expander.sls expander.scm compat.scm struct.so hash-code.so hash.so equal.so port.so bytes.so regexp.so
-	$(COMP) '(compile-file "expander.sls")' | scheme -q error.so struct.so equal.so hash-code.so hash.so path.so port.so bytes.so regexp.so 
+expander.so: expander.sls expander.scm expander-compat.scm compat.scm struct.so hash-code.so hash.so equal.so port.so bytes.so regexp.so linklet.so
+	$(COMP) '(compile-file "expander.sls")' | scheme -q error.so struct.so equal.so hash-code.so hash.so path.so port.so bytes.so regexp.so linklet.so
 
 expander.scm: expander.rktl convert.rkt schemify.rkt
 	racket convert.rkt < expander.rktl > expander.scm

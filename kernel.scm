@@ -1,11 +1,4 @@
 
-(define-syntax make-primitive-table
-  (syntax-rules ()
-    [(_ prim ...)
-     (let ([ht (make-eq-hashtable)])
-       (hashtable-set! ht 'prim prim)
-       ...)]))
-
 (define kernel-table
   (make-primitive-table
    make-hasheq-placeholder

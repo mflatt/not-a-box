@@ -81,8 +81,14 @@
      (eprintf "~a: ~a"
               (and (who-condition? v)
                    (condition-who v))
-              (and (message-condition? v)
-                   (condition-message v)))
+              (cond
+               [(format-condition? v)
+                (apply format
+                       (condition-message v)
+                       (condition-irritants v))]
+               [(message-condition? v)
+                (condition-message v)]
+               [else "???"]))
      (when (continuation-condition? v)
        (eprintf "\n  context...:")
        (let loop ([i (inspect/object (condition-continuation v))] [n 100])

@@ -374,7 +374,7 @@
                                                    imports_7
                                                    exports_5)))
                                       (append
-                                       (map2 schemify_0 accum_0)
+                                       (map2 schemify_0 (reverse$1 accum_0))
                                        (make-set-variables accum_0 exports_5)
                                        (list (schemify_0 v_14))
                                        (make-set-variables (list v_14) exports_5)

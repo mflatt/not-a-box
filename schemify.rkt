@@ -82,7 +82,7 @@
                                   #t)]
        [else
         (define schemify (make-schemify new-procs new-structs mutated imports exports))
-        (append (map schemify accum)
+        (append (map schemify (reverse accum))
                 (make-set-variables accum exports)
                 (list (schemify v))
                 (make-set-variables (list v) exports)

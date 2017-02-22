@@ -1,6 +1,5 @@
 (library (linklet)
-  (export primitive-table
-          linklet?
+  (export linklet?
           compile-linklet
           recompile-linklet
           eval-linklet
@@ -39,11 +38,6 @@
           (bytes)
           (schemify))
 
-  (define (primitive-table key)
-    (case key
-      [(|#%linklet|) '|not-yet-the-#%linklet-table|]
-      [else #f]))
-
   (define (primitive->compiled-position prim) #f)
   (define (compiled-position->primitive pos) #f)
 
@@ -55,13 +49,21 @@
      [(c name) (compile-linklet c name #f (lambda (key) (values #f #f)))]
      [(c name import-keys) (compile-linklet c name import-keys (lambda (key) (values #f #f)))]
      [(c name import-keys get-import)
-      (schemify-linklet c primitive-procs)]))
-  
+      (define (get-external-names l)
+        (map (lambda (p) (if (pair? p) (cadr p) p)) l))
+      (make-linklet (expand (schemify-linklet c primitive-procs))
+                    name
+                    (map get-external-names (cdadr c))
+                    (get-external-names (cdaddr c)))]))
+
   (define (recompile-linklet . args)
     (error 'recompile-linklet "no"))
   
   (define (eval-linklet linklet)
-    linklet)
+    (make-linklet (eval (linklet-code linklet))
+                  (linklet-name linklet)
+                  (linklet-importss linklet)
+                  (linklet-exports linklet)))
 
   (define (read-compiled-linklet in)
     (read in))
@@ -71,14 +73,21 @@
      [(linklet import-instances)
       (instantiate-linklet linklet import-instances #f #f)]
      [(linklet import-instances target-instance)
-      (instantiate-linklet linklet import-instances #f)]
+      (instantiate-linklet linklet import-instances target-instance #f)]
      [(linklet import-instances target-instance use-prompt?)
       (cond
        [target-instance
-        (apply (linklet-code linklet) target-instance import-instances)]
+        (apply
+         (eval (linklet-code linklet))
+         (append (apply append
+                        (map extract-variables
+                             import-instances
+                             (linklet-importss linklet)))
+                 (create-variables target-instance
+                                   (linklet-exports linklet))))]
        [else
         (let ([i (make-instance (linklet-name linklet))])
-          (apply (linklet-code linklet) i import-instances)
+          (instantiate-linklet linklet import-instances i use-prompt?)
           i)])]))
               
   (define (linklet-import-variables linklet)
@@ -86,6 +95,42 @@
 
   (define (linklet-export-variables linklet)
     (linklet-exports linklet))
+
+  (define undefined (gensym "undefined"))
+  
+  (define-record-type variable (fields (mutable val) name))
+
+  (define (variable-set! var val)
+    (variable-val-set! var val))
+
+  (define (variable-ref var)
+    (define v (variable-val var))
+    (if (eq? v undefined)
+        (error (variable-name var)
+               "undefined;\n cannot reference undefined identifier")
+        v))
+
+  (define (extract-variables inst syms)
+    (define ht (instance-hash inst))
+    (map (lambda (sym)
+           (or (hash-ref ht sym #f)
+               (error 'instantiate-linklet
+                      (string-append
+                       "variable not found in imported instance\n"
+                       "  instance: ~a\n"
+                       "  name: ~a")
+                      inst
+                      sym)))
+         syms))
+  
+  (define (create-variables inst syms)
+    (define ht (instance-hash inst))
+    (map (lambda (sym)
+           (or (hash-ref ht sym #f)
+               (let ([var (make-variable undefined sym)])
+                 (hash-set! ht sym var)
+                 var)))
+         syms))
 
   (define-record-type (instance new-instance instance?)
     (fields name data hash))
@@ -140,4 +185,9 @@
   (define-record variable-reference (var constant? instance-link))
               
   (define (variable-reference->instance vr)
-    (car (variable-reference-instance-link vr))))
+    (car (variable-reference-instance-link vr)))
+
+  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (path) (port)))
+  (eval `(define null '()))
+  (eval `(define variable-set! ',variable-set!))
+  (eval `(define variable-ref ',variable-ref)))

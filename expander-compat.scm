@@ -416,7 +416,51 @@
 
 (define (primitive-table key)
   (case key
-    [(|#%linklet|) '|not-yet-the-#%linklet-table|]
+    [(|#%linklet|) linklet-table]
+    [(|#%kernel|) kernel-table]
     [else #f]))
 
+(define-syntax make-primitive-table
+  (syntax-rules ()
+    [(_ prim ...)
+     (let ([ht (make-hasheq)])
+       (hash-set! ht 'prim prim)
+       ...
+       ht)]))
+
 (include "kernel.scm")
+
+(define linklet-table
+  (make-primitive-table
+   linklet?
+   compile-linklet
+   recompile-linklet
+   eval-linklet
+   read-compiled-linklet
+   instantiate-linklet
+   
+   linklet-import-variables
+   linklet-export-variables
+   
+   instance?
+   make-instance
+   instance-name
+   instance-data
+   instance-variable-names
+   instance-variable-value
+   instance-set-variable-value!
+   instance-unset-variable!
+
+   linklet-directory?
+   hash->linklet-directory
+   linklet-directory->hash
+
+   linklet-bundle?
+   hash->linklet-bundle
+   linklet-bundle->hash
+   
+   variable-reference?
+   variable-reference->instance
+   variable-reference-constant?
+
+   primitive-table))
