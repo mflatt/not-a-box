@@ -228,9 +228,21 @@
   (define (make-let-values ids rhs body)
     (if (and (pair? ids) (null? (cdr ids)))
         `(let ([,(car ids) ,rhs]) ,body)
-        `(let-values ([,ids ,rhs]) ,body)))
+        `(call-with-values (lambda () ,rhs)
+          (case-lambda 
+            [,ids ,body]
+            [args (error (format
+                          (string-append
+                           "result arity mismatch;\n"
+                           " expected number of values not received\n"
+                           "  received: ~a\n" 
+                           "  in: local-binding form"))
+                         (length args))]))))
   (match v
-    [`(let-values (,_) . ,_) v]
+    [`(let-values ([,ids ,rhs]) ,body)
+     (make-let-values ids rhs body)]
+    [`(let-values ([,ids ,rhs]) . ,bodys)
+     (make-let-values ids rhs `(begin . ,bodys))]
     [`(let-values ([(,idss ...) ,rhss] ...) . ,bodys)
      (let loop ([idss idss] [rhss rhss] [binds null])
        (cond
@@ -362,9 +374,9 @@
                     `[,id ,(schemify rhs)])
          ,@(map schemify bodys))]
       [`(letrec-values ([(,idss ...) ,rhss] ...) ,bodys ...)
-       `(letrec-values ,(for/list ([ids (in-list idss)]
-                                   [rhs (in-list rhss)])
-                          `[,ids ,(schemify rhs)])
+       `(letrec*-values ,(for/list ([ids (in-list idss)]
+                                    [rhs (in-list rhss)])
+                           `[,ids ,(schemify rhs)])
          ,@(map schemify bodys))]
       [`(if ,tst ,thn ,els)
        `(if ,(schemify tst) ,(schemify thn) ,(schemify els))]
