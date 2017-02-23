@@ -83,11 +83,12 @@ struct.so: struct.sls
 
 KNOT = ++knot read - ++knot main - ++knot core - ++knot boot - ++knot place-struct -
 
-file:
+file: regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so immutable-hash.so linklet.so prefix.scm convert.rkt
 	racket -l expander/bootstrap-run -- -c compiled/cache-src $(KNOT) -s -x -o compiled/$(ARGS).rktl -t $(ARGS)
 	echo ';; generated file' > compiled/$(ARGS).sls
 	echo '(top-level-program' >> compiled/$(ARGS).sls
 	cat prefix.scm >> compiled/$(ARGS).sls
 	racket convert.rkt < compiled/$(ARGS).rktl >> compiled/$(ARGS).sls
 	echo ')' >> compiled/$(ARGS).sls
-	$(COMP) | scheme -q regexp.so error.so struct.so hash-code.so hash.so equal.so port.so compiled/$(ARGS).sls
+	$(COMP) | scheme -q regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so immutable-hash.so linklet.so compiled/$(ARGS).sls
+
