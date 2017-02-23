@@ -2,6 +2,8 @@
         (port))
 
 (define (show v) (write v) (newline))
+(define (run s)
+  (show (eval (read (open-input-string s)))))
 
 (boot)
 (namespace-require ''|#%kernel|)
@@ -17,4 +19,4 @@
 (eval '(|#%require| 'm))
 (show (eval 'x))
 
-
+(run "'x")
