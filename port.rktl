@@ -2182,7 +2182,7 @@
                                       (let-values (((or-part_9) (eof-object? b_5)))
                                         (if or-part_9 or-part_9 (< b_5 128)))
                                       #f)
-                                  (let-values () (integer->char b_5))
+                                  (let-values () (if (eof-object? b_5) b_5 (integer->char b_5)))
                                   (let-values ()
                                     (let-values (((bstr_41) (make-string 1)))
                                       (let-values (((v_39) (do-peek-string! 'peek-char in_36 bstr_41 0 1 skip-k_22)))
