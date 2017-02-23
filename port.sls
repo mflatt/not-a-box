@@ -112,7 +112,7 @@
   (define string-locale-downcase string-downcase)
 
   (define (char-blank? v) (char-whitespace? v))
-  (define (char-graphic? v) (char-graphic? v))
+  (define (char-graphic? v) #t)
   
   (define (read-byte in) (get-u8 in))
   (define (read-bytes-avail!* bstr in start-pos end-pos)

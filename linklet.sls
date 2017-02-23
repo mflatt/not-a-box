@@ -41,7 +41,7 @@
   (define (primitive->compiled-position prim) #f)
   (define (compiled-position->primitive pos) #f)
 
-  (define-record-type linklet (fields code name importss exports))
+  (define-record-type linklet (fields code compiled? name importss exports))
               
   (define compile-linklet
     (case-lambda
@@ -53,6 +53,7 @@
         (map (lambda (p) (if (pair? p) (cadr p) p)) l))
       (define lk
         (make-linklet (expand (schemify-linklet c primitive-procs))
+                      #f
                       name
                       (map get-external-names (cadr c))
                       (get-external-names (caddr c))))
@@ -64,10 +65,13 @@
     (raise (exn:fail "recompile-linklet: no" (current-continuation-marks))))
   
   (define (eval-linklet linklet)
-    (make-linklet (eval (linklet-code linklet))
-                  (linklet-name linklet)
-                  (linklet-importss linklet)
-                  (linklet-exports linklet)))
+    (if (linklet-compiled? linklet)
+        linklet
+        (make-linklet (eval (linklet-code linklet))
+                      #t
+                      (linklet-name linklet)
+                      (linklet-importss linklet)
+                      (linklet-exports linklet))))
 
   (define (read-compiled-linklet in)
     (read in))
@@ -82,7 +86,9 @@
       (cond
        [target-instance
         (apply
-         (eval (linklet-code linklet))
+         (if (linklet-compiled? linklet)
+             (linklet-code linklet)
+             (eval (linklet-code linklet)))
          (append (apply append
                         (map extract-variables
                              import-instances
@@ -150,7 +156,7 @@
            [(null? (cdr content))
             (raise-arguments-error 'make-instance "odd number of arguments")]
            [else
-            (hash-set! ht (car content) (cadr content))
+            (hash-set! ht (car content) (make-variable (cadr content) (car content))) 
             (loop (cddr content))]))
         (new-instance name data ht))]))
 
@@ -160,7 +166,11 @@
   (define instance-variable-value
     (case-lambda
      [(i sym fail-k)
-      (hash-ref (instance-hash i) sym fail-k)]
+      (define v (variable-val
+                 (hash-ref (instance-hash i) sym fail-k)))
+      (if (eq? v undefined)
+          (fail-k)
+          v)]
      [(i sym)
       (instance-variable-value i
                                sym
@@ -174,10 +184,16 @@
     (case-lambda
      [(i k v) (instance-set-variable-value! i k v #f)]
      [(i k v mode)
-      (hash-set! (instance-hash i) k v)]))
+      (let ([var (or (hash-ref (instance-hash i) k #f)
+                     (let ([var (make-variable undefined k)])
+                       (hash-set! (instance-hash i) k var)
+                       var))])
+        (variable-val-set! var v))]))
 
   (define (instance-unset-variable! i k)
-    (hash-remove! (instance-hash i) k))
+    (let ([var (hash-ref (instance-hash i) k #f)])
+      (when var
+        (variable-val-set! var undefined))))
 
   (define-record-type linklet-directory (fields hash))
 

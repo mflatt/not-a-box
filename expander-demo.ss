@@ -7,10 +7,14 @@
 (namespace-require ''|#%kernel|)
 (show (expand '1))
 (show (eval '((lambda (x) x) 1)))
-(show (eval '(module m '|#%kernel|
-              (define-values (x) 'ex)
-              (|#%provide| x))))
-(show (eval '(|#%require| 'm)))
+(eval '(module m '|#%kernel|
+        (|#%require| (for-syntax '|#%kernel|))
+        (define-syntaxes (m)
+          (lambda (stx)
+            (quote-syntax 'ex)))
+        (define-values (x) (m))
+        (|#%provide| x)))
+(eval '(|#%require| 'm))
 (show (eval 'x))
 
 

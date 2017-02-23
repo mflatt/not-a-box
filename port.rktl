@@ -5527,7 +5527,7 @@
                         (begin
                           ((custom-write-ref v_59) v_59 o_23 mode_2)
                           (output-port/max-max-length o_23 max-length_16))))
-                    (let-values () (format "~s" v_59))))))))))))
+                    (let-values () (write-string/max (format "~s" v_59) o_22 max-length_16))))))))))))
  (define-values
   (do-printf)
   (lambda (who_0 o_13 fmt_0 all-args_0)

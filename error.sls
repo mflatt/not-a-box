@@ -57,7 +57,10 @@
                                  (continuation-mark-set-marks marks))
                             (current-marks))])
         (cond
-         [(null? marks) none-v]
+         [(null? marks)
+          (if (eq? k parameterization-key)
+              mt-hasheq
+              none-v)]
          [(eq? k (caar marks)) (cdar marks)]
          [else (loop (cdr marks))]))]))
   
@@ -69,8 +72,10 @@
 
   ;; ----------------------------------------
 
-  (define parameterization-key  (gensym "parameterization-key"))
+  (define parameterization-key (gensym "parameterization-key"))
 
+  (define mt-hasheq (hasheq))
+  
   (define (extend-parameterization p . args)
     (let loop ([p p] [args args])
       (cond
@@ -78,8 +83,6 @@
        [else (loop (immutable-hash-set p (car args) (cadr args))
                    (cddr args))])))
 
-  (define mt-hasheq (hasheq))
-  
   (define make-parameter
     (case-lambda
      [(v) (make-parameter v (lambda (x) x))]
@@ -149,7 +152,7 @@
                                                 #'(field ...))]
                          [(field-index ...) (let loop ([fields #'(field ...)] [accum '()] [pos 0])
                                               (cond
-                                               [(null? fields) accum]
+                                               [(null? fields) (reverse accum)]
                                                [else (loop (cdr fields) (cons pos accum) (add1 pos))]))]
                          [struct:parent (if (syntax->datum #'parent)
                                             (make-id #'parent "struct:~a" (syntax->datum #'parent))
