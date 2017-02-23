@@ -231,13 +231,7 @@
         `(call-with-values (lambda () ,rhs)
           (case-lambda 
             [,ids ,body]
-            [args (error (format
-                          (string-append
-                           "result arity mismatch;\n"
-                           " expected number of values not received\n"
-                           "  received: ~a\n" 
-                           "  in: local-binding form")
-                          (length args)))]))))
+            [args (raise-result-arity-error 'ids args)]))))
   (match v
     [`(let-values ([,ids ,rhs]) ,body)
      (make-let-values ids rhs body)]

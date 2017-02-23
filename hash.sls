@@ -16,7 +16,7 @@
   (import (hash-code)
           (immutable-hash)
           (except (chezscheme)
-                  error)
+                  make-parameter)
           (error))
 
   ;; To support iteration and locking, we wrap Chez's mutable hash
@@ -289,7 +289,11 @@
     (cond
      [(immutable-hash? ht)
       (check-i who i)
-      (immutable-hash-iterate-key+value ht i)]
+      (immutable-hash-iterate-key+value
+       ht i
+       (lambda ()
+         (raise-arguments-error who "no element at index"
+                                "index" i)))]
      [(mutable-hash? ht)
       (check-i who i)
       (let* ([vec (prepate-iterate! ht i)]

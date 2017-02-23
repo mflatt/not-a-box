@@ -30,7 +30,7 @@
           variable-reference->instance
           variable-reference-constant?)
   (import (except (chezscheme)
-                  error)
+                  error make-parameter)
           (hash)
           (error)
           (struct)
@@ -61,7 +61,7 @@
           lk)]))
 
   (define (recompile-linklet . args)
-    (error 'recompile-linklet "no"))
+    (raise (exn:fail "recompile-linklet: no" (current-continuation-marks))))
   
   (define (eval-linklet linklet)
     (make-linklet (eval (linklet-code linklet))
@@ -110,21 +110,21 @@
   (define (variable-ref var)
     (define v (variable-val var))
     (if (eq? v undefined)
-        (error (variable-name var)
-               "undefined;\n cannot reference undefined identifier")
+        (raise
+         (exn:fail:contract:variable
+          (string-append (symbol->string (variable-name var))
+                         ": undefined;\n cannot reference undefined identifier")
+          (current-continuation-marks)))
         v))
 
   (define (extract-variables inst syms)
     (define ht (instance-hash inst))
     (map (lambda (sym)
            (or (hash-ref ht sym #f)
-               (error 'instantiate-linklet
-                      (string-append
-                       "variable not found in imported instance\n"
-                       "  instance: ~a\n"
-                       "  name: ~a")
-                      inst
-                      sym)))
+               (raise-arguments-error 'instantiate-linklet
+                                      "variable not found in imported instance"
+                                      "instance" inst
+                                      "name" sym)))
          syms))
   
   (define (create-variables inst syms)
@@ -162,8 +162,14 @@
      [(i sym fail-k)
       (hash-ref (instance-hash i) sym fail-k)]
      [(i sym)
-      (instance-variable-value i sym (lambda () (error "instance variable not found:" sym)))]))
-  
+      (instance-variable-value i
+                               sym
+                               (lambda ()
+                                 (raise-argument-error
+                                  'instance-variable-value
+                                  "instance variable not found"
+                                  "name" sym)))]))
+
   (define instance-set-variable-value!
     (case-lambda
      [(i k v) (instance-set-variable-value! i k v #f)]
@@ -194,7 +200,7 @@
   (define (variable-reference->instance vr)
     (car (variable-reference-instance-link vr)))
 
-  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (path) (port)))
+  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (port)))
   (eval `(define null '()))
   (eval `(define variable-set! ',variable-set!))
   (eval `(define variable-ref ',variable-ref)))

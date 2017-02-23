@@ -9,6 +9,9 @@
 (define null '())
 (define eof #!eof)
 
+(define (void . args) (chez:void))
+(define (void? v) (eq? v (chez:void)))
+
 (define (exact-integer? n) (and (integer? n) (exact? n)))
 (define (exact-nonnegative-integer? n) (and (exact-integer? n) (>= n 0)))
 (define (exact-positive-integer? n) (and (exact-integer? n) (> n 0)))

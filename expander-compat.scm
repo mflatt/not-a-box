@@ -1,8 +1,4 @@
 
-(define (void . args) (chez:void))
-
-(define-values (prop:custom-write custom-write? custom-write-ref)
-  (make-struct-type-property 'custom-write))
 (define-values (prop:checked-procedure checked-procedure? checked-procedure-ref)
   (make-struct-type-property 'checked-procedure))
 (define-values (prop:impersonator-of impersonator-of? impersonator-of-ref)
@@ -11,29 +7,6 @@
   (make-struct-type-property 'arity-string))
 (define-values (prop:incomplete-arity incomplete-arity? incomplete-arity-ref)
   (make-struct-type-property 'incomplete-arity))
-
-(define current-marks (chez:make-parameter null))
-
-(define-syntax with-continuation-mark
-  (syntax-rules ()
-    [(_ key val body)
-     (parameterize ([current-marks (cons (cons key val)
-                                         (current-marks))])
-       body)]))
-
-(define continuation-mark-set-first
-  (case-lambda
-    [(marks k) (continuation-mark-set-first marks k #f)]
-    [(marks k none-v prompt-tag) (continuation-mark-set-first marks k none-v)]
-    [(marks k none-v)
-     (let loop ([marks (or marks (current-continuation-marks))])
-       (cond
-        [(null? marks) none-v]
-        [(eq? k (caar marks)) (cdar marks)]
-        [else (loop (cdr marks))]))]))
-
-(define (current-continuation-marks)
-  (current-marks))
 
 (define (check-for-break) (void))
 (define break-enabled-key 'break-enabled-key)
@@ -175,32 +148,6 @@
 (define (resolve-path p) p)
 (define (expand-user-path p) p)
 
-(define parameterization-key  'parameterization-key)
-
-(define (extend-parameterization p . args)
-  (let loop ([p p] [args args])
-    (cond
-     [(null? args) p]
-     [else (loop (hash-set p (car args) (cadr args))
-                 (cddr args))])))
-
-(define mt-hasheq (hasheq))
-
-(define make-parameter
-  (case-lambda
-    [(v) (make-parameter v (lambda (x) x))]
-    [(v guard)
-     (define self
-       (case-lambda
-         [() (hash-ref
-              (continuation-mark-set-first
-               (current-continuation-marks)
-               parameterization-key
-               mt-hasheq)
-              self
-              (lambda () v))]
-         [(v2) (set! v v2)]))
-     self]))
 
 (define (reparameterize . args) (void))
 
@@ -262,73 +209,12 @@
 
 (define (version) "0.1")
 
-(define-syntax struct
-  (lambda (stx)
-    (syntax-case stx  ()
-      [(_ name (field ...))
-       #'(struct name #f (field ...))]
-      [(_ name parent (field ...))
-       (let ([make-id (lambda (id fmt . args)
-                        (datum->syntax id
-                                       (string->symbol (apply format fmt args))))])
-         (with-syntax ([struct:name (make-id #'name "struct:~a" (syntax->datum #'name))]
-                       [name? (make-id #'name "~a?" (syntax->datum #'name))]
-                       [(name-field ...) (map (lambda (field)
-                                                (make-id field "~a-~a" (syntax->datum #'name) (syntax->datum field)))
-                                              #'(field ...))]
-                       [(field-index ...) (let loop ([fields #'(field ...)] [accum '()] [pos 0])
-                                            (cond
-                                             [(null? fields) accum]
-                                             [else (loop (cdr fields) (cons pos accum) (add1 pos))]))]
-                       [struct:parent (if (syntax->datum #'parent)
-                                          (make-id #'parent "struct:~a" (syntax->datum #'parent))
-                                          #f)])
-           #'(begin
-               (define struct:name (make-record-type-descriptor 'name struct:parent #f #f #f '#((immutable field) ...)))
-               (define name? (record-predicate struct:name))
-               (define name (make-record-constructor-descriptor struct:name #f #f))
-               (define name-field (record-accessor struct:name field-index))
-               ...)))])))
-
-(define-syntax define-struct
-  (lambda (stx)
-    (syntax-case stx ()
-      [(_ name . rest)
-       (with-syntax ([make-name
-                      (datum->syntax #'name
-                                     (string->symbol (format "make-~a" (syntax->datum #'name))))])
-         #'(begin
-             (struct name . rest)
-             (define make-name name)))])))
-
-(struct exn (message continuation-marks))
-(struct exn:fail exn ())
-(struct exn:fail:filesystem exn:fail ())
-(struct exn:fail:read exn:fail (srclocs))
-(struct exn:fail:read:non-char exn:fail:read ())
-(struct exn:fail:read:eof exn:fail:read ())
-(struct exn:fail:contract exn:fail ())
-(struct exn:fail:contract:variable exn:fail:contract ())
-
 (define-values (prop:exn:srclocs exn:srclocs? exn:srclocs-accessor)
   (make-struct-type-property 'exn:srclocs))
 
 (define (log-level? logger v) #f)
 (define (log-message . args) (void))
 (define (current-logger) 'logger)
-
-(define output-getters (make-weak-eq-hashtable))
-
-(define (open-output-bytes bstr)
-  (define-values (p g) (open-bytevector-output-port bstr))
-  (hashtable-set! output-getters p g)
-  p)
-(define (get-output-bytes p)
-  ((hashtable-ref output-getters p (lambda ()
-                                     (raise-arguments-error
-                                      'get-output-bytes
-                                      "not a byte output port"
-                                      "port" p)))))
 
 (define (port-read-handler p) read)
 
@@ -384,10 +270,13 @@
 (define (make-prefab-struct key args) (error 'make-prefab-struct "not ready"))
 (define (struct->vector s) (error 'struct->vector "not ready"))
 
-(define-struct srcloc (source line column position span))
 (define (srcloc->string s) "srcloc-from-string")
 
-(define-struct arity-at-least (value))
+(define struct:arity-at-least (make-record-type-descriptor 'arity-at-least #f #f #f #f '#((immutable value))))
+(define arity-at-least? (record-predicate struct:arity-at-least))
+(define arity-at-least (make-record-constructor-descriptor struct:arity-at-least #f #f))
+(define arity-at-least-value (record-accessor struct:arity-at-least 0))
+(define make-arity-at-least arity-at-least)
 
 (define make-inspector
   (case-lambda
@@ -402,9 +291,6 @@
 (define (make-placeholder v) #f)
 (define (placeholder-set! ph v) (error "no placeholders, yet"))
 (define (make-reader-graph v) v)
-
-(define (void? v)
-  (eq? v (void)))
 
 (define (eval-jit-enabled) #t)
 

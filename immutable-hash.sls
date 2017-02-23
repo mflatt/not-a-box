@@ -35,8 +35,7 @@
           immutable-hash-for-each
           immutable-hash-map)
   (import (hash-code)
-          (error)
-          (except (chezscheme) error))
+          (chezscheme))
 
   (define (vector-copy! dest d-start src s-start s-end)
     (let loop ([i (- s-end s-start)])
@@ -143,17 +142,14 @@
   (define (immutable-hash-empty? h)
     (= (immutable-hash-count h) 0))
 
-  (define immutable-hash-ref
-    (case-lambda
-      [(h key) (immutable-hash-ref h key (lambda () (error 'immutable-hash-ref "not found")))]
-      [(h key default)
-       (cond
-        [(bnode/eq? h)
-         (node-ref h key (eq-hash-code key) eq? 0 default)]
-        [(bnode/equal? h)
-         (node-ref h key (equal-hash-code key) equal? 0 default)]
-        [else
-         (node-ref h key (eqv-hash-code key) eqv? 0 default)])]))
+  (define (immutable-hash-ref h key default)
+    (cond
+     [(bnode/eq? h)
+      (node-ref h key (eq-hash-code key) eq? 0 default)]
+     [(bnode/equal? h)
+      (node-ref h key (equal-hash-code key) equal? 0 default)]
+     [else
+      (node-ref h key (eqv-hash-code key) eqv? 0 default)]))
 
   (define (immutable-hash-set h key val)
     (let-values ([(new-h added?)
@@ -216,27 +212,24 @@
           #f
           pos)))
 
-  (define (immutable-hash-iterate-key h pos)
+  (define (immutable-hash-iterate-key h pos fail-k)
     (let ([e (node-entry-at-position h pos)])
-      (unless e
-        (raise-arguments-error 'hash-iterate-key "no element at index"
-                               "index" pos))
-      (entry*-key e)))
+      (if e
+          (entry*-key e)
+          (fail-k))))
 
-  (define (immutable-hash-iterate-value h pos)
+  (define (immutable-hash-iterate-value h pos fail-k)
     (let ([e (node-entry-at-position h pos)])
-      (unless e
-        (raise-arguments-error 'hash-iterate-value "no element at index"
-                               "index" pos))
-      (entry*-value e)))
+      (if e
+          (entry*-value e)
+          (fail-k))))
 
-  (define (immutable-hash-iterate-key+value h pos)
+  (define (immutable-hash-iterate-key+value h pos fail-k)
     (let ([e (node-entry-at-position h pos)])
-      (unless e
-        (raise-arguments-error 'hash-iterate-key+value "no element at index"
-                               "index" pos))
-      (values (entry*-key e)
-              (entry*-value e))))
+      (if e
+          (values (entry*-key e)
+                  (entry*-value e))
+          (fail-k))))
 
   ;; "unsafe" iteration works with a record; it's unsafe only in the
   ;; sense that it doesn't make sure the iteration value is compatible

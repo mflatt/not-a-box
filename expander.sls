@@ -48,8 +48,13 @@
                           close-output-port open-input-file
                           make-input-port make-output-port
                           close-input-port
-                          error current-eval)
-                  [make-parameter chez:make-parameter]
+                          error current-eval
+                          open-input-file peek-char
+                          error make-parameter
+                          current-input-port current-output-port current-error-port
+                          open-input-string open-output-string get-output-string
+                          format printf fprintf
+                          write display newline)
                   [void chez:void]
                   [string->number chez:string->number]
                   [substring chez:substring]
@@ -63,7 +68,6 @@
           (hash-code)
           (equal)
           (struct)
-          (path)
           (port)
           (linklet))
   (include "compat.scm")

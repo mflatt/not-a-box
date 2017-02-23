@@ -2,13 +2,23 @@
   (export schemify-linklet
           schemify-body
           primitive-procs)
-  (import (except (chezscheme)
-                  error)
+  (import (rename (except (chezscheme)
+                          read-char
+                          close-input-port close-output-port
+                          make-input-port make-output-port
+                          open-input-file peek-char
+                          error make-parameter
+                          current-input-port current-output-port current-error-port
+                          open-input-string open-output-string get-output-string
+                          format printf fprintf
+                          write display newline)
+                  [void chez:void])
           (hash)
           (error)
           (struct)
           (regexp)
           (bytes)
+          (port)
           (primitive-procs))
 
   (define primitive-procs

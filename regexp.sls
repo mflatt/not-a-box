@@ -21,12 +21,17 @@
                   (1/regexp-match regexp-match)
                   (1/byte-pregexp byte-pregexp)
                   (1/byte-pregexp? byte-pregexp?)))
-  (import (except (chezscheme)
-                  read-char
-                  close-input-port close-output-port
-                  make-input-port make-output-port
-                  open-input-file peek-char
-                  error)
+  (import (rename (except (chezscheme)
+                          read-char
+                          close-input-port close-output-port
+                          make-input-port make-output-port
+                          open-input-file peek-char
+                          error make-parameter
+                          current-input-port current-output-port current-error-port
+                          open-input-string open-output-string get-output-string
+                          format printf fprintf
+                          write display newline)
+                  [void chez:void])
           (hash)
           (struct)
           (port)
@@ -39,6 +44,4 @@
   (define (call-with-continuation-prompt proc . args) (proc))
   (define (abort-current-continuation . args)
     (error 'abort-current-continuation "fixme"))
-  (define-values (prop:custom-write custom-write? custom-write-ref)
-    (make-struct-type-property 'custom-write))
   (include "regexp.scm"))

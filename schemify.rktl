@@ -1946,18 +1946,7 @@
                       (list
                        'call-with-values
                        (list 'lambda '() rhs_16)
-                       (list*
-                        'case-lambda
-                        (list ids_18 body_11)
-                        '((args
-                           (error
-                            (format
-                             (string-append
-                              "result arity mismatch;\n"
-                              " expected number of values not received\n"
-                              "  received: ~a\n"
-                              "  in: local-binding form"))
-                            (length args))))))))))
+                       (list* 'case-lambda (list ids_18 body_11) '((args (raise-result-arity-error 'ids args)))))))))
       (let-values (((v_35) v_34))
         (if (if (pair? v_35)
               (if (let-values (((a_150) (car v_35))) (equal? 'let-values a_150))
