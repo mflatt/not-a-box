@@ -27,6 +27,7 @@
                           make-input-port make-output-port
                           open-input-file peek-char
                           error make-parameter
+                          input-port? output-port?
                           current-input-port current-output-port current-error-port
                           open-input-string open-output-string get-output-string
                           format printf fprintf

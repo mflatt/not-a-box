@@ -79,7 +79,9 @@
            (1/read-bytes! read-bytes!)
            (1/peek-bytes peek-bytes)
            (1/close-output-port close-output-port)
-           (1/open-output-string open-output-string)))
+           (1/open-output-string open-output-string)
+           (1/input-port? input-port?)
+           (1/output-port? output-port?)))
   (import (struct)
           (hash-code)
           (hash)
@@ -89,7 +91,7 @@
           (rename (except (chezscheme)
                           memv memq member
                           output-port-buffer-mode
-                          equal?
+                          equal? input-port? output-port?
                           open-input-file abort
                           current-output-port current-input-port current-error-port)
                   [make-parameter chez:make-parameter]

@@ -49,12 +49,13 @@
                           make-input-port make-output-port
                           close-input-port
                           error current-eval
-                          open-input-file peek-char
+                          open-input-file
                           error make-parameter
                           current-input-port current-output-port current-error-port
                           open-input-string open-output-string get-output-string
                           format printf fprintf
-                          write display newline)
+                          write display newline
+                          input-port? output-port?)
                   [void chez:void]
                   [string->number chez:string->number]
                   [substring chez:substring]

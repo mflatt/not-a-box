@@ -297,8 +297,16 @@
 (define current-load-relative-directory
   (make-parameter #f))
 
-(define read-char-or-special read-char)
-(define peek-char-or-special peek-char)
+(define read-char-or-special
+  (case-lambda [() (read-char)]
+               [(in) (read-char in)]
+               [(in special src) (read-char in)]))
+
+(define peek-char-or-special
+  (case-lambda [() (peek-char)]
+               [(in) (peek-char in)]
+               [(in skip) (peek-char in skip)]
+               [(in skip special src) (peek-char in skip)]))
 
 (define datums (make-weak-hash))
 
