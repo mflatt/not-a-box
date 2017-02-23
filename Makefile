@@ -4,7 +4,7 @@ COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 expander-demo: expander.so expander-demo.ss
 	scheme regexp.so error.so struct.so hash-code.so hash.so equal.so port.so expander.so expander-demo.ss
 
-expander.so: expander.sls expander.scm expander-compat.scm compat.scm struct.so hash-code.so hash.so equal.so port.so bytes.so regexp.so linklet.so
+expander.so: expander.sls expander.scm expander-compat.scm compat.scm kernel.scm struct.so hash-code.so hash.so equal.so port.so bytes.so regexp.so linklet.so
 	$(COMP) '(compile-file "expander.sls")' | scheme -q error.so struct.so equal.so hash-code.so hash.so port.so bytes.so regexp.so linklet.so
 
 expander.scm: expander.rktl convert.rkt schemify.rkt
@@ -18,7 +18,7 @@ linklet.so: linklet.sls schemify.so primitive-procs.so
 	$(COMP) '(compile-file "linklet.sls")' | scheme -q immutable-hash.so hash.so error.so struct.so regexp.so bytes.so primitive-procs.so schemify.so
 
 schemify.so: schemify.sls schemify.scm compat.scm primitive-procs.so regexp.so
-	$(COMP) '(compile-file "schemify.sls")' | scheme -q immutable-hash.so hash.so error.so struct.so port.so regexp.so bytes.so primitive-procs.so
+	$(COMP) '(compile-file "schemify.sls")' | scheme -q equal.so immutable-hash.so hash.so error.so struct.so port.so regexp.so bytes.so primitive-procs.so
 
 schemify.scm: schemify.rktl convert.rkt schemify.rkt
 	racket convert.rkt < schemify.rktl > schemify.scm
@@ -58,14 +58,14 @@ hash-demo: immutable-hash.so hash.so
 	scheme struct.so equal.so hash-code.so immutable-hash.so hash.so hash-demo.ss
 
 hash.so: hash.sls hash-code.so immutable-hash.so error.so
-	$(COMP) '(compile-file "hash.sls")' | scheme -q struct.so hash-code.so immutable-hash.so error.so
+	$(COMP) '(compile-file "hash.sls")' | scheme -q struct.so hash-code.so equal.so immutable-hash.so error.so
 
 
 error.so: error.sls immutable-hash.so
 	$(COMP) '(compile-file "error.sls")' | scheme -q hash-code.so immutable-hash.so
 
-immutable-hash.so: immutable-hash.sls hash-code.so
-	$(COMP) '(compile-file "immutable-hash.sls")' | scheme -q struct.so hash-code.so
+immutable-hash.so: immutable-hash.sls equal.so hash-code.so
+	$(COMP) '(compile-file "immutable-hash.sls")' | scheme -q struct.so equal.so hash-code.so
 
 hash-code.so: hash-code.sls struct.so
 	$(COMP) '(compile-file "hash-code.sls")' | scheme -q struct.so

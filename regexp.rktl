@@ -33,10 +33,6 @@
   (new-prop:procedure new-procedure? new-procedure-ref)
   (make-struct-type-property 'procedure #f (list (cons prop:procedure values) (cons prop:procedure-accessor values))))
  (define-values
-  (check-reflection-name)
-  (lambda (name_0 what_0)
-    (begin (if (symbol? what_0) (void) (let-values () (raise-argument-error name_0 "symbol?" what_0))) what_0)))
- (define-values
   (1/reverse)
   (lambda (l_0)
     (begin
@@ -313,7 +309,7 @@
   (lambda (r_0 v_15)
     (let-values (((lst_0) r_0))
       (begin
-        (if (list? lst_0) (void) (let-values () (check-list lst_0)))
+        (check-list lst_0)
         ((letrec-values (((for-loop_0)
                           (lambda (result_0 lst_1)
                             (if (pair? lst_1)
@@ -387,7 +383,7 @@
           (begin
             (let-values (((lst_2) range_5))
               (begin
-                (if (list? lst_2) (void) (let-values () (check-list lst_2)))
+                (check-list lst_2)
                 ((letrec-values (((for-loop_1)
                                   (lambda (lst_3)
                                     (if (pair? lst_3)
@@ -397,11 +393,7 @@
                                                                    ((end_0) (add1 (cdr p_1)))
                                                                    ((inc_0) 1))
                                                         (begin
-                                                          (if (if (real? start_3)
-                                                                (if (real? end_0) (real? inc_0) #f)
-                                                                #f)
-                                                            (void)
-                                                            (let-values () (check-range$1 start_3 end_0 inc_0)))
+                                                          (check-range$1 start_3 end_0 inc_0)
                                                           ((letrec-values (((for-loop_2)
                                                                             (lambda (pos_0)
                                                                               (if (< pos_0 end_0)
@@ -689,7 +681,7 @@
                                               bytes-append
                                               (let-values (((lst_4) (1/reverse accum_0)))
                                                 (begin
-                                                  (if (list? lst_4) (void) (let-values () (check-list lst_4)))
+                                                  (check-list lst_4)
                                                   ((letrec-values (((for-loop_3)
                                                                     (lambda (lst_5)
                                                                       (if (pair? lst_5)
@@ -720,7 +712,7 @@
                                                 string-append
                                                 (let-values (((lst_6) (1/reverse accum_0)))
                                                   (begin
-                                                    (if (list? lst_6) (void) (let-values () (check-list lst_6)))
+                                                    (check-list lst_6)
                                                     ((letrec-values (((for-loop_4)
                                                                       (lambda (lst_7)
                                                                         (if (pair? lst_7)
@@ -977,11 +969,7 @@
                                           (let-values (((range_1)
                                                         (let-values (((start_4) 0) ((end_1) 128) ((inc_1) 1))
                                                           (begin
-                                                            (if (if (real? start_4)
-                                                                  (if (real? end_1) (real? inc_1) #f)
-                                                                  #f)
-                                                              (void)
-                                                              (let-values () (check-range$1 start_4 end_1 inc_1)))
+                                                            (check-range$1 start_4 end_1 inc_1)
                                                             ((letrec-values (((for-loop_5)
                                                                               (lambda (range_8 pos_5)
                                                                                 (if (unsafe-fx< pos_5 end_1)
@@ -1183,9 +1171,7 @@
       (let-values ()
         (let-values (((start_5) from-c_1) ((end_2) (add1 to-c_1)) ((inc_2) 1))
           (begin
-            (if (if (real? start_5) (if (real? end_2) (real? inc_2) #f) #f)
-              (void)
-              (let-values () (check-range$1 start_5 end_2 inc_2)))
+            (check-range$1 start_5 end_2 inc_2)
             ((letrec-values (((for-loop_6)
                               (lambda (range_14 pos_8)
                                 (if (< pos_8 end_2)
@@ -1950,9 +1936,7 @@
                                                             (let-values ()
                                                               (let-values (((lst_8) (rx:sequence-rxs rx_16)))
                                                                 (begin
-                                                                  (if (list? lst_8)
-                                                                    (void)
-                                                                    (let-values () (check-list lst_8)))
+                                                                  (check-list lst_8)
                                                                   ((letrec-values (((for-loop_7)
                                                                                     (lambda (min-len_1
                                                                                              max-len_1
@@ -2136,7 +2120,7 @@
               (begin
                 (let-values (((ht_2) must-sizes_0))
                   (begin
-                    (if ((lambda (ht_3) (hash? ht_3)) ht_2) (void) (let-values () (check-in-hash-keys ht_2)))
+                    (check-in-hash-keys ht_2)
                     ((letrec-values (((for-loop_8)
                                       (lambda (i_4)
                                         (if i_4
@@ -2168,22 +2152,22 @@
       (if (< (hash-count ht2_0) (hash-count ht1_0))
         (let-values () (merge-depends-sizes ht2_0 ht1_0))
         (let-values ()
-          (let-values (((ht_4) ht1_0))
+          (let-values (((ht_3) ht1_0))
             (begin
-              (if ((lambda (ht_5) (hash? ht_5)) ht_4) (void) (let-values () (check-in-hash-keys ht_4)))
+              (check-in-hash-keys ht_3)
               ((letrec-values (((for-loop_9)
                                 (lambda (ht2_1 i_5)
                                   (if i_5
-                                    (let-values (((k_0) (hash-iterate-key ht_4 i_5)))
+                                    (let-values (((k_0) (hash-iterate-key ht_3 i_5)))
                                       (let-values (((ht2_2)
                                                     (let-values (((ht2_3) ht2_1))
                                                       (let-values (((ht2_4) (let-values () (hash-set ht2_3 k_0 #t))))
                                                         (values ht2_4)))))
-                                        (if (not #f) (for-loop_9 ht2_2 (hash-iterate-next ht_4 i_5)) ht2_2)))
+                                        (if (not #f) (for-loop_9 ht2_2 (hash-iterate-next ht_3 i_5)) ht2_2)))
                                     ht2_1))))
                  for-loop_9)
                ht2_0
-               (hash-iterate-first ht_4)))))))))
+               (hash-iterate-first ht_3)))))))))
  (define-values
   (convert)
   (lambda (rx_15)
@@ -2209,7 +2193,7 @@
                         (let-values (((rxs1_0)
                                       (let-values (((lst_10) (rx:sequence-rxs rx_15)))
                                         (begin
-                                          (if (list? lst_10) (void) (let-values () (check-list lst_10)))
+                                          (check-list lst_10)
                                           ((letrec-values (((for-loop_10)
                                                             (lambda (lst_11)
                                                               (if (pair? lst_11)
@@ -2387,9 +2371,7 @@
                                               (rx-range (range-add-span empty-range p_3 q_0) 255)
                                               (let-values (((start_7) 0) ((end_4) tail-len_0) ((inc_3) 1))
                                                 (begin
-                                                  (if (if (real? start_7) (if (real? end_4) (real? inc_3) #f) #f)
-                                                    (void)
-                                                    (let-values () (check-range$1 start_7 end_4 inc_3)))
+                                                  (check-range$1 start_7 end_4 inc_3)
                                                   ((letrec-values (((for-loop_11)
                                                                     (lambda (pos_53)
                                                                       (if (< pos_53 end_4)
@@ -2494,7 +2476,7 @@
           (let-values ()
             (let-values (((lst_12) (rx:sequence-rxs rx_19)))
               (begin
-                (if (list? lst_12) (void) (let-values () (check-list lst_12)))
+                (check-list lst_12)
                 ((letrec-values (((for-loop_13)
                                   (lambda (result_10 lst_13)
                                     (if (pair? lst_13)
@@ -2536,7 +2518,7 @@
           (let-values ()
             (let-values (((lst_14) (rx:sequence-rxs rx_21)))
               (begin
-                (if (list? lst_14) (void) (let-values () (check-list lst_14)))
+                (check-list lst_14)
                 ((letrec-values (((for-loop_14)
                                   (lambda (bstr_2 lst_15)
                                     (if (pair? lst_15)
@@ -2618,7 +2600,7 @@
   (lambda (seq_2)
     (let-values (((lst_16) seq_2))
       (begin
-        (if (list? lst_16) (void) (let-values () (check-list lst_16)))
+        (check-list lst_16)
         ((letrec-values (((for-loop_15)
                           (lambda (lst_17)
                             (if (pair? lst_17)
@@ -3011,7 +2993,7 @@
                            ((start_15) pos_65))
                 (begin
                   #t
-                  (if (exact-nonnegative-integer? start_15) (void) (let-values () (check-naturals start_15)))
+                  (check-naturals start_15)
                   ((letrec-values (((for-loop_17)
                                     (lambda (result_15 idx_3 pos_49)
                                       (if (if (unsafe-fx< idx_3 stop*_4) #t #f)
@@ -3102,7 +3084,7 @@
                            ((start_17) pos_66))
                 (begin
                   #t
-                  (if (exact-nonnegative-integer? start_17) (void) (let-values () (check-naturals start_17)))
+                  (check-naturals start_17)
                   ((letrec-values (((for-loop_19)
                                     (lambda (result_21 idx_6 pos_67)
                                       (if (if (unsafe-fx< idx_6 stop*_7) #t #f)
@@ -3231,9 +3213,7 @@
                                                           ((start_19) pos_70))
                                                (begin
                                                  #t
-                                                 (if (exact-nonnegative-integer? start_19)
-                                                   (void)
-                                                   (let-values () (check-naturals start_19)))
+                                                 (check-naturals start_19)
                                                  ((letrec-values (((for-loop_21)
                                                                    (lambda (result_27 idx_9 pos_71)
                                                                      (if (if (unsafe-fx< idx_9 stop*_10) #t #f)
@@ -3745,12 +3725,8 @@
                                              ((inc_4) 1)
                                              ((start_44) pos_108))
                                   (begin
-                                    (if (if (real? start_43) (if (real? end_38) (real? inc_4) #f) #f)
-                                      (void)
-                                      (let-values () (check-range$1 start_43 end_38 inc_4)))
-                                    (if (exact-nonnegative-integer? start_44)
-                                      (void)
-                                      (let-values () (check-naturals start_44)))
+                                    (check-range$1 start_43 end_38 inc_4)
+                                    (check-naturals start_44)
                                     ((letrec-values (((for-loop_23)
                                                       (lambda (result_33 pos_109 pos_110)
                                                         (if (if (< pos_109 end_38) #t #f)
@@ -3861,12 +3837,8 @@
                                              ((inc_5) 1)
                                              ((start_47) pos_111))
                                   (begin
-                                    (if (if (real? start_46) (if (real? end_40) (real? inc_5) #f) #f)
-                                      (void)
-                                      (let-values () (check-range$1 start_46 end_40 inc_5)))
-                                    (if (exact-nonnegative-integer? start_47)
-                                      (void)
-                                      (let-values () (check-naturals start_47)))
+                                    (check-range$1 start_46 end_40 inc_5)
+                                    (check-naturals start_47)
                                     ((letrec-values (((for-loop_25)
                                                       (lambda (result_39 pos_112 pos_113)
                                                         (if (if (< pos_112 end_40) #t #f)
@@ -4029,7 +4001,7 @@
                                              (if (list? cats_0)
                                                (let-values (((lst_18) cats_0))
                                                  (begin
-                                                   (if (list? lst_18) (void) (let-values () (check-list lst_18)))
+                                                   (check-list lst_18)
                                                    ((letrec-values (((for-loop_26)
                                                                      (lambda (result_42 lst_19)
                                                                        (if (pair? lst_19)
@@ -4328,7 +4300,7 @@
                 (let-values ()
                   (let-values ()
                     (make-struct-type
-                     (check-reflection-name 'struct 'regexp)
+                     'regexp
                      #f
                      10
                      0
@@ -4502,9 +4474,7 @@
                      (cons (+ ms-pos_0 delta_0) (+ me-pos_0 delta_0))
                      (let-values (((vec_3 len_16)
                                    (let-values (((vec_4) state_42))
-                                     (begin
-                                       (if (vector? vec_4) (void) (let-values () (check-vector vec_4)))
-                                       (values vec_4 (unsafe-vector-length vec_4))))))
+                                     (begin (check-vector vec_4) (values vec_4 (unsafe-vector-length vec_4))))))
                        (begin
                          #f
                          ((letrec-values (((for-loop_27)
@@ -4543,9 +4513,7 @@
                  (if state_43
                    (let-values (((vec_5 len_17)
                                  (let-values (((vec_6) state_43))
-                                   (begin
-                                     (if (vector? vec_6) (void) (let-values () (check-vector vec_6)))
-                                     (values vec_6 (unsafe-vector-length vec_6))))))
+                                   (begin (check-vector vec_6) (values vec_6 (unsafe-vector-length vec_6))))))
                      (begin
                        #f
                        ((letrec-values (((for-loop_28)
@@ -4590,9 +4558,7 @@
                      (if state_44
                        (let-values (((vec_7 len_18)
                                      (let-values (((vec_8) state_44))
-                                       (begin
-                                         (if (vector? vec_8) (void) (let-values () (check-vector vec_8)))
-                                         (values vec_8 (unsafe-vector-length vec_8))))))
+                                       (begin (check-vector vec_8) (values vec_8 (unsafe-vector-length vec_8))))))
                          (begin
                            #f
                            ((letrec-values (((for-loop_29)
@@ -4632,9 +4598,7 @@
                  (if state_2
                    (let-values (((vec_9 len_19)
                                  (let-values (((vec_10) state_2))
-                                   (begin
-                                     (if (vector? vec_10) (void) (let-values () (check-vector vec_10)))
-                                     (values vec_10 (unsafe-vector-length vec_10))))))
+                                   (begin (check-vector vec_10) (values vec_10 (unsafe-vector-length vec_10))))))
                      (begin
                        #f
                        ((letrec-values (((for-loop_30)
@@ -4768,9 +4732,7 @@
                                ((end_48) (- end-pos_1 (sub1 (bytes-length must-string_1))))
                                ((inc_6) 1))
                     (begin
-                      (if (if (real? start_55) (if (real? end_48) (real? inc_6) #f) #f)
-                        (void)
-                        (let-values () (check-range$1 start_55 end_48 inc_6)))
+                      (check-range$1 start_55 end_48 inc_6)
                       ((letrec-values (((for-loop_32)
                                         (lambda (result_52 pos_127)
                                           (if (< pos_127 end_48)
@@ -4885,20 +4847,18 @@
           (let-values ()
             (let-values (((start_56) pos_12) ((end_49) (- end-pos_1 (sub1 (length must-string_1)))) ((inc_7) 1))
               (begin
-                (if (if (real? start_56) (if (real? end_49) (real? inc_7) #f) #f)
-                  (void)
-                  (let-values () (check-range$1 start_56 end_49 inc_7)))
+                (check-range$1 start_56 end_49 inc_7)
                 ((letrec-values (((for-loop_34)
                                   (lambda (result_9 pos_128)
                                     (if (< pos_128 end_49)
-                                      (let-values (((i_14) pos_128))
+                                      (let-values (((i_4) pos_128))
                                         (let-values (((result_56)
                                                       (let-values ()
                                                         (let-values (((result_57)
                                                                       (let-values ()
                                                                         (let-values ()
                                                                           ((letrec-values (((loop_21)
-                                                                                            (lambda (i_15 l_16)
+                                                                                            (lambda (i_14 l_16)
                                                                                               (if (null? l_16)
                                                                                                 (let-values () #t)
                                                                                                 (let-values ()
@@ -4909,16 +4869,16 @@
                                                                                                          e_0
                                                                                                          (bytes-ref
                                                                                                           in_4
-                                                                                                          i_15))
+                                                                                                          i_14))
                                                                                                       (loop_21
-                                                                                                       (add1 i_15)
+                                                                                                       (add1 i_14)
                                                                                                        (cdr l_16))
                                                                                                       #f)))))))
                                                                              loop_21)
-                                                                           i_14
+                                                                           i_4
                                                                            must-string_1)))))
                                                           (values result_57)))))
-                                          (if (if (not ((lambda x_61 result_56) i_14)) (not #f) #f)
+                                          (if (if (not ((lambda x_61 result_56) i_4)) (not #f) #f)
                                             (for-loop_34 result_56 (+ pos_128 inc_7))
                                             result_56)))
                                       result_9))))
@@ -4992,9 +4952,7 @@
                (if state_49
                  (let-values (((vec_11 len_20)
                                (let-values (((vec_12) state_49))
-                                 (begin
-                                   (if (vector? vec_12) (void) (let-values () (check-vector vec_12)))
-                                   (values vec_12 (unsafe-vector-length vec_12))))))
+                                 (begin (check-vector vec_12) (values vec_12 (unsafe-vector-length vec_12))))))
                    (begin
                      #f
                      ((letrec-values (((for-loop_35)
@@ -5040,9 +4998,7 @@
            (if state_50
              (let-values (((vec_13 len_21)
                            (let-values (((vec_14) state_50))
-                             (begin
-                               (if (vector? vec_14) (void) (let-values () (check-vector vec_14)))
-                               (values vec_14 (unsafe-vector-length vec_14))))))
+                             (begin (check-vector vec_14) (values vec_14 (unsafe-vector-length vec_14))))))
                (begin
                  #f
                  ((letrec-values (((for-loop_36)
@@ -5084,9 +5040,7 @@
              (if state_51
                (let-values (((vec_15 len_22)
                              (let-values (((vec_16) state_51))
-                               (begin
-                                 (if (vector? vec_16) (void) (let-values () (check-vector vec_16)))
-                                 (values vec_16 (unsafe-vector-length vec_16))))))
+                               (begin (check-vector vec_16) (values vec_16 (unsafe-vector-length vec_16))))))
                  (begin
                    #f
                    ((letrec-values (((for-loop_37)
@@ -5134,14 +5088,14 @@
            search-offset9_0
            who17_0
            orig-rx18_0
-           in19_0
+           orig-in19_0
            orig-start-offset20_0
            orig-end-offset21_0
            out22_0
            prefix23_0)
     (let-values (((who_4) who17_0))
       (let-values (((orig-rx_0) orig-rx18_0))
-        (let-values (((in_12) in19_0))
+        (let-values (((orig-in_0) orig-in19_0))
           (let-values (((orig-start-offset_0) orig-start-offset20_0))
             (let-values (((orig-end-offset_0) orig-end-offset21_0))
               (let-values (((out_3) out22_0))
@@ -5167,562 +5121,569 @@
                                                            who_4
                                                            "(or/c regexp? byte-regexp? string? bytes?)"
                                                            orig-rx_0)))))))
-                                      (let-values ((()
-                                                    (begin
-                                                      (if (let-values (((or-part_69)
-                                                                        (if (bytes? in_12) (not peek?_1) #f)))
-                                                            (if or-part_69
-                                                              or-part_69
-                                                              (let-values (((or-part_70)
-                                                                            (if (string? in_12) (not peek?_1) #f)))
-                                                                (if or-part_70
-                                                                  or-part_70
-                                                                  (if in-port-ok?_0 (input-port? in_12) #f)))))
-                                                        (void)
-                                                        (let-values ()
-                                                          (raise-argument-error
-                                                           who_4
-                                                           (if peek?_1
-                                                             (let-values () "input-port?")
-                                                             (if in-port-ok?_0
-                                                               (let-values () "(or/c bytes? string? input-port?)")
-                                                               (let-values () "(or/c bytes? string?)")))
-                                                           in_12)))
-                                                      (values))))
-                                        (let-values (((start-offset_4)
-                                                      (if orig-start-offset_0
-                                                        (let-values ()
-                                                          (begin
-                                                            (if (exact-nonnegative-integer? orig-start-offset_0)
-                                                              (void)
-                                                              (let-values ()
-                                                                (raise-argument-error
-                                                                 who_4
-                                                                 "exact-nonnegative-integer?"
-                                                                 orig-start-offset_0)))
-                                                            (check-range
+                                      (let-values (((in_12) (if (path? orig-in_0) (path->bytes orig-in_0) orig-in_0)))
+                                        (let-values ((()
+                                                      (begin
+                                                        (if (let-values (((or-part_69)
+                                                                          (if (bytes? in_12) (not peek?_1) #f)))
+                                                              (if or-part_69
+                                                                or-part_69
+                                                                (let-values (((or-part_70)
+                                                                              (if (string? in_12) (not peek?_1) #f)))
+                                                                  (if or-part_70
+                                                                    or-part_70
+                                                                    (if in-port-ok?_0 (input-port? in_12) #f)))))
+                                                          (void)
+                                                          (let-values ()
+                                                            (raise-argument-error
                                                              who_4
-                                                             "starting index"
-                                                             in_12
-                                                             orig-start-offset_0
-                                                             0)
-                                                            orig-start-offset_0))
-                                                        (let-values () 0))))
-                                          (let-values (((end-offset_3)
-                                                        (if orig-end-offset_0
+                                                             (if peek?_1
+                                                               (let-values () "input-port?")
+                                                               (if in-port-ok?_0
+                                                                 (let-values ()
+                                                                   "(or/c bytes? string? input-port? path?)")
+                                                                 (let-values () "(or/c bytes? string?)")))
+                                                             orig-in_0)))
+                                                        (values))))
+                                          (let-values (((start-offset_4)
+                                                        (if orig-start-offset_0
                                                           (let-values ()
                                                             (begin
-                                                              (if (exact-nonnegative-integer? orig-end-offset_0)
+                                                              (if (exact-nonnegative-integer? orig-start-offset_0)
                                                                 (void)
                                                                 (let-values ()
                                                                   (raise-argument-error
                                                                    who_4
-                                                                   "(or/c #f exact-nonnegative-integer?)"
-                                                                   orig-end-offset_0)))
+                                                                   "exact-nonnegative-integer?"
+                                                                   orig-start-offset_0)))
                                                               (check-range
                                                                who_4
-                                                               "ending index"
+                                                               "starting index"
                                                                in_12
-                                                               orig-end-offset_0
-                                                               start-offset_4)
-                                                              orig-end-offset_0))
-                                                          (if (bytes? in_12)
-                                                            (let-values () (bytes-length in_12))
-                                                            (if (string? in_12)
-                                                              (let-values () (string-length in_12))
-                                                              (let-values () 'eof))))))
-                                            (let-values ((()
-                                                          (begin
-                                                            (if (let-values (((or-part_71) (not out_3)))
-                                                                  (if or-part_71 or-part_71 (output-port? out_3)))
-                                                              (void)
-                                                              (let-values ()
-                                                                (raise-argument-error
+                                                               orig-start-offset_0
+                                                               0)
+                                                              orig-start-offset_0))
+                                                          (let-values () 0))))
+                                            (let-values (((end-offset_3)
+                                                          (if orig-end-offset_0
+                                                            (let-values ()
+                                                              (begin
+                                                                (if (exact-nonnegative-integer? orig-end-offset_0)
+                                                                  (void)
+                                                                  (let-values ()
+                                                                    (raise-argument-error
+                                                                     who_4
+                                                                     "(or/c #f exact-nonnegative-integer?)"
+                                                                     orig-end-offset_0)))
+                                                                (check-range
                                                                  who_4
-                                                                 "(or/c #f output-port?)"
-                                                                 out_3)))
-                                                            (values))))
+                                                                 "ending index"
+                                                                 in_12
+                                                                 orig-end-offset_0
+                                                                 start-offset_4)
+                                                                orig-end-offset_0))
+                                                            (if (bytes? in_12)
+                                                              (let-values () (bytes-length in_12))
+                                                              (if (string? in_12)
+                                                                (let-values () (string-length in_12))
+                                                                (let-values () 'eof))))))
                                               (let-values ((()
                                                             (begin
-                                                              (if (bytes? prefix_1)
+                                                              (if (let-values (((or-part_71) (not out_3)))
+                                                                    (if or-part_71 or-part_71 (output-port? out_3)))
                                                                 (void)
                                                                 (let-values ()
-                                                                  (raise-argument-error who_4 "bytes?" prefix_1)))
+                                                                  (raise-argument-error
+                                                                   who_4
+                                                                   "(or/c #f output-port?)"
+                                                                   out_3)))
                                                               (values))))
                                                 (let-values ((()
                                                               (begin
-                                                                (if end-bytes?_0
+                                                                (if (bytes? prefix_1)
+                                                                  (void)
                                                                   (let-values ()
-                                                                    (if (exact-nonnegative-integer? end-bytes-count_1)
-                                                                      (void)
-                                                                      (let-values ()
-                                                                        (raise-argument-error
-                                                                         who_4
-                                                                         "exact-nonnegative-integer?"
-                                                                         end-bytes-count_1))))
-                                                                  (void))
+                                                                    (raise-argument-error who_4 "bytes?" prefix_1)))
                                                                 (values))))
-                                                  (let-values (((state_52)
-                                                                (if (let-values (((or-part_72) (not (eq? mode_2 '?))))
-                                                                      (if or-part_72
-                                                                        or-part_72
-                                                                        (rx:regexp-references? rx_33)))
-                                                                  (let-values (((n_40) (rx:regexp-num-groups rx_33)))
-                                                                    (if (positive? n_40) (make-vector n_40 #f) #f))
-                                                                  #f)))
-                                                    (if (if (bytes? in_12) (if (not out_3) (equal? #"" prefix_1) #f) #f)
-                                                      (let-values ()
-                                                        (let-values (((start-pos_5) start-offset_4))
-                                                          (let-values (((search-pos_0) search-offset_0))
-                                                            (let-values (((end-pos_6) end-offset_3))
-                                                              (let-values (((ms-pos_9 me-pos_10)
-                                                                            (search-match
-                                                                             rx_33
-                                                                             in_12
-                                                                             search-pos_0
-                                                                             start-pos_5
-                                                                             end-pos_6
-                                                                             state_52)))
+                                                  (let-values ((()
                                                                 (begin
-                                                                  (if out_3
+                                                                  (if end-bytes?_0
                                                                     (let-values ()
-                                                                      (write-bytes
-                                                                       in_12
-                                                                       out_3
-                                                                       0
-                                                                       (let-values (((or-part_73) ms-pos_9))
-                                                                         (if or-part_73 or-part_73 end-pos_6))))
+                                                                      (if (exact-nonnegative-integer? end-bytes-count_1)
+                                                                        (void)
+                                                                        (let-values ()
+                                                                          (raise-argument-error
+                                                                           who_4
+                                                                           "exact-nonnegative-integer?"
+                                                                           end-bytes-count_1))))
                                                                     (void))
-                                                                  (let-values (((tmp_32) (if ms-pos_9 mode_2 #f)))
-                                                                    (if (equal? tmp_32 #f)
-                                                                      (let-values ()
-                                                                        (add-end-bytes #f end-bytes-count_1 #f #f))
-                                                                      (if (equal? tmp_32 '?)
-                                                                        (let-values () #t)
-                                                                        (if (equal? tmp_32 'positions)
-                                                                          (let-values ()
-                                                                            (let-values (((positions_0)
-                                                                                          (let-values (((ms-pos27_0)
-                                                                                                        ms-pos_9)
-                                                                                                       ((me-pos28_0)
-                                                                                                        me-pos_10)
-                                                                                                       ((state29_0)
-                                                                                                        state_52))
-                                                                                            (byte-positions->byte-positions6.1
-                                                                                             #f
-                                                                                             #f
-                                                                                             ms-pos27_0
-                                                                                             me-pos28_0
-                                                                                             state29_0))))
-                                                                              (add-end-bytes
-                                                                               positions_0
-                                                                               end-bytes-count_1
-                                                                               in_12
-                                                                               me-pos_10)))
-                                                                          (if (equal? tmp_32 'strings)
-                                                                            (let-values ()
-                                                                              (let-values (((bytess_0)
-                                                                                            (let-values (((in30_0)
-                                                                                                          in_12)
-                                                                                                         ((ms-pos31_0)
-                                                                                                          ms-pos_9)
-                                                                                                         ((me-pos32_0)
-                                                                                                          me-pos_10)
-                                                                                                         ((state33_0)
-                                                                                                          state_52))
-                                                                                              (byte-positions->bytess15.1
-                                                                                               #f
-                                                                                               #f
-                                                                                               in30_0
-                                                                                               ms-pos31_0
-                                                                                               me-pos32_0
-                                                                                               state33_0))))
-                                                                                (add-end-bytes
-                                                                                 bytess_0
-                                                                                 end-bytes-count_1
-                                                                                 in_12
-                                                                                 me-pos_10)))
-                                                                            (let-values () (void)))))))))))))
-                                                      (if (if (string? in_12)
-                                                            (if (not out_3)
-                                                              (if (equal? #"" prefix_1)
-                                                                (< (- end-offset_3 start-offset_4) FAST-STRING-LEN)
-                                                                #f)
-                                                              #f)
+                                                                  (values))))
+                                                    (let-values (((state_52)
+                                                                  (if (let-values (((or-part_72) (not (eq? mode_2 '?))))
+                                                                        (if or-part_72
+                                                                          or-part_72
+                                                                          (rx:regexp-references? rx_33)))
+                                                                    (let-values (((n_40) (rx:regexp-num-groups rx_33)))
+                                                                      (if (positive? n_40) (make-vector n_40 #f) #f))
+                                                                    #f)))
+                                                      (if (if (bytes? in_12)
+                                                            (if (not out_3) (equal? #"" prefix_1) #f)
                                                             #f)
                                                         (let-values ()
-                                                          (let-values (((bstr-in_2)
-                                                                        (string->bytes/utf-8
-                                                                         in_12
-                                                                         0
-                                                                         start-offset_4
-                                                                         end-offset_3)))
-                                                            (let-values (((search-pos_1)
-                                                                          (if (= start-offset_4 search-offset_0)
-                                                                            0
-                                                                            (string-utf-8-length
-                                                                             in_12
-                                                                             start-offset_4
-                                                                             search-offset_0))))
-                                                              (let-values (((end-pos_7) (bytes-length bstr-in_2)))
-                                                                (let-values (((ms-pos_10 me-pos_11)
+                                                          (let-values (((start-pos_5) start-offset_4))
+                                                            (let-values (((search-pos_0) search-offset_0))
+                                                              (let-values (((end-pos_6) end-offset_3))
+                                                                (let-values (((ms-pos_9 me-pos_10)
                                                                               (search-match
                                                                                rx_33
-                                                                               bstr-in_2
-                                                                               search-pos_1
-                                                                               0
-                                                                               end-pos_7
+                                                                               in_12
+                                                                               search-pos_0
+                                                                               start-pos_5
+                                                                               end-pos_6
                                                                                state_52)))
                                                                   (begin
                                                                     (if out_3
                                                                       (let-values ()
-                                                                        (begin
-                                                                          (write-string in_12 out_3 0 start-offset_4)
-                                                                          (write-bytes
-                                                                           bstr-in_2
-                                                                           out_3
-                                                                           0
-                                                                           (let-values (((or-part_74) ms-pos_10))
-                                                                             (if or-part_74 or-part_74 end-pos_7)))))
+                                                                        (write-bytes
+                                                                         in_12
+                                                                         out_3
+                                                                         0
+                                                                         (let-values (((or-part_73) ms-pos_9))
+                                                                           (if or-part_73 or-part_73 end-pos_6))))
                                                                       (void))
-                                                                    (let-values (((tmp_33) (if ms-pos_10 mode_2 #f)))
-                                                                      (if (equal? tmp_33 #f)
+                                                                    (let-values (((tmp_32) (if ms-pos_9 mode_2 #f)))
+                                                                      (if (equal? tmp_32 #f)
                                                                         (let-values ()
                                                                           (add-end-bytes #f end-bytes-count_1 #f #f))
-                                                                        (if (equal? tmp_33 '?)
+                                                                        (if (equal? tmp_32 '?)
                                                                           (let-values () #t)
-                                                                          (if (equal? tmp_33 'positions)
+                                                                          (if (equal? tmp_32 'positions)
                                                                             (let-values ()
-                                                                              (let-values (((positions_1)
-                                                                                            (if (rx:regexp-bytes? rx_33)
-                                                                                              (let-values ()
-                                                                                                (let-values (((delta_3)
-                                                                                                              (string-utf-8-length
-                                                                                                               in_12
-                                                                                                               0
-                                                                                                               start-offset_4)))
-                                                                                                  (let-values (((delta37_0)
-                                                                                                                delta_3))
-                                                                                                    (byte-positions->byte-positions6.1
-                                                                                                     delta37_0
-                                                                                                     #t
-                                                                                                     ms-pos_10
-                                                                                                     me-pos_11
-                                                                                                     state_52))))
-                                                                                              (let-values ()
-                                                                                                (let-values (((start-offset42_0)
-                                                                                                              start-offset_4))
-                                                                                                  (byte-positions->string-positions26.1
-                                                                                                   start-offset42_0
-                                                                                                   #f
-                                                                                                   #f
-                                                                                                   bstr-in_2
-                                                                                                   ms-pos_10
-                                                                                                   me-pos_11
-                                                                                                   state_52))))))
+                                                                              (let-values (((positions_0)
+                                                                                            (let-values (((ms-pos27_0)
+                                                                                                          ms-pos_9)
+                                                                                                         ((me-pos28_0)
+                                                                                                          me-pos_10)
+                                                                                                         ((state29_0)
+                                                                                                          state_52))
+                                                                                              (byte-positions->byte-positions6.1
+                                                                                               #f
+                                                                                               #f
+                                                                                               ms-pos27_0
+                                                                                               me-pos28_0
+                                                                                               state29_0))))
                                                                                 (add-end-bytes
-                                                                                 positions_1
+                                                                                 positions_0
                                                                                  end-bytes-count_1
-                                                                                 bstr-in_2
-                                                                                 me-pos_11)))
-                                                                            (if (equal? tmp_33 'strings)
+                                                                                 in_12
+                                                                                 me-pos_10)))
+                                                                            (if (equal? tmp_32 'strings)
                                                                               (let-values ()
-                                                                                (let-values (((bytes/strings_0)
+                                                                                (let-values (((bytess_0)
+                                                                                              (let-values (((in30_0)
+                                                                                                            in_12)
+                                                                                                           ((ms-pos31_0)
+                                                                                                            ms-pos_9)
+                                                                                                           ((me-pos32_0)
+                                                                                                            me-pos_10)
+                                                                                                           ((state33_0)
+                                                                                                            state_52))
+                                                                                                (byte-positions->bytess15.1
+                                                                                                 #f
+                                                                                                 #f
+                                                                                                 in30_0
+                                                                                                 ms-pos31_0
+                                                                                                 me-pos32_0
+                                                                                                 state33_0))))
+                                                                                  (add-end-bytes
+                                                                                   bytess_0
+                                                                                   end-bytes-count_1
+                                                                                   in_12
+                                                                                   me-pos_10)))
+                                                                              (let-values () (void)))))))))))))
+                                                        (if (if (string? in_12)
+                                                              (if (not out_3)
+                                                                (if (equal? #"" prefix_1)
+                                                                  (< (- end-offset_3 start-offset_4) FAST-STRING-LEN)
+                                                                  #f)
+                                                                #f)
+                                                              #f)
+                                                          (let-values ()
+                                                            (let-values (((bstr-in_2)
+                                                                          (string->bytes/utf-8
+                                                                           in_12
+                                                                           0
+                                                                           start-offset_4
+                                                                           end-offset_3)))
+                                                              (let-values (((search-pos_1)
+                                                                            (if (= start-offset_4 search-offset_0)
+                                                                              0
+                                                                              (string-utf-8-length
+                                                                               in_12
+                                                                               start-offset_4
+                                                                               search-offset_0))))
+                                                                (let-values (((end-pos_7) (bytes-length bstr-in_2)))
+                                                                  (let-values (((ms-pos_10 me-pos_11)
+                                                                                (search-match
+                                                                                 rx_33
+                                                                                 bstr-in_2
+                                                                                 search-pos_1
+                                                                                 0
+                                                                                 end-pos_7
+                                                                                 state_52)))
+                                                                    (begin
+                                                                      (if out_3
+                                                                        (let-values ()
+                                                                          (begin
+                                                                            (write-string in_12 out_3 0 start-offset_4)
+                                                                            (write-bytes
+                                                                             bstr-in_2
+                                                                             out_3
+                                                                             0
+                                                                             (let-values (((or-part_74) ms-pos_10))
+                                                                               (if or-part_74 or-part_74 end-pos_7)))))
+                                                                        (void))
+                                                                      (let-values (((tmp_33) (if ms-pos_10 mode_2 #f)))
+                                                                        (if (equal? tmp_33 #f)
+                                                                          (let-values ()
+                                                                            (add-end-bytes #f end-bytes-count_1 #f #f))
+                                                                          (if (equal? tmp_33 '?)
+                                                                            (let-values () #t)
+                                                                            (if (equal? tmp_33 'positions)
+                                                                              (let-values ()
+                                                                                (let-values (((positions_1)
                                                                                               (if (rx:regexp-bytes?
                                                                                                    rx_33)
                                                                                                 (let-values ()
-                                                                                                  (let-values (((bstr-in43_0)
-                                                                                                                bstr-in_2)
-                                                                                                               ((ms-pos44_0)
-                                                                                                                ms-pos_10)
-                                                                                                               ((me-pos45_0)
-                                                                                                                me-pos_11)
-                                                                                                               ((state46_0)
-                                                                                                                state_52))
-                                                                                                    (byte-positions->bytess15.1
-                                                                                                     #f
-                                                                                                     #f
-                                                                                                     bstr-in43_0
-                                                                                                     ms-pos44_0
-                                                                                                     me-pos45_0
-                                                                                                     state46_0)))
+                                                                                                  (let-values (((delta_3)
+                                                                                                                (string-utf-8-length
+                                                                                                                 in_12
+                                                                                                                 0
+                                                                                                                 start-offset_4)))
+                                                                                                    (let-values (((delta37_0)
+                                                                                                                  delta_3))
+                                                                                                      (byte-positions->byte-positions6.1
+                                                                                                       delta37_0
+                                                                                                       #t
+                                                                                                       ms-pos_10
+                                                                                                       me-pos_11
+                                                                                                       state_52))))
                                                                                                 (let-values ()
-                                                                                                  (let-values (((bstr-in47_0)
-                                                                                                                bstr-in_2)
-                                                                                                               ((ms-pos48_0)
-                                                                                                                ms-pos_10)
-                                                                                                               ((me-pos49_0)
-                                                                                                                me-pos_11)
-                                                                                                               ((state50_0)
-                                                                                                                state_52))
-                                                                                                    (byte-positions->strings35.1
+                                                                                                  (let-values (((start-offset42_0)
+                                                                                                                start-offset_4))
+                                                                                                    (byte-positions->string-positions26.1
+                                                                                                     start-offset42_0
                                                                                                      #f
                                                                                                      #f
-                                                                                                     bstr-in47_0
-                                                                                                     ms-pos48_0
-                                                                                                     me-pos49_0
-                                                                                                     state50_0))))))
+                                                                                                     bstr-in_2
+                                                                                                     ms-pos_10
+                                                                                                     me-pos_11
+                                                                                                     state_52))))))
                                                                                   (add-end-bytes
-                                                                                   bytes/strings_0
+                                                                                   positions_1
                                                                                    end-bytes-count_1
                                                                                    bstr-in_2
                                                                                    me-pos_11)))
-                                                                              (let-values () (void)))))))))))))
-                                                        (let-values ()
-                                                          (let-values (((prefix-len_1) (bytes-length prefix_1)))
-                                                            (let-values (((start-pos_6) prefix-len_1))
-                                                              (let-values (((search-pos_2)
-                                                                            (if (= start-offset_4 search-offset_0)
-                                                                              start-pos_6
-                                                                              (+
-                                                                               start-pos_6
-                                                                               (if (string? in_12)
-                                                                                 (let-values ()
-                                                                                   (string-utf-8-length
-                                                                                    in_12
-                                                                                    start-offset_4
-                                                                                    search-offset_0))
-                                                                                 (let-values ()
-                                                                                   (-
-                                                                                    search-offset_0
-                                                                                    start-offset_4)))))))
-                                                                (let-values (((port-in_0)
-                                                                              (if (bytes? in_12)
+                                                                              (if (equal? tmp_33 'strings)
                                                                                 (let-values ()
-                                                                                  (open-input-bytes/no-copy
-                                                                                   in_12
-                                                                                   start-offset_4
-                                                                                   end-offset_3))
-                                                                                (if (string? in_12)
+                                                                                  (let-values (((bytes/strings_0)
+                                                                                                (if (rx:regexp-bytes?
+                                                                                                     rx_33)
+                                                                                                  (let-values ()
+                                                                                                    (let-values (((bstr-in43_0)
+                                                                                                                  bstr-in_2)
+                                                                                                                 ((ms-pos44_0)
+                                                                                                                  ms-pos_10)
+                                                                                                                 ((me-pos45_0)
+                                                                                                                  me-pos_11)
+                                                                                                                 ((state46_0)
+                                                                                                                  state_52))
+                                                                                                      (byte-positions->bytess15.1
+                                                                                                       #f
+                                                                                                       #f
+                                                                                                       bstr-in43_0
+                                                                                                       ms-pos44_0
+                                                                                                       me-pos45_0
+                                                                                                       state46_0)))
+                                                                                                  (let-values ()
+                                                                                                    (let-values (((bstr-in47_0)
+                                                                                                                  bstr-in_2)
+                                                                                                                 ((ms-pos48_0)
+                                                                                                                  ms-pos_10)
+                                                                                                                 ((me-pos49_0)
+                                                                                                                  me-pos_11)
+                                                                                                                 ((state50_0)
+                                                                                                                  state_52))
+                                                                                                      (byte-positions->strings35.1
+                                                                                                       #f
+                                                                                                       #f
+                                                                                                       bstr-in47_0
+                                                                                                       ms-pos48_0
+                                                                                                       me-pos49_0
+                                                                                                       state50_0))))))
+                                                                                    (add-end-bytes
+                                                                                     bytes/strings_0
+                                                                                     end-bytes-count_1
+                                                                                     bstr-in_2
+                                                                                     me-pos_11)))
+                                                                                (let-values () (void)))))))))))))
+                                                          (let-values ()
+                                                            (let-values (((prefix-len_1) (bytes-length prefix_1)))
+                                                              (let-values (((start-pos_6) prefix-len_1))
+                                                                (let-values (((search-pos_2)
+                                                                              (if (= start-offset_4 search-offset_0)
+                                                                                start-pos_6
+                                                                                (+
+                                                                                 start-pos_6
+                                                                                 (if (string? in_12)
+                                                                                   (let-values ()
+                                                                                     (string-utf-8-length
+                                                                                      in_12
+                                                                                      start-offset_4
+                                                                                      search-offset_0))
+                                                                                   (let-values ()
+                                                                                     (-
+                                                                                      search-offset_0
+                                                                                      start-offset_4)))))))
+                                                                  (let-values (((port-in_0)
+                                                                                (if (bytes? in_12)
                                                                                   (let-values ()
-                                                                                    (open-input-string/lazy
+                                                                                    (open-input-bytes/no-copy
                                                                                      in_12
                                                                                      start-offset_4
                                                                                      end-offset_3))
-                                                                                  (let-values () in_12)))))
-                                                                  (let-values ((()
-                                                                                (begin
-                                                                                  (if (if (not peek?_1)
-                                                                                        (positive? start-offset_4)
-                                                                                        #f)
+                                                                                  (if (string? in_12)
                                                                                     (let-values ()
-                                                                                      (if (bytes? in_12)
-                                                                                        (let-values ()
-                                                                                          (if out_3
-                                                                                            (let-values ()
-                                                                                              (write-bytes
-                                                                                               in_12
-                                                                                               out_3
-                                                                                               0
-                                                                                               start-offset_4))
-                                                                                            (void)))
-                                                                                        (if (string? in_12)
+                                                                                      (open-input-string/lazy
+                                                                                       in_12
+                                                                                       start-offset_4
+                                                                                       end-offset_3))
+                                                                                    (let-values () in_12)))))
+                                                                    (let-values ((()
+                                                                                  (begin
+                                                                                    (if (if (not peek?_1)
+                                                                                          (positive? start-offset_4)
+                                                                                          #f)
+                                                                                      (let-values ()
+                                                                                        (if (bytes? in_12)
                                                                                           (let-values ()
                                                                                             (if out_3
                                                                                               (let-values ()
-                                                                                                (write-string
+                                                                                                (write-bytes
                                                                                                  in_12
                                                                                                  out_3
                                                                                                  0
                                                                                                  start-offset_4))
                                                                                               (void)))
-                                                                                          (if (input-port? in_12)
+                                                                                          (if (string? in_12)
                                                                                             (let-values ()
-                                                                                              (copy-port-bytes
-                                                                                               port-in_0
-                                                                                               out_3
-                                                                                               start-offset_4))
-                                                                                            (void)))))
-                                                                                    (void))
-                                                                                  (values))))
-                                                                    (let-values (((lb-in_0)
-                                                                                  (make-lazy-bytes
-                                                                                   port-in_0
-                                                                                   (if peek?_1 start-offset_4 0)
-                                                                                   prefix_1
-                                                                                   peek?_1
-                                                                                   immediate-only?_1
-                                                                                   progress-evt_1
-                                                                                   out_3
-                                                                                   (rx:regexp-max-lookbehind rx_33))))
-                                                                      (let-values (((end-pos_8)
-                                                                                    (if (eq? 'eof end-offset_3)
-                                                                                      'eof
-                                                                                      (+
-                                                                                       start-pos_6
-                                                                                       (if (string? in_12)
-                                                                                         (let-values ()
-                                                                                           (string-utf-8-length
-                                                                                            in_12
-                                                                                            start-offset_4
-                                                                                            end-offset_3))
-                                                                                         (let-values ()
-                                                                                           (-
-                                                                                            end-offset_3
-                                                                                            start-offset_4)))))))
-                                                                        (let-values (((ms-pos_11 me-pos_12)
-                                                                                      (search-match
-                                                                                       rx_33
-                                                                                       lb-in_0
-                                                                                       search-pos_2
-                                                                                       0
-                                                                                       end-pos_8
-                                                                                       state_52)))
-                                                                          (let-values (((write/consume-skipped_0)
-                                                                                        (lambda ()
-                                                                                          (if (not peek?_1)
-                                                                                            (let-values ()
-                                                                                              (if ms-pos_11
+                                                                                              (if out_3
                                                                                                 (let-values ()
-                                                                                                  (if (let-values (((or-part_75)
-                                                                                                                    out_3))
-                                                                                                        (if or-part_75
-                                                                                                          or-part_75
-                                                                                                          (input-port?
-                                                                                                           in_12)))
-                                                                                                    (let-values ()
-                                                                                                      (begin
-                                                                                                        (lazy-bytes-advance!
-                                                                                                         lb-in_0
-                                                                                                         ms-pos_11
-                                                                                                         #t)
-                                                                                                        (copy-port-bytes
-                                                                                                         port-in_0
-                                                                                                         #f
-                                                                                                         (-
-                                                                                                          me-pos_12
-                                                                                                          ms-pos_11))))
-                                                                                                    (void)))
-                                                                                                (if (eq? end-pos_8 'eof)
+                                                                                                  (write-string
+                                                                                                   in_12
+                                                                                                   out_3
+                                                                                                   0
+                                                                                                   start-offset_4))
+                                                                                                (void)))
+                                                                                            (if (input-port? in_12)
+                                                                                              (let-values ()
+                                                                                                (copy-port-bytes
+                                                                                                 port-in_0
+                                                                                                 out_3
+                                                                                                 start-offset_4))
+                                                                                              (void)))))
+                                                                                      (void))
+                                                                                    (values))))
+                                                                      (let-values (((lb-in_0)
+                                                                                    (make-lazy-bytes
+                                                                                     port-in_0
+                                                                                     (if peek?_1 start-offset_4 0)
+                                                                                     prefix_1
+                                                                                     peek?_1
+                                                                                     immediate-only?_1
+                                                                                     progress-evt_1
+                                                                                     out_3
+                                                                                     (rx:regexp-max-lookbehind rx_33))))
+                                                                        (let-values (((end-pos_8)
+                                                                                      (if (eq? 'eof end-offset_3)
+                                                                                        'eof
+                                                                                        (+
+                                                                                         start-pos_6
+                                                                                         (if (string? in_12)
+                                                                                           (let-values ()
+                                                                                             (string-utf-8-length
+                                                                                              in_12
+                                                                                              start-offset_4
+                                                                                              end-offset_3))
+                                                                                           (let-values ()
+                                                                                             (-
+                                                                                              end-offset_3
+                                                                                              start-offset_4)))))))
+                                                                          (let-values (((ms-pos_11 me-pos_12)
+                                                                                        (search-match
+                                                                                         rx_33
+                                                                                         lb-in_0
+                                                                                         search-pos_2
+                                                                                         0
+                                                                                         end-pos_8
+                                                                                         state_52)))
+                                                                            (let-values (((write/consume-skipped_0)
+                                                                                          (lambda ()
+                                                                                            (if (not peek?_1)
+                                                                                              (let-values ()
+                                                                                                (if ms-pos_11
                                                                                                   (let-values ()
-                                                                                                    (copy-port-bytes
-                                                                                                     port-in_0
-                                                                                                     out_3
-                                                                                                     #f))
-                                                                                                  (let-values ()
-                                                                                                    (if (let-values (((or-part_76)
+                                                                                                    (if (let-values (((or-part_75)
                                                                                                                       out_3))
-                                                                                                          (if or-part_76
-                                                                                                            or-part_76
+                                                                                                          (if or-part_75
+                                                                                                            or-part_75
                                                                                                             (input-port?
                                                                                                              in_12)))
                                                                                                       (let-values ()
-                                                                                                        (lazy-bytes-advance!
-                                                                                                         lb-in_0
-                                                                                                         end-pos_8
-                                                                                                         #t))
-                                                                                                      (void))))))
-                                                                                            (void)))))
-                                                                            (begin0
-                                                                              (let-values (((tmp_34)
-                                                                                            (if ms-pos_11
-                                                                                              (if (not
-                                                                                                   (lazy-bytes-failed?
-                                                                                                    lb-in_0))
-                                                                                                mode_2
-                                                                                                #f)
-                                                                                              #f)))
-                                                                                (if (equal? tmp_34 #f)
-                                                                                  (let-values ()
-                                                                                    (add-end-bytes
-                                                                                     #f
-                                                                                     end-bytes-count_1
-                                                                                     #f
-                                                                                     #f))
-                                                                                  (if (equal? tmp_34 '?)
-                                                                                    (let-values () #t)
-                                                                                    (if (equal? tmp_34 'positions)
-                                                                                      (let-values ()
-                                                                                        (let-values (((bstr_15)
-                                                                                                      (lazy-bytes-bstr
-                                                                                                       lb-in_0)))
-                                                                                          (let-values (((positions_2)
-                                                                                                        (if (let-values (((or-part_77)
-                                                                                                                          (not
-                                                                                                                           (string?
-                                                                                                                            in_12))))
-                                                                                                              (if or-part_77
-                                                                                                                or-part_77
-                                                                                                                (rx:regexp-bytes?
-                                                                                                                 rx_33)))
-                                                                                                          (let-values ()
-                                                                                                            (let-values (((delta_4)
-                                                                                                                          (-
-                                                                                                                           start-offset_4
-                                                                                                                           start-pos_6)))
-                                                                                                              (let-values (((delta54_0)
-                                                                                                                            delta_4))
-                                                                                                                (byte-positions->byte-positions6.1
-                                                                                                                 delta54_0
-                                                                                                                 #t
-                                                                                                                 ms-pos_11
-                                                                                                                 me-pos_12
-                                                                                                                 state_52))))
-                                                                                                          (let-values ()
-                                                                                                            (let-values (((start-pos59_0)
-                                                                                                                          start-pos_6)
-                                                                                                                         ((start-offset60_0)
-                                                                                                                          start-offset_4))
-                                                                                                              (byte-positions->string-positions26.1
-                                                                                                               start-offset60_0
-                                                                                                               start-pos59_0
-                                                                                                               #t
-                                                                                                               bstr_15
-                                                                                                               ms-pos_11
-                                                                                                               me-pos_12
-                                                                                                               state_52))))))
-                                                                                            (add-end-bytes
-                                                                                             positions_2
-                                                                                             end-bytes-count_1
-                                                                                             bstr_15
-                                                                                             me-pos_12))))
-                                                                                      (if (equal? tmp_34 'strings)
+                                                                                                        (begin
+                                                                                                          (lazy-bytes-advance!
+                                                                                                           lb-in_0
+                                                                                                           ms-pos_11
+                                                                                                           #t)
+                                                                                                          (copy-port-bytes
+                                                                                                           port-in_0
+                                                                                                           #f
+                                                                                                           (-
+                                                                                                            me-pos_12
+                                                                                                            ms-pos_11))))
+                                                                                                      (void)))
+                                                                                                  (if (eq?
+                                                                                                       end-pos_8
+                                                                                                       'eof)
+                                                                                                    (let-values ()
+                                                                                                      (copy-port-bytes
+                                                                                                       port-in_0
+                                                                                                       out_3
+                                                                                                       #f))
+                                                                                                    (let-values ()
+                                                                                                      (if (let-values (((or-part_76)
+                                                                                                                        out_3))
+                                                                                                            (if or-part_76
+                                                                                                              or-part_76
+                                                                                                              (input-port?
+                                                                                                               in_12)))
+                                                                                                        (let-values ()
+                                                                                                          (lazy-bytes-advance!
+                                                                                                           lb-in_0
+                                                                                                           end-pos_8
+                                                                                                           #t))
+                                                                                                        (void))))))
+                                                                                              (void)))))
+                                                                              (begin0
+                                                                                (let-values (((tmp_34)
+                                                                                              (if ms-pos_11
+                                                                                                (if (not
+                                                                                                     (lazy-bytes-failed?
+                                                                                                      lb-in_0))
+                                                                                                  mode_2
+                                                                                                  #f)
+                                                                                                #f)))
+                                                                                  (if (equal? tmp_34 #f)
+                                                                                    (let-values ()
+                                                                                      (add-end-bytes
+                                                                                       #f
+                                                                                       end-bytes-count_1
+                                                                                       #f
+                                                                                       #f))
+                                                                                    (if (equal? tmp_34 '?)
+                                                                                      (let-values () #t)
+                                                                                      (if (equal? tmp_34 'positions)
                                                                                         (let-values ()
-                                                                                          (let-values (((bstr_16)
+                                                                                          (let-values (((bstr_15)
                                                                                                         (lazy-bytes-bstr
                                                                                                          lb-in_0)))
-                                                                                            (let-values (((delta_5)
-                                                                                                          (lazy-bytes-discarded-count
+                                                                                            (let-values (((positions_2)
+                                                                                                          (if (let-values (((or-part_77)
+                                                                                                                            (not
+                                                                                                                             (string?
+                                                                                                                              in_12))))
+                                                                                                                (if or-part_77
+                                                                                                                  or-part_77
+                                                                                                                  (rx:regexp-bytes?
+                                                                                                                   rx_33)))
+                                                                                                            (let-values ()
+                                                                                                              (let-values (((delta_4)
+                                                                                                                            (-
+                                                                                                                             start-offset_4
+                                                                                                                             start-pos_6)))
+                                                                                                                (let-values (((delta54_0)
+                                                                                                                              delta_4))
+                                                                                                                  (byte-positions->byte-positions6.1
+                                                                                                                   delta54_0
+                                                                                                                   #t
+                                                                                                                   ms-pos_11
+                                                                                                                   me-pos_12
+                                                                                                                   state_52))))
+                                                                                                            (let-values ()
+                                                                                                              (let-values (((start-pos59_0)
+                                                                                                                            start-pos_6)
+                                                                                                                           ((start-offset60_0)
+                                                                                                                            start-offset_4))
+                                                                                                                (byte-positions->string-positions26.1
+                                                                                                                 start-offset60_0
+                                                                                                                 start-pos59_0
+                                                                                                                 #t
+                                                                                                                 bstr_15
+                                                                                                                 ms-pos_11
+                                                                                                                 me-pos_12
+                                                                                                                 state_52))))))
+                                                                                              (add-end-bytes
+                                                                                               positions_2
+                                                                                               end-bytes-count_1
+                                                                                               bstr_15
+                                                                                               me-pos_12))))
+                                                                                        (if (equal? tmp_34 'strings)
+                                                                                          (let-values ()
+                                                                                            (let-values (((bstr_16)
+                                                                                                          (lazy-bytes-bstr
                                                                                                            lb-in_0)))
-                                                                                              (let-values (((bytes/strings_1)
-                                                                                                            (if (let-values (((or-part_78)
-                                                                                                                              (not
-                                                                                                                               (string?
-                                                                                                                                in_12))))
-                                                                                                                  (if or-part_78
-                                                                                                                    or-part_78
-                                                                                                                    (rx:regexp-bytes?
-                                                                                                                     rx_33)))
-                                                                                                              (let-values ()
-                                                                                                                (let-values (((delta65_0)
-                                                                                                                              delta_5))
-                                                                                                                  (byte-positions->bytess15.1
-                                                                                                                   delta65_0
-                                                                                                                   #t
-                                                                                                                   bstr_16
-                                                                                                                   ms-pos_11
-                                                                                                                   me-pos_12
-                                                                                                                   state_52)))
-                                                                                                              (let-values ()
-                                                                                                                (let-values (((delta70_0)
-                                                                                                                              delta_5))
-                                                                                                                  (byte-positions->strings35.1
-                                                                                                                   delta70_0
-                                                                                                                   #t
-                                                                                                                   bstr_16
-                                                                                                                   ms-pos_11
-                                                                                                                   me-pos_12
-                                                                                                                   state_52))))))
-                                                                                                (add-end-bytes
-                                                                                                 bytes/strings_1
-                                                                                                 end-bytes-count_1
-                                                                                                 bstr_16
-                                                                                                 me-pos_12)))))
-                                                                                        (let-values () (void)))))))
-                                                                              (write/consume-skipped_0))))))))))))))))))))))))))))))))))))))))
+                                                                                              (let-values (((delta_5)
+                                                                                                            (lazy-bytes-discarded-count
+                                                                                                             lb-in_0)))
+                                                                                                (let-values (((bytes/strings_1)
+                                                                                                              (if (let-values (((or-part_78)
+                                                                                                                                (not
+                                                                                                                                 (string?
+                                                                                                                                  in_12))))
+                                                                                                                    (if or-part_78
+                                                                                                                      or-part_78
+                                                                                                                      (rx:regexp-bytes?
+                                                                                                                       rx_33)))
+                                                                                                                (let-values ()
+                                                                                                                  (let-values (((delta65_0)
+                                                                                                                                delta_5))
+                                                                                                                    (byte-positions->bytess15.1
+                                                                                                                     delta65_0
+                                                                                                                     #t
+                                                                                                                     bstr_16
+                                                                                                                     ms-pos_11
+                                                                                                                     me-pos_12
+                                                                                                                     state_52)))
+                                                                                                                (let-values ()
+                                                                                                                  (let-values (((delta70_0)
+                                                                                                                                delta_5))
+                                                                                                                    (byte-positions->strings35.1
+                                                                                                                     delta70_0
+                                                                                                                     #t
+                                                                                                                     bstr_16
+                                                                                                                     ms-pos_11
+                                                                                                                     me-pos_12
+                                                                                                                     state_52))))))
+                                                                                                  (add-end-bytes
+                                                                                                   bytes/strings_1
+                                                                                                   end-bytes-count_1
+                                                                                                   bstr_16
+                                                                                                   me-pos_12)))))
+                                                                                          (let-values () (void)))))))
+                                                                                (write/consume-skipped_0)))))))))))))))))))))))))))))))))))))))))
  (define-values
   (check-range)
-  (lambda (who_5 what_1 in_13 pos_133 start-pos_7)
+  (lambda (who_5 what_0 in_13 pos_133 start-pos_7)
     (let-values (((len_23)
                   (if (bytes? in_13)
                     (let-values () (bytes-length in_13))
@@ -5733,14 +5694,14 @@
           (let-values ()
             (raise-arguments-error
              who_5
-             (format "~a is smaller than starting index" what_1)
-             what_1
+             (format "~a is smaller than starting index" what_0)
+             what_0
              pos_133
              "starting index"
              start-pos_7)))
         (if (<= pos_133 len_23)
           (void)
-          (let-values () (raise-arguments-error who_5 (format "~a is out of range" what_1) what_1 pos_133)))))))
+          (let-values () (raise-arguments-error who_5 (format "~a is out of range" what_0) what_0 pos_133)))))))
  (define-values
   (chytes-ref)
   (lambda (s_4 pos_1) (if (bytes? s_4) (bytes-ref s_4 pos_1) (char->integer (string-ref s_4 pos_1)))))
@@ -5776,35 +5737,35 @@
   (let-values (((regexp-replace6_0)
                 (lambda (rx3_1 orig-in4_0 insert5_0 prefix1_0 prefix2_0)
                   (let-values (((rx_3) rx3_1))
-                    (let-values (((orig-in_0) orig-in4_0))
+                    (let-values (((orig-in_1) orig-in4_0))
                       (let-values (((insert_0) insert5_0))
                         (let-values (((prefix_2) (if prefix2_0 prefix1_0 #"")))
-                          (let-values () (do-regexp-replace 'regexp-replace rx_3 orig-in_0 insert_0 prefix_2 #f)))))))))
+                          (let-values () (do-regexp-replace 'regexp-replace rx_3 orig-in_1 insert_0 prefix_2 #f)))))))))
     (case-lambda
-     ((rx_16 orig-in_1 insert_1) (regexp-replace6_0 rx_16 orig-in_1 insert_1 #f #f))
-     ((rx_29 orig-in_2 insert_2 prefix1_1) (regexp-replace6_0 rx_29 orig-in_2 insert_2 prefix1_1 #t)))))
+     ((rx_16 orig-in_2 insert_1) (regexp-replace6_0 rx_16 orig-in_2 insert_1 #f #f))
+     ((rx_29 orig-in_3 insert_2 prefix1_1) (regexp-replace6_0 rx_29 orig-in_3 insert_2 prefix1_1 #t)))))
  (define-values
   (1/regexp-replace*)
   (let-values (((regexp-replace*13_0)
                 (lambda (rx10_1 orig-in11_0 insert12_0 prefix8_0 prefix9_0)
                   (let-values (((rx_34) rx10_1))
-                    (let-values (((orig-in_3) orig-in11_0))
+                    (let-values (((orig-in_4) orig-in11_0))
                       (let-values (((insert_3) insert12_0))
                         (let-values (((prefix_3) (if prefix9_0 prefix8_0 #"")))
                           (let-values ()
-                            (do-regexp-replace 'regexp-replace* rx_34 orig-in_3 insert_3 prefix_3 #t)))))))))
+                            (do-regexp-replace 'regexp-replace* rx_34 orig-in_4 insert_3 prefix_3 #t)))))))))
     (case-lambda
-     ((rx_23 orig-in_4 insert_4) (regexp-replace*13_0 rx_23 orig-in_4 insert_4 #f #f))
-     ((rx_35 orig-in_5 insert_5 prefix8_1) (regexp-replace*13_0 rx_35 orig-in_5 insert_5 prefix8_1 #t)))))
+     ((rx_23 orig-in_5 insert_4) (regexp-replace*13_0 rx_23 orig-in_5 insert_4 #f #f))
+     ((rx_35 orig-in_6 insert_5 prefix8_1) (regexp-replace*13_0 rx_35 orig-in_6 insert_5 prefix8_1 #t)))))
  (define-values
   (do-regexp-replace)
-  (lambda (who_6 rx-in_0 orig-in_6 insert_6 prefix_4 all?_0)
+  (lambda (who_6 rx-in_0 orig-in_7 insert_6 prefix_4 all?_0)
     (let-values (((string-mode?_0)
                   (if (let-values (((or-part_79) (string? rx-in_0))) (if or-part_79 or-part_79 (1/regexp? rx-in_0)))
-                    (string? orig-in_6)
+                    (string? orig-in_7)
                     #f)))
       (let-values (((in_14)
-                    (if (if (not string-mode?_0) (string? orig-in_6) #f) (string->bytes/utf-8 orig-in_6) orig-in_6)))
+                    (if (if (not string-mode?_0) (string? orig-in_7) #f) (string->bytes/utf-8 orig-in_7) orig-in_7)))
         (let-values ((()
                       (begin
                         (if (let-values (((or-part_80) string-mode?_0))
@@ -5812,8 +5773,8 @@
                                 or-part_80
                                 (if (let-values (((or-part_81) (bytes? rx-in_0)))
                                       (if or-part_81 or-part_81 (1/byte-regexp? rx-in_0)))
-                                  (let-values (((or-part_82) (string? orig-in_6)))
-                                    (if or-part_82 or-part_82 (bytes? orig-in_6)))
+                                  (let-values (((or-part_82) (string? orig-in_7)))
+                                    (if or-part_82 or-part_82 (bytes? orig-in_7)))
                                   #f)))
                           (let-values ()
                             (if (let-values (((or-part_83) (string? insert_6)))
@@ -5915,7 +5876,7 @@
                        insert_7
                        (let-values (((lst_20) poss_1))
                          (begin
-                           (if (list? lst_20) (void) (let-values () (check-list lst_20)))
+                           (check-list lst_20)
                            ((letrec-values (((for-loop_38)
                                              (lambda (lst_21)
                                                (if (pair? lst_21)

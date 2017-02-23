@@ -1,6 +1,7 @@
 (library (port)
   (export
-   (rename (1/build-path/convention-type build-path/convention-type)
+   (rename (port-name port-name)
+           (1/build-path/convention-type build-path/convention-type)
            (1/peek-bytes! peek-bytes!)
            (1/explode-path explode-path)
            (1/peek-byte peek-byte)
@@ -93,7 +94,8 @@
                           output-port-buffer-mode
                           equal? input-port? output-port?
                           open-input-file abort
-                          current-output-port current-input-port current-error-port)
+                          current-output-port current-input-port current-error-port
+                          port-name)
                   [make-parameter chez:make-parameter]
                   [void chez:void]
                   [standard-input-port current-input-port]
@@ -126,16 +128,15 @@
     (put-bytevector out bstr start-pos len)
     (flush-output-port out)
     len)
-  (define (open-input-file path mode mode2)
-    (open-file-input-port path))
   (define peek-byte lookahead-u8)
   (define (->string p)
     (if (1/path? p) (1/path->string p) p))
+  (define (open-input-file path mode mode2)
+    (open-file-input-port (->string path)))
   (define (directory-exists? p)
     (file-directory? (->string p)))
   (define (resolve-path p) p)
   (define (object-name n) 'unknown-name)
-  (define (current-inspector) #f)
   (define (system-path-convention-type) 'unix)
 
   (include "port.scm"))

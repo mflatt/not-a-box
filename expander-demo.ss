@@ -2,8 +2,6 @@
         (port))
 
 (define (show v) (write v) (newline))
-(define (run s)
-  (show (eval (read (open-input-string s)))))
 
 (boot)
 (namespace-require ''|#%kernel|)
@@ -19,4 +17,14 @@
 (eval '(|#%require| 'm))
 (show (eval 'x))
 
+(define (run s)
+  (show (eval (read (open-input-string s)))))
 (run "'x")
+
+;; Set `AS_IF_RACKET` to a linklet-branch Racket executable's
+;; path to allow a `racket/base` load to possibly succeed
+(current-library-collection-links
+ (find-library-collection-links))
+(current-library-collection-paths
+ (find-library-collection-paths))
+(eval '(|#%require| racket/base))

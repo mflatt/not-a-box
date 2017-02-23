@@ -39,7 +39,11 @@
                   (1/module->language-info module->language-info)
                   (1/namespace-syntax-introduce namespace-syntax-introduce)
                   (1/compile compile)
-                  (1/datum->syntax datum->syntax)))
+                  (1/datum->syntax datum->syntax))
+          find-library-collection-links
+          current-library-collection-links
+          current-library-collection-paths
+          find-library-collection-paths)
   (import (rename (except (chezscheme)
                           member memv memq
                           sort vector-sort vector-sort!
@@ -55,12 +59,14 @@
                           open-input-string open-output-string get-output-string
                           format printf fprintf
                           write display newline
-                          input-port? output-port?)
+                          input-port? output-port? port-name)
                   [void chez:void]
                   [string->number chez:string->number]
                   [substring chez:substring]
                   [string-copy! chez:string-copy!]
-                  [gensym chez:gensym])
+                  [gensym chez:gensym]
+                  [file-exists? chez:file-exists?]
+                  [directory-list chez:directory-list])
           (regexp)
           (error)
           (hash)

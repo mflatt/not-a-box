@@ -38,7 +38,7 @@
   (define imports
     (for*/fold ([imports (hasheq)]) ([ims (in-list (cadr lk))]
                                      [im (in-list ims)])
-      (define id (if (pair? im) (car im) im))
+      (define id (if (pair? im) (cadr im) im))
       (hash-set imports id (gensym (symbol->string id)))))
   ;; Ditto for exports:
   (define exports
@@ -48,7 +48,7 @@
   ;; Build `lambda` with schemified body:
   `(lambda (,@(for*/list ([ims (in-list (cadr lk))]
                      [im (in-list ims)])
-           (hash-ref imports (if (pair? im) (car im) im)))
+           (hash-ref imports (if (pair? im) (cadr im) im)))
        ,@(for/list ([ex (in-list (caddr lk))])
            (hash-ref exports (if (pair? ex) (car ex) ex))))
     ,@(schemify-body (cdddr lk) init-procs imports exports)))

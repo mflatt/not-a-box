@@ -13,10 +13,11 @@
           hash-keys-subset?
           ;; For intern tables:
           weak-hash-ref-key)
-  (import (hash-code)
+  (import (equal)
+          (hash-code)
           (immutable-hash)
           (except (chezscheme)
-                  make-parameter)
+                  make-parameter equal?)
           (error))
 
   ;; To support iteration and locking, we wrap Chez's mutable hash
@@ -147,7 +148,7 @@
       (let loop ([i (hash-iterate-first ht)])
         (when i
           (let-values ([(key val) (hash-iterate-key+value ht i)])
-            (proc ht i))
+            (proc key val))
           (loop (hash-iterate-next ht i))))]
      [(immutable-hash? ht) (immutable-hash-for-each ht proc)]
      [(weak-equal-hash? ht) (weak-hash-for-each ht proc)]
@@ -161,7 +162,7 @@
             '()
             (cons
              (let-values ([(key val) (hash-iterate-key+value ht i)])
-               (proc ht i))
+               (proc key val))
              (loop (hash-iterate-next ht i)))))]
      [(immutable-hash? ht) (immutable-hash-map ht proc)]
      [(weak-equal-hash? ht) (weak-hash-map ht proc)]
@@ -549,7 +550,7 @@
                       (cond
                        [(not i) (values ht count)]
                        [else
-                        (let-values ([(key l) (immutable-hash-iterate-key+value ht i)])
+                        (let-values ([(key l) (immutable-hash-iterate-key+value ht i #f)])
                           (let ([l (filter (lambda (p) (not (bwp-object? (car p)))) l)])
                             (loop (if (null? l)
                                       ht

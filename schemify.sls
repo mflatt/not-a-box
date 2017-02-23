@@ -3,7 +3,7 @@
           schemify-body
           primitive-procs)
   (import (rename (except (chezscheme)
-                          read-char
+                          equal? read-char
                           close-input-port close-output-port
                           make-input-port make-output-port
                           open-input-file peek-char
@@ -11,10 +11,11 @@
                           current-input-port current-output-port current-error-port
                           open-input-string open-output-string get-output-string
                           format printf fprintf
-                          write display newline)
+                          write display newline port-name)
                   [void chez:void])
           (hash)
           (error)
+          (equal)
           (struct)
           (regexp)
           (bytes)
@@ -29,6 +30,4 @@
                    (cdr l))])))
 
   (include "compat.scm")
-  (define (current-inspector) #f)
-
   (include "schemify.scm"))

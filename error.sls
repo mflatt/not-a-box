@@ -10,6 +10,9 @@
           error-print-width
           error-value->string-handler
 
+          current-inspector
+          make-inspector
+
           struct:exn exn exn? exn-message exn-continuation-marks
           struct:exn:fail exn:fail exn:fail?
           struct:exn:fail:contract exn:fail:contract exn:fail:contract?
@@ -29,6 +32,7 @@
           raise-range-error
           raise-result-arity-error)
   (import (immutable-hash)
+          (struct)
           (rename (chezscheme)
                   [make-parameter chez:make-parameter]))
 
@@ -107,15 +111,9 @@
                       (unless (and (integer? v)
                                    (exact? v)
                                    (>= v 3))
-                        (raise
-                         (exn:fail:contract
-                          (string-append
-                           "error-print-width: contract violation\n"
-                           "  expected: (and/c exact-integer? (>=/c 3))\n"
-                           "  given: " ((error-value->string-handler)
-                                        v
-                                        (error-print-width)))
-                          (current-continuation-marks))))
+                        (raise-argument-error 'error-print-width
+                                              "(and/c exact-integer? (>=/c 3))"
+                                              v))
                       v)))
 
   (define error-value->string-handler
@@ -123,16 +121,31 @@
                     (lambda (v)
                       (unless (and (procedure? v)
                                    (procedure-arity-includes? v 2))
-                        (raise
-                         (exn:fail:contract
-                          (string-append
-                           "error-value->string-handler: contract violation\n"
-                           "  expected: (procedure-arity-includes?/c 2)\n"
-                           "  given: " ((error-value->string-handler)
-                                        v
-                                        (error-print-width)))
-                          (current-continuation-marks))))
+                        (raise-argument-error 'error-value->string-handler
+                                              "(procedure-arity-includes?/c 2)"
+                                              v))
                       v)))
+
+  ;; ----------------------------------------
+
+  (define current-inspector
+    (make-parameter root-inspector
+                    (lambda (v)
+                      (unless (inspector? v)
+                        (raise-argument-error 'current-inspector
+                                              "inspector?"
+                                              v))
+                      v)))
+
+  (define make-inspector
+    (case-lambda
+     [() (new-inspector (current-inspector))]
+     [(i)
+      (unless (inspector? i)
+        (raise-argument-error 'current-inspector
+                              "inspector?"
+                              i))
+      (new-inspector i)]))
   
   ;; ----------------------------------------
   
@@ -316,6 +329,15 @@
                 (apply format
                        (condition-message v)
                        (condition-irritants v))]
+               [(syntax-violation? v)
+                (let ([show (lambda (s)
+                              (cond
+                               [(not s) ""]
+                               [else (format " ~s" (syntax->datum s))]))])
+                  (format "~a~a~a"
+                          (condition-message v)
+                          (show (syntax-violation-form v))
+                          (show (syntax-violation-subform v))))]
                [(message-condition? v)
                 (condition-message v)]
                [else (format "~s" v)]))
@@ -325,7 +347,7 @@
        (let loop ([i (inspect/object (if (exn? v)
                                          (continuation-mark-set-k (exn-continuation-marks v))
                                          (condition-continuation v)))]
-                  [n 100])
+                  [n 10])
          (unless (or (zero? n)
                      (not (eq? (i 'type) 'continuation)))
            (call-with-values (lambda () (i 'source-path))

@@ -129,9 +129,10 @@
                                          next-k))))]
                           [else
                            (cond
-                            [(eq? x-type y-type)
+                            [(and (eq? x-type y-type)
+                                  (struct-type-transparent? x-type))
                              (let loop ([i (fx- (struct-type-field-count x-type) 1)] [k k])
-                               (if (fx<= i)
+                               (if (fx< i 0)
                                    k
                                    (let ([k (e? (unsafe-struct-ref x i) (unsafe-struct-ref y i) k)])
                                      (and k (loop (fx- i 1) k)))))]
@@ -185,9 +186,10 @@
                                        next-k))))]
                         [else
                          (cond
-                          [(eq? x-type y-type)
+                          [(and (eq? x-type y-type)
+                                (struct-type-transparent? x-type))
                            (let loop ([i (fx- (struct-type-field-count x-type) 1)] [k k])
-                             (if (fx<= i)
+                             (if (fx< i 0)
                                  k
                                  (let ([k (e? (unsafe-struct-ref x i) (unsafe-struct-ref y i) k)])
                                    (and k (loop (fx- i 1) k)))))]
@@ -251,9 +253,10 @@
                                next-k))))]
                 [else
                  (cond
-                  [(eq? x-type y-type)
+                  [(and (eq? x-type y-type)
+                        (struct-type-transparent? x-type))
                    (let loop ([i (fx- (struct-type-field-count x-type) 1)] [k k])
-                     (if (fx<= i)
+                     (if (fx< i 0)
                          k
                          (let ([k (precheck? (unsafe-struct-ref x i) (unsafe-struct-ref y i) k)])
                            (and k (loop (fx- i 1) k)))))]

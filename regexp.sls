@@ -31,7 +31,7 @@
                           current-input-port current-output-port current-error-port
                           open-input-string open-output-string get-output-string
                           format printf fprintf
-                          write display newline)
+                          write display newline port-name)
                   [void chez:void])
           (hash)
           (struct)
@@ -39,7 +39,6 @@
           (bytes)
           (error))
   (include "compat.scm")
-  (define (current-inspector) #f)
   (define (char-graphic? x) #f)
   (define (make-continuation-prompt-tag s) (gensym))
   (define (call-with-continuation-prompt proc . args) (proc))

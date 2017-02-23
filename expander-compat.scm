@@ -48,7 +48,11 @@
    [(n) 'no-flvector]
    [(n val) 'no-flvector]))
 
-(define (object-name n) 'unknown-name)
+(define (object-name o)
+  (cond
+   [(input-port? o) (port-name o)]
+   [(output-port? o) (port-name o)]
+   [else 'unknown-name]))
 
 (define (mpair? v) #f)
 (define (mcar m) #f)
@@ -125,7 +129,8 @@
 (define (system-library-subpath) "x86_64-macosx/3m")
 (define (system-path-convention-type) 'unix)
 
-(define (environment-variables-ref e k) #f)
+(define (environment-variables-ref e k)
+  (getenv (bytes->string/utf-8 k)))
 (define (current-environment-variables) #f)
 
 (define (->string p)
@@ -134,10 +139,16 @@
 (define (directory-exists? p)
   (file-directory? (->string p)))
 
+(define (file-exists? p)
+  (chez:file-exists? (->string p)))
+
+(define (directory-list p)
+  (map string->path (chez:directory-list (->string p))))
+
 (define file-or-directory-modify-seconds
   (case-lambda
    [(p)
-    (time-second (file-modification-time p))]
+    (time-second (file-modification-time (->string p)))]
    [(p secs)
     (if secs
         (error 'file-or-directory-modify-seconds "cannot set modify seconds")
@@ -170,7 +181,7 @@
 (define use-collection-link-paths
   (make-parameter null))
 (define use-user-specific-search-paths
-  (make-parameter null))
+  (make-parameter #t))
 (define use-compiled-file-paths
   (make-parameter null))
 (define current-compiled-file-roots
@@ -181,10 +192,8 @@
 (define read-on-demand-source
   (make-parameter #f))
 
-(define current-inspector
-  (make-parameter #f))
 (define current-code-inspector
-  (make-parameter #f))
+  (make-parameter (current-inspector)))
 (define current-print
   (make-parameter (lambda (v)
                     (unless (void? v)
@@ -205,7 +214,13 @@
 (define (cache-configuration id proc) (proc))
 
 (define (find-system-path key)
-  #f)
+  (case key
+    [(exec-file) (string->path (or (getenv "AS_IF_RACKET") "/usr/bin/racket"))]
+    [(config-dir) (string->path "../config")]
+    [(collects-dir) (string->path "../collects")]
+    [(addon-dir) (string->path "/tmp/addon")]
+    [(orig-dir) (string->path (current-directory))]
+    [else `(find-system-path-not-ready ,key)]))
 
 (define (version) "0.1")
 
@@ -270,20 +285,18 @@
 (define (make-prefab-struct key args) (error 'make-prefab-struct "not ready"))
 (define (struct->vector s) (error 'struct->vector "not ready"))
 
-(define (srcloc->string s) "srcloc-from-string")
+(define (srcloc->string s)
+  (and (srcloc-source s)
+       (format "~s:~s:~s"
+               (srcloc-source s)
+               (srcloc-line s)
+               (srcloc-column s))))
 
 (define struct:arity-at-least (make-record-type-descriptor 'arity-at-least #f #f #f #f '#((immutable value))))
 (define arity-at-least? (record-predicate struct:arity-at-least))
 (define arity-at-least (make-record-constructor-descriptor struct:arity-at-least #f #f))
 (define arity-at-least-value (record-accessor struct:arity-at-least 0))
 (define make-arity-at-least arity-at-least)
-
-(define make-inspector
-  (case-lambda
-    [() 'inspector]
-    [(super) 'inspector]))
-(define (inspector-superior? i1 i2) #t)
-(define (inspector? v) (eq? v 'inspector))
 
 (define (make-hash-placeholder v) #f)
 (define (make-hasheq-placeholder v) #f)
@@ -298,15 +311,17 @@
   (make-parameter #f))
 
 (define read-char-or-special
-  (case-lambda [() (read-char)]
-               [(in) (read-char in)]
-               [(in special src) (read-char in)]))
+  (case-lambda
+   [() (read-char)]
+   [(in) (read-char in)]
+   [(in special src) (read-char in)]))
 
 (define peek-char-or-special
-  (case-lambda [() (peek-char)]
-               [(in) (peek-char in)]
-               [(in skip) (peek-char in skip)]
-               [(in skip special src) (peek-char in skip)]))
+  (case-lambda
+   [() (peek-char)]
+   [(in) (peek-char in)]
+   [(in skip) (peek-char in skip)]
+   [(in skip special src) (peek-char in skip)]))
 
 (define datums (make-weak-hash))
 
@@ -351,8 +366,10 @@
 (define (syntax-property-symbol-keys v)
   null)
 
-(define (syntax-property v k)
-  #f)
+(define syntax-property
+  (case-lambda
+   [(v k) #f]
+   [(v k val) v]))
 
 (define (syntax-e v) (raise-argument-error 'syntax-e "syntax?" v))
 (define (syntax-source v) #f)

@@ -208,7 +208,7 @@
     (let-values (((imports_0)
                   (let-values (((lst_0) (cadr lk_0)))
                     (begin
-                      (if (list? lst_0) (void) (let-values () (check-list lst_0)))
+                      (check-list lst_0)
                       ((letrec-values (((for-loop_0)
                                         (lambda (imports_1 lst_1)
                                           (if (pair? lst_1)
@@ -216,9 +216,7 @@
                                               (let-values (((imports_2)
                                                             (let-values (((lst_2) ims_0))
                                                               (begin
-                                                                (if (list? lst_2)
-                                                                  (void)
-                                                                  (let-values () (check-list lst_2)))
+                                                                (check-list lst_2)
                                                                 ((letrec-values (((for-loop_1)
                                                                                   (lambda (imports_3 lst_3)
                                                                                     (if (pair? lst_3)
@@ -234,15 +232,28 @@
                                                                                                                         (let-values (((id_0)
                                                                                                                                       (if (pair?
                                                                                                                                            im_0)
-                                                                                                                                        (car
+                                                                                                                                        (cadr
                                                                                                                                          im_0)
                                                                                                                                         im_0)))
-                                                                                                                          (hash-set
-                                                                                                                           imports_5
-                                                                                                                           id_0
-                                                                                                                           (gensym
-                                                                                                                            (symbol->string
-                                                                                                                             id_0)))))))
+                                                                                                                          (begin
+                                                                                                                            (if (hash-ref
+                                                                                                                                 imports_5
+                                                                                                                                 id_0
+                                                                                                                                 #f)
+                                                                                                                              (let-values ()
+                                                                                                                                (error
+                                                                                                                                 'oops
+                                                                                                                                 "dups ~s in ~s"
+                                                                                                                                 id_0
+                                                                                                                                 (cadr
+                                                                                                                                  lk_0)))
+                                                                                                                              (void))
+                                                                                                                            (hash-set
+                                                                                                                             imports_5
+                                                                                                                             id_0
+                                                                                                                             (gensym
+                                                                                                                              (symbol->string
+                                                                                                                               id_0))))))))
                                                                                                           (values
                                                                                                            imports_6)))))
                                                                                           (if (not #f)
@@ -262,7 +273,7 @@
       (let-values (((exports_0)
                     (let-values (((lst_4) (caddr lk_0)))
                       (begin
-                        (if (list? lst_4) (void) (let-values () (check-list lst_4)))
+                        (check-list lst_4)
                         ((letrec-values (((for-loop_2)
                                           (lambda (exports_1 lst_5)
                                             (if (pair? lst_5)
@@ -290,7 +301,7 @@
          (qq-append
           (let-values (((lst_6) (cadr lk_0)))
             (begin
-              (if (list? lst_6) (void) (let-values () (check-list lst_6)))
+              (check-list lst_6)
               ((letrec-values (((for-loop_3)
                                 (lambda (lst_7)
                                   (if (pair? lst_7)
@@ -298,7 +309,7 @@
                                       (let-values (((post-guard-var_0) (lambda () #t)))
                                         (let-values (((lst_8) ims_1))
                                           (begin
-                                            (if (list? lst_8) (void) (let-values () (check-list lst_8)))
+                                            (check-list lst_8)
                                             ((letrec-values (((for-loop_4)
                                                               (lambda (lst_9)
                                                                 (if (pair? lst_9)
@@ -312,7 +323,7 @@
                                                                                           (hash-ref
                                                                                            imports_0
                                                                                            (if (pair? im_1)
-                                                                                             (car im_1)
+                                                                                             (cadr im_1)
                                                                                              im_1))))))
                                                                           (let-values (((result_0)
                                                                                         (if (post-guard-var_1)
@@ -329,7 +340,7 @@
                lst_6)))
           (let-values (((lst_10) (caddr lk_0)))
             (begin
-              (if (list? lst_10) (void) (let-values () (check-list lst_10)))
+              (check-list lst_10)
               ((letrec-values (((for-loop_5)
                                 (lambda (lst_11)
                                   (if (pair? lst_11)
@@ -570,7 +581,7 @@
                                 (if (list? a_44)
                                   (let-values (((lst_12) a_44))
                                     (begin
-                                      (if (list? lst_12) (void) (let-values () (check-list lst_12)))
+                                      (check-list lst_12)
                                       ((letrec-values (((for-loop_6)
                                                         (lambda (result_2 lst_13)
                                                           (if (pair? lst_13)
@@ -632,9 +643,7 @@
                                                 (let-values (((rhss_2)
                                                               (let-values (((lst_14) a_48))
                                                                 (begin
-                                                                  (if (list? lst_14)
-                                                                    (void)
-                                                                    (let-values () (check-list lst_14)))
+                                                                  (check-list lst_14)
                                                                   ((letrec-values (((for-loop_7)
                                                                                     (lambda (rhss_3 lst_15)
                                                                                       (if (pair? lst_15)
@@ -677,7 +686,7 @@
                                   (values rhss_1 body_3)))))
                   (if (let-values (((lst_16) rhss_0))
                         (begin
-                          (if (list? lst_16) (void) (let-values () (check-list lst_16)))
+                          (check-list lst_16)
                           ((letrec-values (((for-loop_8)
                                             (lambda (result_5 lst_17)
                                               (if (pair? lst_17)
@@ -707,7 +716,7 @@
                                   (if (list? a_52)
                                     (let-values (((lst_18) a_52))
                                       (begin
-                                        (if (list? lst_18) (void) (let-values () (check-list lst_18)))
+                                        (check-list lst_18)
                                         ((letrec-values (((for-loop_9)
                                                           (lambda (result_8 lst_19)
                                                             (if (pair? lst_19)
@@ -769,9 +778,7 @@
                                                   (let-values (((rhss_9)
                                                                 (let-values (((lst_20) a_56))
                                                                   (begin
-                                                                    (if (list? lst_20)
-                                                                      (void)
-                                                                      (let-values () (check-list lst_20)))
+                                                                    (check-list lst_20)
                                                                     ((letrec-values (((for-loop_10)
                                                                                       (lambda (rhss_10 lst_21)
                                                                                         (if (pair? lst_21)
@@ -816,7 +823,7 @@
                                     (values rhss_8 body_5)))))
                     (if (let-values (((lst_22) rhss_7))
                           (begin
-                            (if (list? lst_22) (void) (let-values () (check-list lst_22)))
+                            (check-list lst_22)
                             ((letrec-values (((for-loop_11)
                                               (lambda (result_11 lst_23)
                                                 (if (pair? lst_23)
@@ -846,7 +853,7 @@
                                     (if (list? a_60)
                                       (let-values (((lst_24) a_60))
                                         (begin
-                                          (if (list? lst_24) (void) (let-values () (check-list lst_24)))
+                                          (check-list lst_24)
                                           ((letrec-values (((for-loop_12)
                                                             (lambda (result_14 lst_25)
                                                               (if (pair? lst_25)
@@ -910,9 +917,7 @@
                                                     (let-values (((idss_2 rhss_16)
                                                                   (let-values (((lst_26) a_64))
                                                                     (begin
-                                                                      (if (list? lst_26)
-                                                                        (void)
-                                                                        (let-values () (check-list lst_26)))
+                                                                      (check-list lst_26)
                                                                       ((letrec-values (((for-loop_13)
                                                                                         (lambda (idss_3 rhss_17 lst_27)
                                                                                           (if (pair? lst_27)
@@ -981,7 +986,7 @@
                       (let-values (((mutated+idss_0)
                                     (let-values (((lst_28) idss_0))
                                       (begin
-                                        (if (list? lst_28) (void) (let-values () (check-list lst_28)))
+                                        (check-list lst_28)
                                         ((letrec-values (((for-loop_14)
                                                           (lambda (mutated_2 lst_29)
                                                             (if (pair? lst_29)
@@ -990,9 +995,7 @@
                                                                 (let-values (((mutated_3)
                                                                               (let-values (((lst_30) ids_0))
                                                                                 (begin
-                                                                                  (if (list? lst_30)
-                                                                                    (void)
-                                                                                    (let-values () (check-list lst_30)))
+                                                                                  (check-list lst_30)
                                                                                   ((letrec-values (((for-loop_15)
                                                                                                     (lambda (mutated_4
                                                                                                              lst_31)
@@ -1032,7 +1035,7 @@
                                          lst_28)))))
                         (if (let-values (((lst_32) rhss_14))
                               (begin
-                                (if (list? lst_32) (void) (let-values () (check-list lst_32)))
+                                (check-list lst_32)
                                 ((letrec-values (((for-loop_16)
                                                   (lambda (result_17 lst_33)
                                                     (if (pair? lst_33)
@@ -1066,7 +1069,7 @@
                                       (if (list? a_69)
                                         (let-values (((lst_34) a_69))
                                           (begin
-                                            (if (list? lst_34) (void) (let-values () (check-list lst_34)))
+                                            (check-list lst_34)
                                             ((letrec-values (((for-loop_17)
                                                               (lambda (result_20 lst_35)
                                                                 (if (pair? lst_35)
@@ -1129,9 +1132,7 @@
                                                       (let-values (((ids_3 rhss_24)
                                                                     (let-values (((lst_36) a_73))
                                                                       (begin
-                                                                        (if (list? lst_36)
-                                                                          (void)
-                                                                          (let-values () (check-list lst_36)))
+                                                                        (check-list lst_36)
                                                                         ((letrec-values (((for-loop_18)
                                                                                           (lambda (ids_4 rhss_25 lst_37)
                                                                                             (if (pair? lst_37)
@@ -1200,7 +1201,7 @@
                         (let-values (((mutated+ids_0)
                                       (let-values (((lst_38) ids_1))
                                         (begin
-                                          (if (list? lst_38) (void) (let-values () (check-list lst_38)))
+                                          (check-list lst_38)
                                           ((letrec-values (((for-loop_19)
                                                             (lambda (mutated_8 lst_39)
                                                               (if (pair? lst_39)
@@ -1224,7 +1225,7 @@
                                            lst_38)))))
                           (if (let-values (((lst_40) rhss_22))
                                 (begin
-                                  (if (list? lst_40) (void) (let-values () (check-list lst_40)))
+                                  (check-list lst_40)
                                   ((letrec-values (((for-loop_20)
                                                     (lambda (result_23 lst_41)
                                                       (if (pair? lst_41)
@@ -1733,7 +1734,7 @@
                    v_28
                    (let-values (((lst_42) (list* make-s_0 s?_0 acc/muts_0)))
                      (begin
-                       (if (list? lst_42) (void) (let-values () (check-list lst_42)))
+                       (check-list lst_42)
                        ((letrec-values (((for-loop_21)
                                          (lambda (procs_2 lst_43)
                                            (if (pair? lst_43)
@@ -1794,7 +1795,7 @@
                           (if (list? a_144)
                             (let-values (((lst_44) a_144))
                               (begin
-                                (if (list? lst_44) (void) (let-values () (check-list lst_44)))
+                                (check-list lst_44)
                                 ((letrec-values (((for-loop_22)
                                                   (lambda (result_26 lst_45)
                                                     (if (pair? lst_45)
@@ -1848,9 +1849,7 @@
                                           (let-values (((ids_11 rhss_32)
                                                         (let-values (((lst_46) a_147))
                                                           (begin
-                                                            (if (list? lst_46)
-                                                              (void)
-                                                              (let-values () (check-list lst_46)))
+                                                            (check-list lst_46)
                                                             ((letrec-values (((for-loop_23)
                                                                               (lambda (ids_12 rhss_33 lst_47)
                                                                                 (if (pair? lst_47)
@@ -2039,7 +2038,7 @@
                               (if (list? a_171)
                                 (let-values (((lst_48) a_171))
                                   (begin
-                                    (if (list? lst_48) (void) (let-values () (check-list lst_48)))
+                                    (check-list lst_48)
                                     ((letrec-values (((for-loop_24)
                                                       (lambda (result_29 lst_49)
                                                         (if (pair? lst_49)
@@ -2096,9 +2095,7 @@
                                               (let-values (((idss_10 rhss_41)
                                                             (let-values (((lst_50) a_174))
                                                               (begin
-                                                                (if (list? lst_50)
-                                                                  (void)
-                                                                  (let-values () (check-list lst_50)))
+                                                                (check-list lst_50)
                                                                 ((letrec-values (((for-loop_25)
                                                                                   (lambda (idss_11 rhss_42 lst_51)
                                                                                     (if (pair? lst_51)
@@ -2226,7 +2223,7 @@
                                         (if (list? d_170)
                                           (let-values (((lst_52) d_170))
                                             (begin
-                                              (if (list? lst_52) (void) (let-values () (check-list lst_52)))
+                                              (check-list lst_52)
                                               ((letrec-values (((for-loop_26)
                                                                 (lambda (result_32 lst_53)
                                                                   (if (pair? lst_53)
@@ -2268,9 +2265,7 @@
                                                 (let-values (((formalss_1 bodys_7)
                                                               (let-values (((lst_54) d_172))
                                                                 (begin
-                                                                  (if (list? lst_54)
-                                                                    (void)
-                                                                    (let-values () (check-list lst_54)))
+                                                                  (check-list lst_54)
                                                                   ((letrec-values (((for-loop_27)
                                                                                     (lambda (formalss_2 bodys_8 lst_55)
                                                                                       (if (pair? lst_55)
@@ -2333,8 +2328,8 @@
                                    'case-lambda
                                    (let-values (((lst_56) formalss_0) ((lst_57) bodys_6))
                                      (begin
-                                       (if (list? lst_56) (void) (let-values () (check-list lst_56)))
-                                       (if (list? lst_57) (void) (let-values () (check-list lst_57)))
+                                       (check-list lst_56)
+                                       (check-list lst_57)
                                        ((letrec-values (((for-loop_28)
                                                          (lambda (lst_58 lst_59)
                                                            (if (if (pair? lst_58) (pair? lst_59) #f)
@@ -2776,11 +2771,7 @@
                                                                          ((end_0) (struct-type-info-field-count sti_0))
                                                                          ((inc_0) 1))
                                                               (begin
-                                                                (if (if (real? start_0)
-                                                                      (if (real? end_0) (real? inc_0) #f)
-                                                                      #f)
-                                                                  (void)
-                                                                  (let-values () (check-range start_0 end_0 inc_0)))
+                                                                (check-range start_0 end_0 inc_0)
                                                                 ((letrec-values (((for-loop_29)
                                                                                   (lambda (vec_3 i_2 pos_0)
                                                                                     (if (< pos_0 end_0)
@@ -2842,8 +2833,8 @@
                                            (qq-append
                                             (let-values (((lst_60) acc/muts_5) ((lst_61) make-acc/muts_6))
                                               (begin
-                                                (if (list? lst_60) (void) (let-values () (check-list lst_60)))
-                                                (if (list? lst_61) (void) (let-values () (check-list lst_61)))
+                                                (check-list lst_60)
+                                                (check-list lst_61)
                                                 ((letrec-values (((for-loop_30)
                                                                   (lambda (lst_62 lst_63)
                                                                     (if (if (pair? lst_62) (pair? lst_63) #f)
@@ -3132,9 +3123,7 @@
                                                               (if (list? a_253)
                                                                 (let-values (((lst_64) a_253))
                                                                   (begin
-                                                                    (if (list? lst_64)
-                                                                      (void)
-                                                                      (let-values () (check-list lst_64)))
+                                                                    (check-list lst_64)
                                                                     ((letrec-values (((for-loop_31)
                                                                                       (lambda (result_37 lst_65)
                                                                                         (if (pair? lst_65)
@@ -3218,11 +3207,7 @@
                                                                                             (let-values (((lst_66)
                                                                                                           a_257))
                                                                                               (begin
-                                                                                                (if (list? lst_66)
-                                                                                                  (void)
-                                                                                                  (let-values ()
-                                                                                                    (check-list
-                                                                                                     lst_66)))
+                                                                                                (check-list lst_66)
                                                                                                 ((letrec-values (((for-loop_32)
                                                                                                                   (lambda (ids_31
                                                                                                                            rhss_51
@@ -3301,12 +3286,8 @@
                                                 (let-values (((new-procs_1)
                                                               (let-values (((lst_68) ids_28) ((lst_69) rhss_48))
                                                                 (begin
-                                                                  (if (list? lst_68)
-                                                                    (void)
-                                                                    (let-values () (check-list lst_68)))
-                                                                  (if (list? lst_69)
-                                                                    (void)
-                                                                    (let-values () (check-list lst_69)))
+                                                                  (check-list lst_68)
+                                                                  (check-list lst_69)
                                                                   ((letrec-values (((for-loop_33)
                                                                                     (lambda (proc_0 lst_70 lst_71)
                                                                                       (if (if (pair? lst_70)
@@ -3360,8 +3341,8 @@
                                                       'let
                                                       (let-values (((lst_72) ids_28) ((lst_73) rhss_48))
                                                         (begin
-                                                          (if (list? lst_72) (void) (let-values () (check-list lst_72)))
-                                                          (if (list? lst_73) (void) (let-values () (check-list lst_73)))
+                                                          (check-list lst_72)
+                                                          (check-list lst_73)
                                                           ((letrec-values (((for-loop_34)
                                                                             (lambda (lst_74 lst_75)
                                                                               (if (if (pair? lst_74) (pair? lst_75) #f)
@@ -3510,9 +3491,7 @@
                                                                   (if (list? a_276)
                                                                     (let-values (((lst_76) a_276))
                                                                       (begin
-                                                                        (if (list? lst_76)
-                                                                          (void)
-                                                                          (let-values () (check-list lst_76)))
+                                                                        (check-list lst_76)
                                                                         ((letrec-values (((for-loop_35)
                                                                                           (lambda (result_41 lst_77)
                                                                                             (if (pair? lst_77)
@@ -3584,11 +3563,7 @@
                                                                                                 (let-values (((lst_78)
                                                                                                               a_279))
                                                                                                   (begin
-                                                                                                    (if (list? lst_78)
-                                                                                                      (void)
-                                                                                                      (let-values ()
-                                                                                                        (check-list
-                                                                                                         lst_78)))
+                                                                                                    (check-list lst_78)
                                                                                                     ((letrec-values (((for-loop_36)
                                                                                                                       (lambda (idss_20
                                                                                                                                rhss_61
@@ -3667,8 +3642,8 @@
                                                       'let-values
                                                       (let-values (((lst_80) idss_17) ((lst_81) rhss_58))
                                                         (begin
-                                                          (if (list? lst_80) (void) (let-values () (check-list lst_80)))
-                                                          (if (list? lst_81) (void) (let-values () (check-list lst_81)))
+                                                          (check-list lst_80)
+                                                          (check-list lst_81)
                                                           ((letrec-values (((for-loop_37)
                                                                             (lambda (lst_82 lst_83)
                                                                               (if (if (pair? lst_82) (pair? lst_83) #f)
@@ -3712,9 +3687,7 @@
                                                                     (if (list? a_283)
                                                                       (let-values (((lst_84) a_283))
                                                                         (begin
-                                                                          (if (list? lst_84)
-                                                                            (void)
-                                                                            (let-values () (check-list lst_84)))
+                                                                          (check-list lst_84)
                                                                           ((letrec-values (((for-loop_38)
                                                                                             (lambda (result_45 lst_85)
                                                                                               (if (pair? lst_85)
@@ -3798,11 +3771,8 @@
                                                                                                   (let-values (((lst_86)
                                                                                                                 a_287))
                                                                                                     (begin
-                                                                                                      (if (list? lst_86)
-                                                                                                        (void)
-                                                                                                        (let-values ()
-                                                                                                          (check-list
-                                                                                                           lst_86)))
+                                                                                                      (check-list
+                                                                                                       lst_86)
                                                                                                       ((letrec-values (((for-loop_39)
                                                                                                                         (lambda (ids_40
                                                                                                                                  rhss_69
@@ -3882,12 +3852,8 @@
                                                       (let-values (((new-procs_2)
                                                                     (let-values (((lst_88) ids_37) ((lst_89) rhss_66))
                                                                       (begin
-                                                                        (if (list? lst_88)
-                                                                          (void)
-                                                                          (let-values () (check-list lst_88)))
-                                                                        (if (list? lst_89)
-                                                                          (void)
-                                                                          (let-values () (check-list lst_89)))
+                                                                        (check-list lst_88)
+                                                                        (check-list lst_89)
                                                                         ((letrec-values (((for-loop_40)
                                                                                           (lambda (proc_3 lst_90 lst_91)
                                                                                             (if (if (pair? lst_90)
@@ -3940,12 +3906,8 @@
                                                            'letrec*
                                                            (let-values (((lst_92) ids_37) ((lst_93) rhss_66))
                                                              (begin
-                                                               (if (list? lst_92)
-                                                                 (void)
-                                                                 (let-values () (check-list lst_92)))
-                                                               (if (list? lst_93)
-                                                                 (void)
-                                                                 (let-values () (check-list lst_93)))
+                                                               (check-list lst_92)
+                                                               (check-list lst_93)
                                                                ((letrec-values (((for-loop_41)
                                                                                  (lambda (lst_94 lst_95)
                                                                                    (if (if (pair? lst_94)
@@ -3992,9 +3954,7 @@
                                                                       (if (list? a_292)
                                                                         (let-values (((lst_96) a_292))
                                                                           (begin
-                                                                            (if (list? lst_96)
-                                                                              (void)
-                                                                              (let-values () (check-list lst_96)))
+                                                                            (check-list lst_96)
                                                                             ((letrec-values (((for-loop_42)
                                                                                               (lambda (result_49 lst_97)
                                                                                                 (if (pair? lst_97)
@@ -4066,12 +4026,8 @@
                                                                                                     (let-values (((lst_98)
                                                                                                                   a_295))
                                                                                                       (begin
-                                                                                                        (if (list?
-                                                                                                             lst_98)
-                                                                                                          (void)
-                                                                                                          (let-values ()
-                                                                                                            (check-list
-                                                                                                             lst_98)))
+                                                                                                        (check-list
+                                                                                                         lst_98)
                                                                                                         ((letrec-values (((for-loop_43)
                                                                                                                           (lambda (idss_28
                                                                                                                                    rhss_77
@@ -4149,12 +4105,8 @@
                                                          'letrec*-values
                                                          (let-values (((lst_100) idss_25) ((lst_101) rhss_74))
                                                            (begin
-                                                             (if (list? lst_100)
-                                                               (void)
-                                                               (let-values () (check-list lst_100)))
-                                                             (if (list? lst_101)
-                                                               (void)
-                                                               (let-values () (check-list lst_101)))
+                                                             (check-list lst_100)
+                                                             (check-list lst_101)
                                                              ((letrec-values (((for-loop_44)
                                                                                (lambda (lst_102 lst_103)
                                                                                  (if (if (pair? lst_102)
@@ -4465,7 +4417,7 @@
     (let-values (((pending_0)
                   (let-values (((lst_104) l_12))
                     (begin
-                      (if (list? lst_104) (void) (let-values () (check-list lst_104)))
+                      (check-list lst_104)
                       ((letrec-values (((for-loop_45)
                                         (lambda (pending_1 lst_105)
                                           (if (pair? lst_105)
@@ -4530,10 +4482,7 @@
                                                                                                      rhs_36)))))
                                                                                     (let-values (((lst_106) ids_46))
                                                                                       (begin
-                                                                                        (if (list? lst_106)
-                                                                                          (void)
-                                                                                          (let-values ()
-                                                                                            (check-list lst_106)))
+                                                                                        (check-list lst_106)
                                                                                         ((letrec-values (((for-loop_46)
                                                                                                           (lambda (pending_5
                                                                                                                    lst_107)
@@ -4584,7 +4533,7 @@
                             (let-values ()
                               (let-values (((lst_108) delay-l_0))
                                 (begin
-                                  (if (list? lst_108) (void) (let-values () (check-list lst_108)))
+                                  (check-list lst_108)
                                   ((letrec-values (((for-loop_47)
                                                     (lambda (mutated_17 lst_109)
                                                       (if (pair? lst_109)
@@ -4632,7 +4581,7 @@
                                       (let-values (((next-pending_0)
                                                     (let-values (((lst_110) ids_48))
                                                       (begin
-                                                        (if (list? lst_110) (void) (let-values () (check-list lst_110)))
+                                                        (check-list lst_110)
                                                         ((letrec-values (((for-loop_48)
                                                                           (lambda (pending_10 lst_111)
                                                                             (if (pair? lst_111)
@@ -4662,9 +4611,7 @@
                                           (let-values (((mutated_21)
                                                         (let-values (((lst_112) delay-l_0))
                                                           (begin
-                                                            (if (list? lst_112)
-                                                              (void)
-                                                              (let-values () (check-list lst_112)))
+                                                            (check-list lst_112)
                                                             ((letrec-values (((for-loop_49)
                                                                               (lambda (mutated_22 lst_113)
                                                                                 (if (pair? lst_113)
@@ -4699,7 +4646,7 @@
                                       (let-values (((mutated_26)
                                                     (let-values (((lst_114) delay-l_0))
                                                       (begin
-                                                        (if (list? lst_114) (void) (let-values () (check-list lst_114)))
+                                                        (check-list lst_114)
                                                         ((letrec-values (((for-loop_50)
                                                                           (lambda (mutated_27 lst_115)
                                                                             (if (pair? lst_115)
@@ -4758,7 +4705,7 @@
                   (if (list? d_335)
                     (let-values (((lst_116) d_335))
                       (begin
-                        (if (list? lst_116) (void) (let-values () (check-list lst_116)))
+                        (check-list lst_116)
                         ((letrec-values (((for-loop_51)
                                           (lambda (result_53 lst_117)
                                             (if (pair? lst_117)
@@ -4793,7 +4740,7 @@
                           (let-values (((formalss_8 bodys_25)
                                         (let-values (((lst_118) d_337))
                                           (begin
-                                            (if (list? lst_118) (void) (let-values () (check-list lst_118)))
+                                            (check-list lst_118)
                                             ((letrec-values (((for-loop_52)
                                                               (lambda (formalss_9 bodys_26 lst_119)
                                                                 (if (pair? lst_119)
@@ -4840,7 +4787,7 @@
                             (values (reverse$1 formalss_8) (reverse$1 bodys_25))))))
             (let-values (((lst_120) bodys_24))
               (begin
-                (if (list? lst_120) (void) (let-values () (check-list lst_120)))
+                (check-list lst_120)
                 ((letrec-values (((for-loop_53)
                                   (lambda (mutated_32 lst_121)
                                     (if (pair? lst_121)
@@ -4898,7 +4845,7 @@
                                 (if (list? a_352)
                                   (let-values (((lst_122) a_352))
                                     (begin
-                                      (if (list? lst_122) (void) (let-values () (check-list lst_122)))
+                                      (check-list lst_122)
                                       ((letrec-values (((for-loop_54)
                                                         (lambda (result_56 lst_123)
                                                           (if (pair? lst_123)
@@ -4968,9 +4915,7 @@
                                                 (let-values (((ids_54 rhss_84)
                                                               (let-values (((lst_124) a_356))
                                                                 (begin
-                                                                  (if (list? lst_124)
-                                                                    (void)
-                                                                    (let-values () (check-list lst_124)))
+                                                                  (check-list lst_124)
                                                                   ((letrec-values (((for-loop_55)
                                                                                     (lambda (ids_55 rhss_85 lst_125)
                                                                                       (if (pair? lst_125)
@@ -5043,7 +4988,7 @@
                                   (if (list? a_361)
                                     (let-values (((lst_126) a_361))
                                       (begin
-                                        (if (list? lst_126) (void) (let-values () (check-list lst_126)))
+                                        (check-list lst_126)
                                         ((letrec-values (((for-loop_56)
                                                           (lambda (result_59 lst_127)
                                                             (if (pair? lst_127)
@@ -5101,9 +5046,7 @@
                                                   (let-values (((idss_35 rhss_92)
                                                                 (let-values (((lst_128) a_364))
                                                                   (begin
-                                                                    (if (list? lst_128)
-                                                                      (void)
-                                                                      (let-values () (check-list lst_128)))
+                                                                    (check-list lst_128)
                                                                     ((letrec-values (((for-loop_57)
                                                                                       (lambda (idss_36 rhss_93 lst_129)
                                                                                         (if (pair? lst_129)
@@ -5170,8 +5113,8 @@
                     (let-values (((new-mutated_0 simple-so-far?_0)
                                   (let-values (((lst_130) idss_33) ((lst_131) rhss_90))
                                     (begin
-                                      (if (list? lst_130) (void) (let-values () (check-list lst_130)))
-                                      (if (list? lst_131) (void) (let-values () (check-list lst_131)))
+                                      (check-list lst_130)
+                                      (check-list lst_131)
                                       ((letrec-values (((for-loop_58)
                                                         (lambda (mutated_36 simple-so-far?_1 lst_132 lst_133)
                                                           (if (if (pair? lst_132) (pair? lst_133) #f)
@@ -5205,12 +5148,8 @@
                                                                                                     (let-values (((lst_134)
                                                                                                                   ids_60))
                                                                                                       (begin
-                                                                                                        (if (list?
-                                                                                                             lst_134)
-                                                                                                          (void)
-                                                                                                          (let-values ()
-                                                                                                            (check-list
-                                                                                                             lst_134)))
+                                                                                                        (check-list
+                                                                                                         lst_134)
                                                                                                         ((letrec-values (((for-loop_59)
                                                                                                                           (lambda (mutated_40
                                                                                                                                    lst_135)
@@ -5392,7 +5331,7 @@
   (lambda (l_14 mutated_44 pending_15)
     (let-values (((lst_136) l_14))
       (begin
-        (if (list? lst_136) (void) (let-values () (check-list lst_136)))
+        (check-list lst_136)
         ((letrec-values (((for-loop_60)
                           (lambda (mutated_45 lst_137)
                             (if (pair? lst_137)
@@ -5413,7 +5352,7 @@
   (lambda (accum_2 exports_8)
     (let-values (((lst_138) accum_2))
       (begin
-        (if (list? lst_138) (void) (let-values () (check-list lst_138)))
+        (check-list lst_138)
         ((letrec-values (((for-loop_61)
                           (lambda (assigns_0 lst_139)
                             (if (pair? lst_139)
@@ -5450,9 +5389,7 @@
                                                                                       a_394))))
                                                                       (let-values (((lst_140) ids_61))
                                                                         (begin
-                                                                          (if (list? lst_140)
-                                                                            (void)
-                                                                            (let-values () (check-list lst_140)))
+                                                                          (check-list lst_140)
                                                                           ((letrec-values (((for-loop_62)
                                                                                             (lambda (assigns_4 lst_141)
                                                                                               (if (pair? lst_141)

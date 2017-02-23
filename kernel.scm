@@ -415,6 +415,7 @@
    unsafe-struct-ref
    read-decimal-as-inexact
    max
+   struct?
 
    [host:datum->syntax datum->syntax]
    [host:syntax->datum syntax->datum]

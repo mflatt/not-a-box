@@ -1,6 +1,39 @@
 (import (hash-code)
         (immutable-hash)
-        (hash))
+        (hash)
+        (equal)
+        (struct))
+
+(define-values (struct:top top top? top-ref top-set!)
+  (make-struct-type 'top #f 2 0 #f
+                    (list (cons prop:equal+hash
+                                (list
+                                 (lambda (a b eql?)
+                                   (eql? (top-1 a)
+                                         (top-1 b)))
+                                 (lambda (a hc)
+                                   (hc (top-1 a)))
+                                 (lambda (a hc)
+                                   (hc (top-1 a))))))))
+(define top-1 (make-struct-field-accessor top-ref 0))
+
+(define-values (struct:trans trans trans? trans-ref trans-set!)
+  (make-struct-type 'top #f 2 0 #f '() #f))
+
+(define-syntax check
+  (syntax-rules ()
+    [(_ a b)
+     (unless (equal? a b)
+       (error 'check (format "failed ~s" 'a)))]))
+
+(check (equal? (top 1 2) (top 1 3)) #t)
+(check (equal? (top 1 2) (top 2 2)) #f)
+(check (hash-ref (hash-set (hash) (top 1 2) 'ok) (top 1 3) #f) 'ok)
+
+(check (equal? (trans 1 2) (trans 1 2)) #t)
+(check (equal? (trans 1 2) (trans 1 3)) #f)
+(check (hash-ref (hash-set (hash) (trans 1 2) 'ok) (trans 1 2) #f) 'ok)
+(check (hash-ref (hash-set (hash) (trans 1 2) 'ok) (trans 1 3) #f) #f)
 
 (define (shuffle l)
   (define a (make-vector (length l)))
@@ -60,7 +93,7 @@
    (unless (zero? j)
      (let loop ([v #f] [i (immutable-hash-iterate-first numbers)])
        (if i
-           (loop (immutable-hash-iterate-value numbers i)
+           (loop (immutable-hash-iterate-value numbers i #f)
                  (immutable-hash-iterate-next numbers i))
            v))
      (loop (sub1 j)))))

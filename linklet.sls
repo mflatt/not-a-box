@@ -49,17 +49,18 @@
      [(c name) (compile-linklet c name #f (lambda (key) (values #f #f)))]
      [(c name import-keys) (compile-linklet c name import-keys (lambda (key) (values #f #f)))]
      [(c name import-keys get-import)
-      (define (get-external-names l)
-        (map (lambda (p) (if (pair? p) (cadr p) p)) l))
-      (define lk
-        (make-linklet (expand (schemify-linklet c primitive-procs))
-                      #f
-                      name
-                      (map get-external-names (cadr c))
-                      (get-external-names (caddr c))))
-      (if import-keys
-          (values lk import-keys)
-          lk)]))
+      (let ([lk (make-linklet (expand (schemify-linklet c primitive-procs))
+                              #f
+                              name
+                              (map (lambda (ps)
+                                     (map (lambda (p) (if (pair? p) (car p) p))
+                                          ps))
+                                   (cadr c))
+                              (map (lambda (p) (if (pair? p) (cadr p) p))
+                                   (caddr c)))])
+        (if import-keys
+            (values lk import-keys)
+            lk))]))
 
   (define (recompile-linklet . args)
     (raise (exn:fail "recompile-linklet: no" (current-continuation-marks))))
@@ -216,7 +217,7 @@
   (define (variable-reference->instance vr)
     (car (variable-reference-instance-link vr)))
 
-  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (port)))
+  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (equal) (port) (regexp)))
   (eval `(define null '()))
   (eval `(define variable-set! ',variable-set!))
   (eval `(define variable-ref ',variable-ref)))

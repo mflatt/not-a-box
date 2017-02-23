@@ -35,7 +35,9 @@
           immutable-hash-for-each
           immutable-hash-map)
   (import (hash-code)
-          (chezscheme))
+          (equal)
+          (except (chezscheme)
+                  equal?))
 
   (define (vector-copy! dest d-start src s-start s-end)
     (let loop ([i (- s-end s-start)])

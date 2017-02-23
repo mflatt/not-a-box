@@ -12,10 +12,17 @@
           unsafe-struct-ref
           unsafe-struct-set!
           struct-equal-hashity
+          struct-type-transparent?
+          struct-transparent-type
           prop:equal+hash
           prop:procedure
           prop:method-arity-error
-          |#%app|)
+          |#%app|
+          inspector?
+          inspector-superior?
+          root-inspector
+          new-inspector
+          set-current-inspector-parameter!)
   (import (chezscheme)
           (only (chezscheme csv7)
                 record-field-accessor
@@ -26,6 +33,7 @@
   (define none (gensym))
 
   (define rtd-props (make-weak-eq-hashtable))
+  (define rtd-inspectors (make-weak-eq-hashtable))
   
   (define make-struct-type-property
     (case-lambda
@@ -40,7 +48,24 @@
               (lambda (v)
                 (hashtable-ref table (record-rtd v) #f)))]))
 
-  (define (current-inspector) #f)
+  (define-record inspector (parent))
+
+  (define root-inspector (make-inspector #f))
+
+  ;; Used to create the public `make-inspector` that checks
+  ;; its argument:
+  (define (new-inspector parent) (make-inspector parent))
+  
+  (define current-inspector (lambda () root-inspector))
+  (define (set-current-inspector-parameter! param)
+    (set! current-inspector param))
+
+  (define (inspector-superior? sup-insp sub-insp)
+    (if (eq? sub-insp root-inspector)
+        #f
+        (let ([parent (inspector-parent sub-insp)])
+          (or (eq? parent sup-insp)
+              (inspector-superior? sup-insp parent)))))
 
   (define make-struct-type
     (case-lambda 
@@ -123,7 +148,8 @@
                                                        parent-rtd
                                                        #f))
                                           val)))))
-                props)]))
+                props)
+      (hashtable-set! rtd-inspectors rtd insp)]))
   
   (define make-struct-field-accessor
     (case-lambda
@@ -166,15 +192,28 @@
                                  (cons (gensym) val))))
 
   (define (struct-type-equality rtd)
-    (define v (hashtable-ref (struct-type-prop-table prop:equal+hash) rtd #f))
-    (if v
-        (values (cadr v) (car v))
-        (values #f #f)))
+    (let ([v (hashtable-ref (struct-type-prop-table prop:equal+hash) rtd #f)])
+      (if v
+          (values (cadr v) (car v))
+          (values #f #f))))
 
   (define (struct-equal-hashity r)
-    (define v (hashtable-ref (struct-type-prop-table prop:equal+hash) (record-rtd r) #f))
-    (and v
-         (caddr v)))
+    (let ([v (hashtable-ref (struct-type-prop-table prop:equal+hash) (record-rtd r) #f)])
+      (and v
+           (caddr v))))
+
+  (define (struct-type-transparent? rtd)
+    (let ([insp (hashtable-ref rtd-inspectors rtd #f)])
+      (and (or (not insp)
+               (inspector-superior? (current-inspector) insp))
+           (let ([p-rtd (record-type-parent rtd)])
+             (or (not p-rtd)
+                 (struct-type-transparent? p-rtd))))))
+    
+  (define (struct-transparent-type r)
+    (let ([t (record-rtd r)])
+      (and (struct-type-transparent? t)
+           t)))
 
   ;; ----------------------------------------
 

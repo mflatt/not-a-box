@@ -86,7 +86,7 @@
      [(bstr start end)
       (define len (- end start))
       (define c (make-bytevector len))
-      (bytevector-copy! bstr 0 c 0 len)
+      (bytevector-copy! bstr start c 0 len)
       c]
      [(bstr start)
       (subbytes bstr start (bytes-length bstr))])))
