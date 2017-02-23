@@ -81,6 +81,10 @@ struct.so: struct.sls
 	$(COMP) '(compile-file "struct.sls")' | scheme -q
 
 
+# For running a Racket program through the expander and flattener, similar to
+# the way "expand.sls" works. After the expander works, the intent it that
+# Racket programs are run by the expander running on Chez, instead.
+
 KNOT = ++knot read - ++knot main - ++knot core - ++knot boot - ++knot place-struct -
 
 file: regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so immutable-hash.so linklet.so prefix.scm convert.rkt
@@ -91,4 +95,3 @@ file: regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so
 	racket convert.rkt < compiled/$(ARGS).rktl >> compiled/$(ARGS).sls
 	echo ')' >> compiled/$(ARGS).sls
 	$(COMP) | scheme -q regexp.so error.so path.so struct.so hash-code.so hash.so equal.so port.so immutable-hash.so linklet.so compiled/$(ARGS).sls
-
