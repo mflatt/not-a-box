@@ -19,6 +19,9 @@
    [(or (regexp? v) (byte-regexp? v))
     (define s (gensym 'rx))
     (hash-set! rxes v s)]
+   [(or (pregexp? v) (byte-pregexp? v))
+    (define s (gensym 'px))
+    (hash-set! rxes v s)]
    [(or (hash? v)
         (nested-hash? v))
     (define s (gensym 'hash))
@@ -39,6 +42,8 @@
           (eq? 'quote (car v))
           (or (regexp? (cadr v))
               (byte-regexp? (cadr v))
+              (pregexp? (cadr v))
+              (byte-pregexp? (cadr v))
               (hash? (cadr v))
               (nested-hash? (cadr v))))
      10]
@@ -56,6 +61,8 @@
           (eq? 'quote (car v))
           (or (regexp? (cadr v))
               (byte-regexp? (cadr v))
+              (pregexp? (cadr v))
+              (byte-pregexp? (cadr v))
               (hash? (cadr v))
               (nested-hash? (cadr v))))
      (write (hash-ref rxes (cadr v)) out)]
@@ -76,7 +83,10 @@
         (cond
          [(or (regexp? k)
               (byte-regexp? k))
-          `(,(if (byte-regexp? k) 'byte-regexp 'regexp)
+          `(,(cond [(byte-regexp? k)  'byte-regexp]
+                   [(byte-pregexp? k) 'byte-pregexp]
+                   [(pregexp? k)      'pregexp]
+                   [else              'regexp])
             ,(object-name k))]
          [(hash? k)
           `(,(cond
