@@ -293,6 +293,7 @@
    pregexp
    pregexp?
    primitive-table
+   printf
    print
    print-as-expression
    procedure-arity
