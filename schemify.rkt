@@ -225,13 +225,6 @@
 ;; Convert a `lte-values` to nested `let-values`es to
 ;; enforce order
 (define (left-to-right/let-values v mutated)
-  (define (make-let-values ids rhs body)
-    (if (and (pair? ids) (null? (cdr ids)))
-        `(let ([,(car ids) ,rhs]) ,body)
-        `(call-with-values (lambda () ,rhs)
-          (case-lambda 
-            [,ids ,body]
-            [args (raise-result-arity-error 'ids args)]))))
   (match v
     [`(let-values ([,ids ,rhs]) ,body)
      (make-let-values ids rhs body)]
@@ -251,6 +244,14 @@
           ids
           (car rhss)
           (loop (cdr idss) (cdr rhss) (append (map (lambda (id) `[,id ,id]) ids) binds)))]))]))
+
+(define (make-let-values ids rhs body)
+  (if (and (pair? ids) (null? (cdr ids)))
+      `(let ([,(car ids) ,rhs]) ,body)
+      `(call-with-values (lambda () ,rhs)
+        (case-lambda 
+          [,ids ,body]
+          [args (raise-result-arity-error ',ids args)]))))
 
 ;; Convert an application to enforce left-to-right
 ;; evaluation order
@@ -368,9 +369,30 @@
                     `[,id ,(schemify rhs)])
          ,@(map schemify bodys))]
       [`(letrec-values ([(,idss ...) ,rhss] ...) ,bodys ...)
-       `(letrec*-values ,(for/list ([ids (in-list idss)]
-                                    [rhs (in-list rhss)])
-                           `[,ids ,(schemify rhs)])
+       ;; Convert
+       ;;  (letrec*-values ([(id ...) rhs] ...) ....)
+       ;; to
+       ;;  (letrec* ([vec (call-with-values rhs vector)]
+       ;;            [id (vector-ref vec 0)]
+       ;;            ... ...)
+       ;;    ....)
+       `(letrec* ,(apply
+                   append
+                   (for/list ([ids (in-list idss)]
+                              [rhs (in-list rhss)])
+                     (let ([rhs (schemify rhs)])
+                       (cond
+                        [(null? ids)
+                         `([,(gensym "lr")
+                            ,(make-let-values null rhs '(void))])]
+                        [(and (pair? ids) (null? (cdr ids)))
+                         `([,ids ,rhs])]
+                        [else
+                         (define lr (gensym "lr"))
+                         `([,lr ,(make-let-values ids rhs `(vector . ,ids))]
+                           ,@(for/list ([id (in-list ids)]
+                                        [pos (in-naturals)])
+                               `[,id (vector-ref ,lr ,pos)]))]))))
          ,@(map schemify bodys))]
       [`(if ,tst ,thn ,els)
        `(if ,(schemify tst) ,(schemify thn) ,(schemify els))]
@@ -409,9 +431,11 @@
         [else v])])))
 
 (define (mutated-in-body l exports)
-  ;; Find all defined variables:
+  ;; Find all defined variables; start with `exports`, because
+  ;; anything exports but not defined is implicitly in an undefined
+  ;; state
   (define pending
-    (for/fold ([pending (hasheq)]) ([v (in-list l)])
+    (for/fold ([pending exports]) ([v (in-list l)])
       (match v
         [`(define-values ,ids ,rhs)
          (for/fold ([pending pending]) ([id (in-list ids)])

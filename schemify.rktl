@@ -86,6 +86,12 @@
       (if (real? b_1) (void) (let-values () (raise-argument-error 'in-range "real?" b_1)))
       (if (real? step_0) (void) (let-values () (raise-argument-error 'in-range "real?" step_0))))))
  (define-values
+  (check-naturals)
+  (lambda (n_0)
+    (if (if (integer? n_0) (if (exact? n_0) (>= n_0 0) #f) #f)
+      (void)
+      (let-values () (raise-argument-error 'in-naturals "exact-nonnegative-integer?" n_0)))))
+ (define-values
   (struct:list-stream make-list-stream list-stream? list-stream-ref list-stream-set!)
   (make-struct-type
    'stream
@@ -123,8 +129,8 @@
  (define-values
   (grow-vector)
   (lambda (vec_0)
-    (let-values (((n_0) (vector-length vec_0)))
-      (let-values (((new-vec_0) (make-vector (* 2 n_0)))) (begin (vector-copy! new-vec_0 0 vec_0 0 n_0) new-vec_0)))))
+    (let-values (((n_1) (vector-length vec_0)))
+      (let-values (((new-vec_0) (make-vector (* 2 n_1)))) (begin (vector-copy! new-vec_0 0 vec_0 0 n_1) new-vec_0)))))
  (define-values
   (shrink-vector)
   (lambda (vec_1 i_0)
@@ -235,25 +241,12 @@
                                                                                                                                         (cadr
                                                                                                                                          im_0)
                                                                                                                                         im_0)))
-                                                                                                                          (begin
-                                                                                                                            (if (hash-ref
-                                                                                                                                 imports_5
-                                                                                                                                 id_0
-                                                                                                                                 #f)
-                                                                                                                              (let-values ()
-                                                                                                                                (error
-                                                                                                                                 'oops
-                                                                                                                                 "dups ~s in ~s"
-                                                                                                                                 id_0
-                                                                                                                                 (cadr
-                                                                                                                                  lk_0)))
-                                                                                                                              (void))
-                                                                                                                            (hash-set
-                                                                                                                             imports_5
-                                                                                                                             id_0
-                                                                                                                             (gensym
-                                                                                                                              (symbol->string
-                                                                                                                               id_0))))))))
+                                                                                                                          (hash-set
+                                                                                                                           imports_5
+                                                                                                                           id_0
+                                                                                                                           (gensym
+                                                                                                                            (symbol->string
+                                                                                                                             id_0)))))))
                                                                                                           (values
                                                                                                            imports_6)))))
                                                                                           (if (not #f)
@@ -1938,242 +1931,244 @@
  (define-values
   (left-to-right/let-values)
   (lambda (v_34 mutated_13)
-    (let-values (((make-let-values_0)
-                  (lambda (ids_18 rhs_16 body_11)
-                    (if (if (pair? ids_18) (null? (cdr ids_18)) #f)
-                      (list 'let (list (list (car ids_18) rhs_16)) body_11)
-                      (list
-                       'call-with-values
-                       (list 'lambda '() rhs_16)
-                       (list* 'case-lambda (list ids_18 body_11) '((args (raise-result-arity-error 'ids args)))))))))
-      (let-values (((v_35) v_34))
+    (let-values (((v_35) v_34))
+      (if (if (pair? v_35)
+            (if (let-values (((a_150) (car v_35))) (equal? 'let-values a_150))
+              (let-values (((d_142) (cdr v_35)))
+                (if (pair? d_142)
+                  (if (let-values (((a_151) (car d_142)))
+                        (if (pair? a_151)
+                          (if (let-values (((a_152) (car a_151)))
+                                (if (pair? a_152)
+                                  (if (let-values (((a_153) (car a_152))) #t)
+                                    (let-values (((d_143) (cdr a_152)))
+                                      (if (pair? d_143)
+                                        (if (let-values (((a_154) (car d_143))) #t)
+                                          (let-values (((d_144) (cdr d_143))) (equal? '() d_144))
+                                          #f)
+                                        #f))
+                                    #f)
+                                  #f))
+                            (let-values (((d_145) (cdr a_151))) (equal? '() d_145))
+                            #f)
+                          #f))
+                    (let-values (((d_146) (cdr d_142)))
+                      (if (pair? d_146)
+                        (if (let-values (((a_155) (car d_146))) #t)
+                          (let-values (((d_147) (cdr d_146))) (equal? '() d_147))
+                          #f)
+                        #f))
+                    #f)
+                  #f))
+              #f)
+            #f)
+        (let-values (((ids_18 rhs_16 body_11)
+                      (let-values (((d_148) (cdr v_35)))
+                        (let-values (((ids_19 rhs_17)
+                                      (let-values (((a_156) (car d_148)))
+                                        (let-values (((a_157) (car a_156)))
+                                          (let-values (((ids_20) (let-values (((a_158) (car a_157))) a_158))
+                                                       ((rhs_18)
+                                                        (let-values (((d_149) (cdr a_157)))
+                                                          (let-values (((a_159) (car d_149))) a_159))))
+                                            (values ids_20 rhs_18)))))
+                                     ((body_12)
+                                      (let-values (((d_150) (cdr d_148))) (let-values (((a_160) (car d_150))) a_160))))
+                          (values ids_19 rhs_17 body_12)))))
+          (make-let-values ids_18 rhs_16 body_11))
         (if (if (pair? v_35)
-              (if (let-values (((a_150) (car v_35))) (equal? 'let-values a_150))
-                (let-values (((d_142) (cdr v_35)))
-                  (if (pair? d_142)
-                    (if (let-values (((a_151) (car d_142)))
-                          (if (pair? a_151)
-                            (if (let-values (((a_152) (car a_151)))
-                                  (if (pair? a_152)
-                                    (if (let-values (((a_153) (car a_152))) #t)
-                                      (let-values (((d_143) (cdr a_152)))
-                                        (if (pair? d_143)
-                                          (if (let-values (((a_154) (car d_143))) #t)
-                                            (let-values (((d_144) (cdr d_143))) (equal? '() d_144))
+              (if (let-values (((a_161) (car v_35))) (equal? 'let-values a_161))
+                (let-values (((d_151) (cdr v_35)))
+                  (if (pair? d_151)
+                    (if (let-values (((a_162) (car d_151)))
+                          (if (pair? a_162)
+                            (if (let-values (((a_163) (car a_162)))
+                                  (if (pair? a_163)
+                                    (if (let-values (((a_164) (car a_163))) #t)
+                                      (let-values (((d_152) (cdr a_163)))
+                                        (if (pair? d_152)
+                                          (if (let-values (((a_165) (car d_152))) #t)
+                                            (let-values (((d_153) (cdr d_152))) (equal? '() d_153))
                                             #f)
                                           #f))
                                       #f)
                                     #f))
-                              (let-values (((d_145) (cdr a_151))) (equal? '() d_145))
+                              (let-values (((d_154) (cdr a_162))) (equal? '() d_154))
                               #f)
                             #f))
-                      (let-values (((d_146) (cdr d_142)))
-                        (if (pair? d_146)
-                          (if (let-values (((a_155) (car d_146))) #t)
-                            (let-values (((d_147) (cdr d_146))) (equal? '() d_147))
-                            #f)
-                          #f))
+                      (let-values (((d_155) (cdr d_151))) #t)
                       #f)
                     #f))
                 #f)
               #f)
-          (let-values (((ids_19 rhs_17 body_12)
-                        (let-values (((d_148) (cdr v_35)))
-                          (let-values (((ids_20 rhs_18)
-                                        (let-values (((a_156) (car d_148)))
-                                          (let-values (((a_157) (car a_156)))
-                                            (let-values (((ids_21) (let-values (((a_158) (car a_157))) a_158))
-                                                         ((rhs_19)
-                                                          (let-values (((d_149) (cdr a_157)))
-                                                            (let-values (((a_159) (car d_149))) a_159))))
-                                              (values ids_21 rhs_19)))))
-                                       ((body_13)
-                                        (let-values (((d_150) (cdr d_148)))
-                                          (let-values (((a_160) (car d_150))) a_160))))
-                            (values ids_20 rhs_18 body_13)))))
-            (make-let-values_0 ids_19 rhs_17 body_12))
+          (let-values (((ids_21 rhs_19 bodys_2)
+                        (let-values (((d_156) (cdr v_35)))
+                          (let-values (((ids_22 rhs_20)
+                                        (let-values (((a_166) (car d_156)))
+                                          (let-values (((a_167) (car a_166)))
+                                            (let-values (((ids_23) (let-values (((a_168) (car a_167))) a_168))
+                                                         ((rhs_21)
+                                                          (let-values (((d_157) (cdr a_167)))
+                                                            (let-values (((a_169) (car d_157))) a_169))))
+                                              (values ids_23 rhs_21)))))
+                                       ((bodys_3) (let-values (((d_158) (cdr d_156))) d_158)))
+                            (values ids_22 rhs_20 bodys_3)))))
+            (make-let-values ids_21 rhs_19 (list* 'begin bodys_2)))
           (if (if (pair? v_35)
-                (if (let-values (((a_161) (car v_35))) (equal? 'let-values a_161))
-                  (let-values (((d_151) (cdr v_35)))
-                    (if (pair? d_151)
-                      (if (let-values (((a_162) (car d_151)))
-                            (if (pair? a_162)
-                              (if (let-values (((a_163) (car a_162)))
-                                    (if (pair? a_163)
-                                      (if (let-values (((a_164) (car a_163))) #t)
-                                        (let-values (((d_152) (cdr a_163)))
-                                          (if (pair? d_152)
-                                            (if (let-values (((a_165) (car d_152))) #t)
-                                              (let-values (((d_153) (cdr d_152))) (equal? '() d_153))
-                                              #f)
-                                            #f))
-                                        #f)
-                                      #f))
-                                (let-values (((d_154) (cdr a_162))) (equal? '() d_154))
-                                #f)
+                (if (let-values (((a_170) (car v_35))) (equal? 'let-values a_170))
+                  (let-values (((d_159) (cdr v_35)))
+                    (if (pair? d_159)
+                      (if (let-values (((a_171) (car d_159)))
+                            (if (list? a_171)
+                              (let-values (((lst_48) a_171))
+                                (begin
+                                  (check-list lst_48)
+                                  ((letrec-values (((for-loop_24)
+                                                    (lambda (result_29 lst_49)
+                                                      (if (pair? lst_49)
+                                                        (let-values (((v_36) (unsafe-car lst_49))
+                                                                     ((rest_28) (unsafe-cdr lst_49)))
+                                                          (let-values (((result_30)
+                                                                        (let-values ()
+                                                                          (let-values (((result_31)
+                                                                                        (let-values ()
+                                                                                          (let-values ()
+                                                                                            (if (pair? v_36)
+                                                                                              (if (let-values (((a_172)
+                                                                                                                (car
+                                                                                                                 v_36)))
+                                                                                                    (list? a_172))
+                                                                                                (let-values (((d_160)
+                                                                                                              (cdr
+                                                                                                               v_36)))
+                                                                                                  (if (pair? d_160)
+                                                                                                    (if (let-values (((a_173)
+                                                                                                                      (car
+                                                                                                                       d_160)))
+                                                                                                          #t)
+                                                                                                      (let-values (((d_161)
+                                                                                                                    (cdr
+                                                                                                                     d_160)))
+                                                                                                        (equal?
+                                                                                                         '()
+                                                                                                         d_161))
+                                                                                                      #f)
+                                                                                                    #f))
+                                                                                                #f)
+                                                                                              #f)))))
+                                                                            (values result_31)))))
+                                                            (if (if (not ((lambda x_9 (not result_30)) v_36))
+                                                                  (not #f)
+                                                                  #f)
+                                                              (for-loop_24 result_30 rest_28)
+                                                              result_30)))
+                                                        result_29))))
+                                     for-loop_24)
+                                   #t
+                                   lst_48)))
                               #f))
-                        (let-values (((d_155) (cdr d_151))) #t)
+                        (let-values (((d_162) (cdr d_159))) #t)
                         #f)
                       #f))
                   #f)
                 #f)
-            (let-values (((ids_22 rhs_20 bodys_2)
-                          (let-values (((d_156) (cdr v_35)))
-                            (let-values (((ids_23 rhs_21)
-                                          (let-values (((a_166) (car d_156)))
-                                            (let-values (((a_167) (car a_166)))
-                                              (let-values (((ids_24) (let-values (((a_168) (car a_167))) a_168))
-                                                           ((rhs_22)
-                                                            (let-values (((d_157) (cdr a_167)))
-                                                              (let-values (((a_169) (car d_157))) a_169))))
-                                                (values ids_24 rhs_22)))))
-                                         ((bodys_3) (let-values (((d_158) (cdr d_156))) d_158)))
-                              (values ids_23 rhs_21 bodys_3)))))
-              (make-let-values_0 ids_22 rhs_20 (list* 'begin bodys_2)))
-            (if (if (pair? v_35)
-                  (if (let-values (((a_170) (car v_35))) (equal? 'let-values a_170))
-                    (let-values (((d_159) (cdr v_35)))
-                      (if (pair? d_159)
-                        (if (let-values (((a_171) (car d_159)))
-                              (if (list? a_171)
-                                (let-values (((lst_48) a_171))
-                                  (begin
-                                    (check-list lst_48)
-                                    ((letrec-values (((for-loop_24)
-                                                      (lambda (result_29 lst_49)
-                                                        (if (pair? lst_49)
-                                                          (let-values (((v_36) (unsafe-car lst_49))
-                                                                       ((rest_28) (unsafe-cdr lst_49)))
-                                                            (let-values (((result_30)
-                                                                          (let-values ()
-                                                                            (let-values (((result_31)
-                                                                                          (let-values ()
-                                                                                            (let-values ()
-                                                                                              (if (pair? v_36)
-                                                                                                (if (let-values (((a_172)
-                                                                                                                  (car
-                                                                                                                   v_36)))
-                                                                                                      (list? a_172))
-                                                                                                  (let-values (((d_160)
-                                                                                                                (cdr
-                                                                                                                 v_36)))
-                                                                                                    (if (pair? d_160)
-                                                                                                      (if (let-values (((a_173)
-                                                                                                                        (car
-                                                                                                                         d_160)))
-                                                                                                            #t)
-                                                                                                        (let-values (((d_161)
-                                                                                                                      (cdr
-                                                                                                                       d_160)))
-                                                                                                          (equal?
-                                                                                                           '()
-                                                                                                           d_161))
-                                                                                                        #f)
-                                                                                                      #f))
-                                                                                                  #f)
-                                                                                                #f)))))
-                                                                              (values result_31)))))
-                                                              (if (if (not ((lambda x_9 (not result_30)) v_36))
-                                                                    (not #f)
-                                                                    #f)
-                                                                (for-loop_24 result_30 rest_28)
-                                                                result_30)))
-                                                          result_29))))
-                                       for-loop_24)
-                                     #t
-                                     lst_48)))
-                                #f))
-                          (let-values (((d_162) (cdr d_159))) #t)
-                          #f)
-                        #f))
-                    #f)
-                  #f)
-              (let-values (((idss_8 rhss_39 bodys_4)
-                            (let-values (((d_163) (cdr v_35)))
-                              (let-values (((idss_9 rhss_40)
-                                            (let-values (((a_174) (car d_163)))
-                                              (let-values (((idss_10 rhss_41)
-                                                            (let-values (((lst_50) a_174))
-                                                              (begin
-                                                                (check-list lst_50)
-                                                                ((letrec-values (((for-loop_25)
-                                                                                  (lambda (idss_11 rhss_42 lst_51)
-                                                                                    (if (pair? lst_51)
-                                                                                      (let-values (((v_37)
-                                                                                                    (unsafe-car lst_51))
-                                                                                                   ((rest_29)
-                                                                                                    (unsafe-cdr
-                                                                                                     lst_51)))
-                                                                                        (let-values (((idss_12 rhss_43)
-                                                                                                      (let-values (((idss_13)
-                                                                                                                    idss_11)
-                                                                                                                   ((rhss_44)
-                                                                                                                    rhss_42))
-                                                                                                        (let-values (((idss_14
-                                                                                                                       rhss_45)
-                                                                                                                      (let-values ()
-                                                                                                                        (let-values (((idss11_0
-                                                                                                                                       rhss12_0)
-                                                                                                                                      (let-values ()
-                                                                                                                                        (let-values (((idss_15)
-                                                                                                                                                      (let-values (((a_175)
+            (let-values (((idss_8 rhss_39 bodys_4)
+                          (let-values (((d_163) (cdr v_35)))
+                            (let-values (((idss_9 rhss_40)
+                                          (let-values (((a_174) (car d_163)))
+                                            (let-values (((idss_10 rhss_41)
+                                                          (let-values (((lst_50) a_174))
+                                                            (begin
+                                                              (check-list lst_50)
+                                                              ((letrec-values (((for-loop_25)
+                                                                                (lambda (idss_11 rhss_42 lst_51)
+                                                                                  (if (pair? lst_51)
+                                                                                    (let-values (((v_37)
+                                                                                                  (unsafe-car lst_51))
+                                                                                                 ((rest_29)
+                                                                                                  (unsafe-cdr lst_51)))
+                                                                                      (let-values (((idss_12 rhss_43)
+                                                                                                    (let-values (((idss_13)
+                                                                                                                  idss_11)
+                                                                                                                 ((rhss_44)
+                                                                                                                  rhss_42))
+                                                                                                      (let-values (((idss_14
+                                                                                                                     rhss_45)
+                                                                                                                    (let-values ()
+                                                                                                                      (let-values (((idss11_0
+                                                                                                                                     rhss12_0)
+                                                                                                                                    (let-values ()
+                                                                                                                                      (let-values (((idss_15)
+                                                                                                                                                    (let-values (((a_175)
+                                                                                                                                                                  (car
+                                                                                                                                                                   v_37)))
+                                                                                                                                                      a_175))
+                                                                                                                                                   ((rhss_46)
+                                                                                                                                                    (let-values (((d_164)
+                                                                                                                                                                  (cdr
+                                                                                                                                                                   v_37)))
+                                                                                                                                                      (let-values (((a_176)
                                                                                                                                                                     (car
-                                                                                                                                                                     v_37)))
-                                                                                                                                                        a_175))
-                                                                                                                                                     ((rhss_46)
-                                                                                                                                                      (let-values (((d_164)
-                                                                                                                                                                    (cdr
-                                                                                                                                                                     v_37)))
-                                                                                                                                                        (let-values (((a_176)
-                                                                                                                                                                      (car
-                                                                                                                                                                       d_164)))
-                                                                                                                                                          a_176))))
-                                                                                                                                          (values
-                                                                                                                                           idss_15
-                                                                                                                                           rhss_46)))))
-                                                                                                                          (values
-                                                                                                                           (cons
-                                                                                                                            idss11_0
-                                                                                                                            idss_13)
-                                                                                                                           (cons
-                                                                                                                            rhss12_0
-                                                                                                                            rhss_44))))))
-                                                                                                          (values
-                                                                                                           idss_14
-                                                                                                           rhss_45)))))
-                                                                                          (if (not #f)
-                                                                                            (for-loop_25
-                                                                                             idss_12
-                                                                                             rhss_43
-                                                                                             rest_29)
-                                                                                            (values idss_12 rhss_43))))
-                                                                                      (values idss_11 rhss_42)))))
-                                                                   for-loop_25)
-                                                                 null
-                                                                 null
-                                                                 lst_50)))))
-                                                (values (reverse$1 idss_10) (reverse$1 rhss_41)))))
-                                           ((bodys_5) (let-values (((d_165) (cdr d_163))) d_165)))
-                                (values idss_9 rhss_40 bodys_5)))))
-                ((letrec-values (((loop_7)
-                                  (lambda (idss_16 rhss_47 binds_1)
-                                    (if (null? (cdr rhss_47))
-                                      (let-values ()
-                                        (make-let-values_0 (car idss_16) (car rhss_47) (list* 'let binds_1 bodys_4)))
-                                      (let-values ()
-                                        (let-values (((ids_25) (car idss_16)))
-                                          (make-let-values_0
-                                           ids_25
-                                           (car rhss_47)
-                                           (loop_7
-                                            (cdr idss_16)
-                                            (cdr rhss_47)
-                                            (append (map2 (lambda (id_8) (list id_8 id_8)) ids_25) binds_1)))))))))
-                   loop_7)
-                 idss_8
-                 rhss_39
-                 null))
-              (error 'match "failed ~e" v_35))))))))
+                                                                                                                                                                     d_164)))
+                                                                                                                                                        a_176))))
+                                                                                                                                        (values
+                                                                                                                                         idss_15
+                                                                                                                                         rhss_46)))))
+                                                                                                                        (values
+                                                                                                                         (cons
+                                                                                                                          idss11_0
+                                                                                                                          idss_13)
+                                                                                                                         (cons
+                                                                                                                          rhss12_0
+                                                                                                                          rhss_44))))))
+                                                                                                        (values
+                                                                                                         idss_14
+                                                                                                         rhss_45)))))
+                                                                                        (if (not #f)
+                                                                                          (for-loop_25
+                                                                                           idss_12
+                                                                                           rhss_43
+                                                                                           rest_29)
+                                                                                          (values idss_12 rhss_43))))
+                                                                                    (values idss_11 rhss_42)))))
+                                                                 for-loop_25)
+                                                               null
+                                                               null
+                                                               lst_50)))))
+                                              (values (reverse$1 idss_10) (reverse$1 rhss_41)))))
+                                         ((bodys_5) (let-values (((d_165) (cdr d_163))) d_165)))
+                              (values idss_9 rhss_40 bodys_5)))))
+              ((letrec-values (((loop_7)
+                                (lambda (idss_16 rhss_47 binds_1)
+                                  (if (null? (cdr rhss_47))
+                                    (let-values ()
+                                      (make-let-values (car idss_16) (car rhss_47) (list* 'let binds_1 bodys_4)))
+                                    (let-values ()
+                                      (let-values (((ids_24) (car idss_16)))
+                                        (make-let-values
+                                         ids_24
+                                         (car rhss_47)
+                                         (loop_7
+                                          (cdr idss_16)
+                                          (cdr rhss_47)
+                                          (append (map2 (lambda (id_8) (list id_8 id_8)) ids_24) binds_1)))))))))
+                 loop_7)
+               idss_8
+               rhss_39
+               null))
+            (error 'match "failed ~e" v_35)))))))
+ (define-values
+  (make-let-values)
+  (lambda (ids_25 rhs_22 body_13)
+    (if (if (pair? ids_25) (null? (cdr ids_25)) #f)
+      (list 'let (list (list (car ids_25) rhs_22)) body_13)
+      (list
+       'call-with-values
+       (list 'lambda '() rhs_22)
+       (list
+        'case-lambda
+        (list ids_25 body_13)
+        (list 'args (list* 'raise-result-arity-error (list 'quote ids_25) '(args))))))))
  (define-values
   (left-to-right/app)
   (lambda (v_38 mutated_14)
@@ -4102,47 +4097,135 @@
                                                                                       d_288)))
                                                                         (values idss_26 rhss_75 bodys_23)))))
                                                         (list*
-                                                         'letrec*-values
-                                                         (let-values (((lst_100) idss_25) ((lst_101) rhss_74))
-                                                           (begin
-                                                             (check-list lst_100)
-                                                             (check-list lst_101)
-                                                             ((letrec-values (((for-loop_44)
-                                                                               (lambda (lst_102 lst_103)
-                                                                                 (if (if (pair? lst_102)
-                                                                                       (pair? lst_103)
-                                                                                       #f)
-                                                                                   (let-values (((ids_45)
-                                                                                                 (unsafe-car lst_102))
-                                                                                                ((rest_54)
-                                                                                                 (unsafe-cdr lst_102))
-                                                                                                ((rhs_32)
-                                                                                                 (unsafe-car lst_103))
-                                                                                                ((rest_55)
-                                                                                                 (unsafe-cdr lst_103)))
-                                                                                     (let-values (((post-guard-var_8)
-                                                                                                   (lambda () #t)))
-                                                                                       (let-values ()
-                                                                                         (let-values (((elem_7)
-                                                                                                       (let-values ()
-                                                                                                         (let-values ()
-                                                                                                           (list
-                                                                                                            ids_45
-                                                                                                            (schemify_1
-                                                                                                             rhs_32))))))
-                                                                                           (let-values (((result_52)
-                                                                                                         (if (post-guard-var_8)
-                                                                                                           (for-loop_44
-                                                                                                            rest_54
-                                                                                                            rest_55)
-                                                                                                           null)))
-                                                                                             (cons
-                                                                                              elem_7
-                                                                                              result_52))))))
-                                                                                   null))))
-                                                                for-loop_44)
-                                                              lst_100
-                                                              lst_101)))
+                                                         'letrec*
+                                                         (apply
+                                                          append
+                                                          (let-values (((lst_100) idss_25) ((lst_101) rhss_74))
+                                                            (begin
+                                                              (check-list lst_100)
+                                                              (check-list lst_101)
+                                                              ((letrec-values (((for-loop_44)
+                                                                                (lambda (lst_102 lst_103)
+                                                                                  (if (if (pair? lst_102)
+                                                                                        (pair? lst_103)
+                                                                                        #f)
+                                                                                    (let-values (((ids_45)
+                                                                                                  (unsafe-car lst_102))
+                                                                                                 ((rest_54)
+                                                                                                  (unsafe-cdr lst_102))
+                                                                                                 ((rhs_32)
+                                                                                                  (unsafe-car lst_103))
+                                                                                                 ((rest_55)
+                                                                                                  (unsafe-cdr lst_103)))
+                                                                                      (let-values (((post-guard-var_8)
+                                                                                                    (lambda () #t)))
+                                                                                        (let-values ()
+                                                                                          (let-values (((elem_7)
+                                                                                                        (let-values ()
+                                                                                                          (let-values ()
+                                                                                                            (let-values (((rhs_33)
+                                                                                                                          (schemify_1
+                                                                                                                           rhs_32)))
+                                                                                                              (if (null?
+                                                                                                                   ids_45)
+                                                                                                                (let-values ()
+                                                                                                                  (list
+                                                                                                                   (list
+                                                                                                                    (gensym
+                                                                                                                     "lr")
+                                                                                                                    (make-let-values
+                                                                                                                     null
+                                                                                                                     rhs_33
+                                                                                                                     '(void)))))
+                                                                                                                (if (if (pair?
+                                                                                                                         ids_45)
+                                                                                                                      (null?
+                                                                                                                       (cdr
+                                                                                                                        ids_45))
+                                                                                                                      #f)
+                                                                                                                  (let-values ()
+                                                                                                                    (list
+                                                                                                                     (list
+                                                                                                                      ids_45
+                                                                                                                      rhs_33)))
+                                                                                                                  (let-values ()
+                                                                                                                    (let-values (((lr_0)
+                                                                                                                                  (gensym
+                                                                                                                                   "lr")))
+                                                                                                                      (list*
+                                                                                                                       (list
+                                                                                                                        lr_0
+                                                                                                                        (make-let-values
+                                                                                                                         ids_45
+                                                                                                                         rhs_33
+                                                                                                                         (list*
+                                                                                                                          'vector
+                                                                                                                          ids_45)))
+                                                                                                                       (let-values (((lst_104)
+                                                                                                                                     ids_45)
+                                                                                                                                    ((start_1)
+                                                                                                                                     0))
+                                                                                                                         (begin
+                                                                                                                           (check-list
+                                                                                                                            lst_104)
+                                                                                                                           (check-naturals
+                                                                                                                            start_1)
+                                                                                                                           ((letrec-values (((for-loop_45)
+                                                                                                                                             (lambda (lst_105
+                                                                                                                                                      pos_3)
+                                                                                                                                               (if (if (pair?
+                                                                                                                                                        lst_105)
+                                                                                                                                                     #t
+                                                                                                                                                     #f)
+                                                                                                                                                 (let-values (((id_15)
+                                                                                                                                                               (unsafe-car
+                                                                                                                                                                lst_105))
+                                                                                                                                                              ((rest_56)
+                                                                                                                                                               (unsafe-cdr
+                                                                                                                                                                lst_105))
+                                                                                                                                                              ((pos_4)
+                                                                                                                                                               pos_3))
+                                                                                                                                                   (let-values (((post-guard-var_9)
+                                                                                                                                                                 (lambda ()
+                                                                                                                                                                   #t)))
+                                                                                                                                                     (let-values ()
+                                                                                                                                                       (let-values (((elem_8)
+                                                                                                                                                                     (let-values ()
+                                                                                                                                                                       (let-values ()
+                                                                                                                                                                         (list
+                                                                                                                                                                          id_15
+                                                                                                                                                                          (list
+                                                                                                                                                                           'vector-ref
+                                                                                                                                                                           lr_0
+                                                                                                                                                                           pos_4))))))
+                                                                                                                                                         (let-values (((result_52)
+                                                                                                                                                                       (if (post-guard-var_9)
+                                                                                                                                                                         (for-loop_45
+                                                                                                                                                                          rest_56
+                                                                                                                                                                          (+
+                                                                                                                                                                           pos_3
+                                                                                                                                                                           1))
+                                                                                                                                                                         null)))
+                                                                                                                                                           (cons
+                                                                                                                                                            elem_8
+                                                                                                                                                            result_52))))))
+                                                                                                                                                 null))))
+                                                                                                                              for-loop_45)
+                                                                                                                            lst_104
+                                                                                                                            start_1)))))))))))))
+                                                                                            (let-values (((result_53)
+                                                                                                          (if (post-guard-var_8)
+                                                                                                            (for-loop_44
+                                                                                                             rest_54
+                                                                                                             rest_55)
+                                                                                                            null)))
+                                                                                              (cons
+                                                                                               elem_7
+                                                                                               result_53))))))
+                                                                                    null))))
+                                                                 for-loop_44)
+                                                               lst_100
+                                                               lst_101))))
                                                          (map2 schemify_1 bodys_22)))
                                                       (if (if (pair? v_42)
                                                             (if (let-values (((a_298) (car v_42))) (equal? 'if a_298))
@@ -4283,14 +4366,14 @@
                                                                           #f))
                                                                       #f)
                                                                     #f)
-                                                                (let-values (((id_15 rhs_33)
+                                                                (let-values (((id_16 rhs_34)
                                                                               (let-values (((d_310) (cdr v_42)))
-                                                                                (let-values (((id_16)
+                                                                                (let-values (((id_17)
                                                                                               (let-values (((a_317)
                                                                                                             (car
                                                                                                              d_310)))
                                                                                                 a_317))
-                                                                                             ((rhs_34)
+                                                                                             ((rhs_35)
                                                                                               (let-values (((d_311)
                                                                                                             (cdr
                                                                                                              d_310)))
@@ -4298,12 +4381,12 @@
                                                                                                               (car
                                                                                                                d_311)))
                                                                                                   a_318))))
-                                                                                  (values id_16 rhs_34)))))
+                                                                                  (values id_17 rhs_35)))))
                                                                   (let-values (((ex-id_0)
-                                                                                (hash-ref exports_6 id_15 #f)))
+                                                                                (hash-ref exports_6 id_16 #f)))
                                                                     (if ex-id_0
-                                                                      (list 'variable-set! ex-id_0 (schemify_1 rhs_33))
-                                                                      (list 'set! id_15 (schemify_1 rhs_33)))))
+                                                                      (list 'variable-set! ex-id_0 (schemify_1 rhs_34))
+                                                                      (list 'set! id_16 (schemify_1 rhs_34)))))
                                                                 (if (if (pair? v_42)
                                                                       (if (let-values (((a_319) (car v_42)))
                                                                             (equal?
@@ -4338,14 +4421,14 @@
                                                                             #f))
                                                                         #f)
                                                                       #f)
-                                                                  (let-values (((id_17)
+                                                                  (let-values (((id_18)
                                                                                 (let-values (((d_316) (cdr v_42)))
                                                                                   (let-values (((a_323) (car d_316)))
                                                                                     (let-values (((d_317) (cdr a_323)))
                                                                                       (let-values (((a_324)
                                                                                                     (car d_317)))
                                                                                         a_324))))))
-                                                                    (not (hash-ref mutated_15 id_17 #f)))
+                                                                    (not (hash-ref mutated_15 id_18 #f)))
                                                                   (if (if (pair? v_42)
                                                                         (if (let-values (((a_325) (car v_42)))
                                                                               (equal? '#%variable-reference a_325))
@@ -4415,13 +4498,13 @@
   (mutated-in-body)
   (lambda (l_12 exports_7)
     (let-values (((pending_0)
-                  (let-values (((lst_104) l_12))
+                  (let-values (((lst_106) l_12))
                     (begin
-                      (check-list lst_104)
-                      ((letrec-values (((for-loop_45)
-                                        (lambda (pending_1 lst_105)
-                                          (if (pair? lst_105)
-                                            (let-values (((v_56) (unsafe-car lst_105)) ((rest_56) (unsafe-cdr lst_105)))
+                      (check-list lst_106)
+                      ((letrec-values (((for-loop_46)
+                                        (lambda (pending_1 lst_107)
+                                          (if (pair? lst_107)
+                                            (let-values (((v_56) (unsafe-car lst_107)) ((rest_57) (unsafe-cdr lst_107)))
                                               (let-values (((pending_2)
                                                             (let-values (((pending_3) pending_1))
                                                               (let-values (((pending_4)
@@ -4460,7 +4543,7 @@
                                                                                             #f))
                                                                                         #f)
                                                                                       #f)
-                                                                                  (let-values (((ids_46 rhs_35)
+                                                                                  (let-values (((ids_46 rhs_36)
                                                                                                 (let-values (((d_324)
                                                                                                               (cdr
                                                                                                                v_57)))
@@ -4469,7 +4552,7 @@
                                                                                                                               (car
                                                                                                                                d_324)))
                                                                                                                   a_331))
-                                                                                                               ((rhs_36)
+                                                                                                               ((rhs_37)
                                                                                                                 (let-values (((d_325)
                                                                                                                               (cdr
                                                                                                                                d_324)))
@@ -4479,21 +4562,21 @@
                                                                                                                     a_332))))
                                                                                                     (values
                                                                                                      ids_47
-                                                                                                     rhs_36)))))
-                                                                                    (let-values (((lst_106) ids_46))
+                                                                                                     rhs_37)))))
+                                                                                    (let-values (((lst_108) ids_46))
                                                                                       (begin
-                                                                                        (check-list lst_106)
-                                                                                        ((letrec-values (((for-loop_46)
+                                                                                        (check-list lst_108)
+                                                                                        ((letrec-values (((for-loop_47)
                                                                                                           (lambda (pending_5
-                                                                                                                   lst_107)
+                                                                                                                   lst_109)
                                                                                                             (if (pair?
-                                                                                                                 lst_107)
-                                                                                                              (let-values (((id_18)
+                                                                                                                 lst_109)
+                                                                                                              (let-values (((id_19)
                                                                                                                             (unsafe-car
-                                                                                                                             lst_107))
-                                                                                                                           ((rest_57)
+                                                                                                                             lst_109))
+                                                                                                                           ((rest_58)
                                                                                                                             (unsafe-cdr
-                                                                                                                             lst_107)))
+                                                                                                                             lst_109)))
                                                                                                                 (let-values (((pending_6)
                                                                                                                               (let-values (((pending_7)
                                                                                                                                             pending_5))
@@ -4501,44 +4584,44 @@
                                                                                                                                               (let-values ()
                                                                                                                                                 (if (hash-ref
                                                                                                                                                      exports_7
-                                                                                                                                                     id_18
+                                                                                                                                                     id_19
                                                                                                                                                      #f)
                                                                                                                                                   (hash-set
                                                                                                                                                    pending_7
-                                                                                                                                                   id_18
+                                                                                                                                                   id_19
                                                                                                                                                    #t)
                                                                                                                                                   pending_7))))
                                                                                                                                   (values
                                                                                                                                    pending_8)))))
                                                                                                                   (if (not
                                                                                                                        #f)
-                                                                                                                    (for-loop_46
+                                                                                                                    (for-loop_47
                                                                                                                      pending_6
-                                                                                                                     rest_57)
+                                                                                                                     rest_58)
                                                                                                                     pending_6)))
                                                                                                               pending_5))))
-                                                                                           for-loop_46)
+                                                                                           for-loop_47)
                                                                                          pending_3
-                                                                                         lst_106))))
+                                                                                         lst_108))))
                                                                                   (let-values () pending_3))))))
                                                                 (values pending_4)))))
-                                                (if (not #f) (for-loop_45 pending_2 rest_56) pending_2)))
+                                                (if (not #f) (for-loop_46 pending_2 rest_57) pending_2)))
                                             pending_1))))
-                         for-loop_45)
-                       (hasheq)
-                       lst_104)))))
+                         for-loop_46)
+                       exports_7
+                       lst_106)))))
       ((letrec-values (((loop_9)
                         (lambda (mutated_16 l_13 delay-l_0 pending_9)
                           (if (null? l_13)
                             (let-values ()
-                              (let-values (((lst_108) delay-l_0))
+                              (let-values (((lst_110) delay-l_0))
                                 (begin
-                                  (check-list lst_108)
-                                  ((letrec-values (((for-loop_47)
-                                                    (lambda (mutated_17 lst_109)
-                                                      (if (pair? lst_109)
-                                                        (let-values (((v_58) (unsafe-car lst_109))
-                                                                     ((rest_58) (unsafe-cdr lst_109)))
+                                  (check-list lst_110)
+                                  ((letrec-values (((for-loop_48)
+                                                    (lambda (mutated_17 lst_111)
+                                                      (if (pair? lst_111)
+                                                        (let-values (((v_58) (unsafe-car lst_111))
+                                                                     ((rest_59) (unsafe-cdr lst_111)))
                                                           (let-values (((mutated_18)
                                                                         (let-values (((mutated_19) mutated_17))
                                                                           (let-values (((mutated_20)
@@ -4548,11 +4631,11 @@
                                                                                            mutated_19
                                                                                            pending_9))))
                                                                             (values mutated_20)))))
-                                                            (if (not #f) (for-loop_47 mutated_18 rest_58) mutated_18)))
+                                                            (if (not #f) (for-loop_48 mutated_18 rest_59) mutated_18)))
                                                         mutated_17))))
-                                     for-loop_47)
+                                     for-loop_48)
                                    mutated_16
-                                   lst_108))))
+                                   lst_110))))
                             (let-values ()
                               (let-values (((form_0) (car l_13)))
                                 (let-values (((v_59) form_0))
@@ -4571,24 +4654,24 @@
                                               #f))
                                           #f)
                                         #f)
-                                    (let-values (((ids_48 rhs_37)
+                                    (let-values (((ids_48 rhs_38)
                                                   (let-values (((d_329) (cdr v_59)))
                                                     (let-values (((ids_49) (let-values (((a_336) (car d_329))) a_336))
-                                                                 ((rhs_38)
+                                                                 ((rhs_39)
                                                                   (let-values (((d_330) (cdr d_329)))
                                                                     (let-values (((a_337) (car d_330))) a_337))))
-                                                      (values ids_49 rhs_38)))))
+                                                      (values ids_49 rhs_39)))))
                                       (let-values (((next-pending_0)
-                                                    (let-values (((lst_110) ids_48))
+                                                    (let-values (((lst_112) ids_48))
                                                       (begin
-                                                        (check-list lst_110)
-                                                        ((letrec-values (((for-loop_48)
-                                                                          (lambda (pending_10 lst_111)
-                                                                            (if (pair? lst_111)
-                                                                              (let-values (((id_19)
-                                                                                            (unsafe-car lst_111))
-                                                                                           ((rest_59)
-                                                                                            (unsafe-cdr lst_111)))
+                                                        (check-list lst_112)
+                                                        ((letrec-values (((for-loop_49)
+                                                                          (lambda (pending_10 lst_113)
+                                                                            (if (pair? lst_113)
+                                                                              (let-values (((id_20)
+                                                                                            (unsafe-car lst_113))
+                                                                                           ((rest_60)
+                                                                                            (unsafe-cdr lst_113)))
                                                                                 (let-values (((pending_11)
                                                                                               (let-values (((pending_12)
                                                                                                             pending_10))
@@ -4596,29 +4679,29 @@
                                                                                                               (let-values ()
                                                                                                                 (hash-remove
                                                                                                                  pending_12
-                                                                                                                 id_19))))
+                                                                                                                 id_20))))
                                                                                                   (values
                                                                                                    pending_13)))))
                                                                                   (if (not #f)
-                                                                                    (for-loop_48 pending_11 rest_59)
+                                                                                    (for-loop_49 pending_11 rest_60)
                                                                                     pending_11)))
                                                                               pending_10))))
-                                                           for-loop_48)
+                                                           for-loop_49)
                                                          pending_9
-                                                         lst_110)))))
-                                        (if (lambda? rhs_37)
-                                          (loop_9 mutated_16 (cdr l_13) (cons rhs_37 delay-l_0) next-pending_0)
+                                                         lst_112)))))
+                                        (if (lambda? rhs_38)
+                                          (loop_9 mutated_16 (cdr l_13) (cons rhs_38 delay-l_0) next-pending_0)
                                           (let-values (((mutated_21)
-                                                        (let-values (((lst_112) delay-l_0))
+                                                        (let-values (((lst_114) delay-l_0))
                                                           (begin
-                                                            (check-list lst_112)
-                                                            ((letrec-values (((for-loop_49)
-                                                                              (lambda (mutated_22 lst_113)
-                                                                                (if (pair? lst_113)
+                                                            (check-list lst_114)
+                                                            ((letrec-values (((for-loop_50)
+                                                                              (lambda (mutated_22 lst_115)
+                                                                                (if (pair? lst_115)
                                                                                   (let-values (((v_60)
-                                                                                                (unsafe-car lst_113))
-                                                                                               ((rest_60)
-                                                                                                (unsafe-cdr lst_113)))
+                                                                                                (unsafe-car lst_115))
+                                                                                               ((rest_61)
+                                                                                                (unsafe-cdr lst_115)))
                                                                                     (let-values (((mutated_23)
                                                                                                   (let-values (((mutated_24)
                                                                                                                 mutated_22))
@@ -4631,28 +4714,28 @@
                                                                                                       (values
                                                                                                        mutated_25)))))
                                                                                       (if (not #f)
-                                                                                        (for-loop_49 mutated_23 rest_60)
+                                                                                        (for-loop_50 mutated_23 rest_61)
                                                                                         mutated_23)))
                                                                                   mutated_22))))
-                                                               for-loop_49)
+                                                               for-loop_50)
                                                              mutated_16
-                                                             lst_112)))))
+                                                             lst_114)))))
                                             (loop_9
-                                             (find-mutated rhs_37 mutated_21 pending_9)
+                                             (find-mutated rhs_38 mutated_21 pending_9)
                                              (cdr l_13)
                                              null
                                              next-pending_0)))))
                                     (let-values ()
                                       (let-values (((mutated_26)
-                                                    (let-values (((lst_114) delay-l_0))
+                                                    (let-values (((lst_116) delay-l_0))
                                                       (begin
-                                                        (check-list lst_114)
-                                                        ((letrec-values (((for-loop_50)
-                                                                          (lambda (mutated_27 lst_115)
-                                                                            (if (pair? lst_115)
-                                                                              (let-values (((v_61) (unsafe-car lst_115))
-                                                                                           ((rest_61)
-                                                                                            (unsafe-cdr lst_115)))
+                                                        (check-list lst_116)
+                                                        ((letrec-values (((for-loop_51)
+                                                                          (lambda (mutated_27 lst_117)
+                                                                            (if (pair? lst_117)
+                                                                              (let-values (((v_61) (unsafe-car lst_117))
+                                                                                           ((rest_62)
+                                                                                            (unsafe-cdr lst_117)))
                                                                                 (let-values (((mutated_28)
                                                                                               (let-values (((mutated_29)
                                                                                                             mutated_27))
@@ -4665,12 +4748,12 @@
                                                                                                   (values
                                                                                                    mutated_30)))))
                                                                                   (if (not #f)
-                                                                                    (for-loop_50 mutated_28 rest_61)
+                                                                                    (for-loop_51 mutated_28 rest_62)
                                                                                     mutated_28)))
                                                                               mutated_27))))
-                                                           for-loop_50)
+                                                           for-loop_51)
                                                          mutated_16
-                                                         lst_114)))))
+                                                         lst_116)))))
                                         (loop_9
                                          (find-mutated form_0 mutated_26 pending_9)
                                          (cdr l_13)
@@ -4703,17 +4786,17 @@
               (if (let-values (((a_341) (car v_63))) (equal? 'case-lambda a_341))
                 (let-values (((d_335) (cdr v_63)))
                   (if (list? d_335)
-                    (let-values (((lst_116) d_335))
+                    (let-values (((lst_118) d_335))
                       (begin
-                        (check-list lst_116)
-                        ((letrec-values (((for-loop_51)
-                                          (lambda (result_53 lst_117)
-                                            (if (pair? lst_117)
-                                              (let-values (((v_64) (unsafe-car lst_117))
-                                                           ((rest_62) (unsafe-cdr lst_117)))
-                                                (let-values (((result_54)
+                        (check-list lst_118)
+                        ((letrec-values (((for-loop_52)
+                                          (lambda (result_54 lst_119)
+                                            (if (pair? lst_119)
+                                              (let-values (((v_64) (unsafe-car lst_119))
+                                                           ((rest_63) (unsafe-cdr lst_119)))
+                                                (let-values (((result_55)
                                                               (let-values ()
-                                                                (let-values (((result_55)
+                                                                (let-values (((result_56)
                                                                               (let-values ()
                                                                                 (let-values ()
                                                                                   (if (pair? v_64)
@@ -4724,28 +4807,28 @@
                                                                                         (list? d_336))
                                                                                       #f)
                                                                                     #f)))))
-                                                                  (values result_55)))))
-                                                  (if (if (not ((lambda x_15 (not result_54)) v_64)) (not #f) #f)
-                                                    (for-loop_51 result_54 rest_62)
-                                                    result_54)))
-                                              result_53))))
-                           for-loop_51)
+                                                                  (values result_56)))))
+                                                  (if (if (not ((lambda x_15 (not result_55)) v_64)) (not #f) #f)
+                                                    (for-loop_52 result_55 rest_63)
+                                                    result_55)))
+                                              result_54))))
+                           for-loop_52)
                          #t
-                         lst_116)))
+                         lst_118)))
                     #f))
                 #f)
               #f)
           (let-values (((formalss_7 bodys_24)
                         (let-values (((d_337) (cdr v_63)))
                           (let-values (((formalss_8 bodys_25)
-                                        (let-values (((lst_118) d_337))
+                                        (let-values (((lst_120) d_337))
                                           (begin
-                                            (check-list lst_118)
-                                            ((letrec-values (((for-loop_52)
-                                                              (lambda (formalss_9 bodys_26 lst_119)
-                                                                (if (pair? lst_119)
-                                                                  (let-values (((v_65) (unsafe-car lst_119))
-                                                                               ((rest_63) (unsafe-cdr lst_119)))
+                                            (check-list lst_120)
+                                            ((letrec-values (((for-loop_53)
+                                                              (lambda (formalss_9 bodys_26 lst_121)
+                                                                (if (pair? lst_121)
+                                                                  (let-values (((v_65) (unsafe-car lst_121))
+                                                                               ((rest_64) (unsafe-cdr lst_121)))
                                                                     (let-values (((formalss_10 bodys_27)
                                                                                   (let-values (((formalss_11)
                                                                                                 formalss_9)
@@ -4777,32 +4860,32 @@
                                                                                                         bodys_28))))))
                                                                                       (values formalss_12 bodys_29)))))
                                                                       (if (not #f)
-                                                                        (for-loop_52 formalss_10 bodys_27 rest_63)
+                                                                        (for-loop_53 formalss_10 bodys_27 rest_64)
                                                                         (values formalss_10 bodys_27))))
                                                                   (values formalss_9 bodys_26)))))
-                                               for-loop_52)
+                                               for-loop_53)
                                              null
                                              null
-                                             lst_118)))))
+                                             lst_120)))))
                             (values (reverse$1 formalss_8) (reverse$1 bodys_25))))))
-            (let-values (((lst_120) bodys_24))
+            (let-values (((lst_122) bodys_24))
               (begin
-                (check-list lst_120)
-                ((letrec-values (((for-loop_53)
-                                  (lambda (mutated_32 lst_121)
-                                    (if (pair? lst_121)
-                                      (let-values (((body_23) (unsafe-car lst_121)) ((rest_64) (unsafe-cdr lst_121)))
+                (check-list lst_122)
+                ((letrec-values (((for-loop_54)
+                                  (lambda (mutated_32 lst_123)
+                                    (if (pair? lst_123)
+                                      (let-values (((body_23) (unsafe-car lst_123)) ((rest_65) (unsafe-cdr lst_123)))
                                         (let-values (((mutated_33)
                                                       (let-values (((mutated_34) mutated_32))
                                                         (let-values (((mutated_35)
                                                                       (let-values ()
                                                                         (find-mutated* body_23 mutated_34 pending_14))))
                                                           (values mutated_35)))))
-                                          (if (not #f) (for-loop_53 mutated_33 rest_64) mutated_33)))
+                                          (if (not #f) (for-loop_54 mutated_33 rest_65) mutated_33)))
                                       mutated_32))))
-                   for-loop_53)
+                   for-loop_54)
                  mutated_31
-                 lst_120))))
+                 lst_122))))
           (if (if (pair? v_63)
                 (if (let-values (((a_344) (car v_63))) (equal? 'define-values a_344))
                   (let-values (((d_339) (cdr v_63)))
@@ -4818,14 +4901,14 @@
                       #f))
                   #f)
                 #f)
-            (let-values (((ids_50 rhs_39)
+            (let-values (((ids_50 rhs_40)
                           (let-values (((d_342) (cdr v_63)))
                             (let-values (((ids_51) (let-values (((a_347) (car d_342))) a_347))
-                                         ((rhs_40)
+                                         ((rhs_41)
                                           (let-values (((d_343) (cdr d_342)))
                                             (let-values (((a_348) (car d_343))) a_348))))
-                              (values ids_51 rhs_40)))))
-              (find-mutated rhs_39 mutated_31 pending_14))
+                              (values ids_51 rhs_41)))))
+              (find-mutated rhs_40 mutated_31 pending_14))
             (if (if (pair? v_63)
                   (if (let-values (((a_349) (car v_63))) (equal? 'quote a_349))
                     (let-values (((d_344) (cdr v_63)))
@@ -4843,17 +4926,17 @@
                         (if (pair? d_346)
                           (if (let-values (((a_352) (car d_346)))
                                 (if (list? a_352)
-                                  (let-values (((lst_122) a_352))
+                                  (let-values (((lst_124) a_352))
                                     (begin
-                                      (check-list lst_122)
-                                      ((letrec-values (((for-loop_54)
-                                                        (lambda (result_56 lst_123)
-                                                          (if (pair? lst_123)
-                                                            (let-values (((v_66) (unsafe-car lst_123))
-                                                                         ((rest_65) (unsafe-cdr lst_123)))
-                                                              (let-values (((result_57)
+                                      (check-list lst_124)
+                                      ((letrec-values (((for-loop_55)
+                                                        (lambda (result_57 lst_125)
+                                                          (if (pair? lst_125)
+                                                            (let-values (((v_66) (unsafe-car lst_125))
+                                                                         ((rest_66) (unsafe-cdr lst_125)))
+                                                              (let-values (((result_58)
                                                                             (let-values ()
-                                                                              (let-values (((result_58)
+                                                                              (let-values (((result_59)
                                                                                             (let-values ()
                                                                                               (let-values ()
                                                                                                 (if (pair? v_66)
@@ -4892,16 +4975,16 @@
                                                                                                         #f))
                                                                                                     #f)
                                                                                                   #f)))))
-                                                                                (values result_58)))))
-                                                                (if (if (not ((lambda x_16 (not result_57)) v_66))
+                                                                                (values result_59)))))
+                                                                (if (if (not ((lambda x_16 (not result_58)) v_66))
                                                                       (not #f)
                                                                       #f)
-                                                                  (for-loop_54 result_57 rest_65)
-                                                                  result_57)))
-                                                            result_56))))
-                                         for-loop_54)
+                                                                  (for-loop_55 result_58 rest_66)
+                                                                  result_58)))
+                                                            result_57))))
+                                         for-loop_55)
                                        #t
-                                       lst_122)))
+                                       lst_124)))
                                   #f))
                             (let-values (((d_350) (cdr d_346))) (list? d_350))
                             #f)
@@ -4913,18 +4996,18 @@
                                 (let-values (((ids_53 rhss_83)
                                               (let-values (((a_356) (car d_351)))
                                                 (let-values (((ids_54 rhss_84)
-                                                              (let-values (((lst_124) a_356))
+                                                              (let-values (((lst_126) a_356))
                                                                 (begin
-                                                                  (check-list lst_124)
-                                                                  ((letrec-values (((for-loop_55)
-                                                                                    (lambda (ids_55 rhss_85 lst_125)
-                                                                                      (if (pair? lst_125)
+                                                                  (check-list lst_126)
+                                                                  ((letrec-values (((for-loop_56)
+                                                                                    (lambda (ids_55 rhss_85 lst_127)
+                                                                                      (if (pair? lst_127)
                                                                                         (let-values (((v_67)
                                                                                                       (unsafe-car
-                                                                                                       lst_125))
-                                                                                                     ((rest_66)
+                                                                                                       lst_127))
+                                                                                                     ((rest_67)
                                                                                                       (unsafe-cdr
-                                                                                                       lst_125)))
+                                                                                                       lst_127)))
                                                                                           (let-values (((ids_56 rhss_86)
                                                                                                         (let-values (((ids_57)
                                                                                                                       ids_55)
@@ -4966,16 +5049,16 @@
                                                                                                              ids_58
                                                                                                              rhss_88)))))
                                                                                             (if (not #f)
-                                                                                              (for-loop_55
+                                                                                              (for-loop_56
                                                                                                ids_56
                                                                                                rhss_86
-                                                                                               rest_66)
+                                                                                               rest_67)
                                                                                               (values ids_56 rhss_86))))
                                                                                         (values ids_55 rhss_85)))))
-                                                                     for-loop_55)
+                                                                     for-loop_56)
                                                                    null
                                                                    null
-                                                                   lst_124)))))
+                                                                   lst_126)))))
                                                   (values (reverse$1 ids_54) (reverse$1 rhss_84)))))
                                              ((bodys_32) (let-values (((d_353) (cdr d_351))) d_353)))
                                   (values ids_53 rhss_83 bodys_32)))))
@@ -4986,17 +5069,17 @@
                           (if (pair? d_354)
                             (if (let-values (((a_361) (car d_354)))
                                   (if (list? a_361)
-                                    (let-values (((lst_126) a_361))
+                                    (let-values (((lst_128) a_361))
                                       (begin
-                                        (check-list lst_126)
-                                        ((letrec-values (((for-loop_56)
-                                                          (lambda (result_59 lst_127)
-                                                            (if (pair? lst_127)
-                                                              (let-values (((v_68) (unsafe-car lst_127))
-                                                                           ((rest_67) (unsafe-cdr lst_127)))
-                                                                (let-values (((result_60)
+                                        (check-list lst_128)
+                                        ((letrec-values (((for-loop_57)
+                                                          (lambda (result_60 lst_129)
+                                                            (if (pair? lst_129)
+                                                              (let-values (((v_68) (unsafe-car lst_129))
+                                                                           ((rest_68) (unsafe-cdr lst_129)))
+                                                                (let-values (((result_61)
                                                                               (let-values ()
-                                                                                (let-values (((result_61)
+                                                                                (let-values (((result_62)
                                                                                               (let-values ()
                                                                                                 (let-values ()
                                                                                                   (if (pair? v_68)
@@ -5023,16 +5106,16 @@
                                                                                                           #f))
                                                                                                       #f)
                                                                                                     #f)))))
-                                                                                  (values result_61)))))
-                                                                  (if (if (not ((lambda x_17 (not result_60)) v_68))
+                                                                                  (values result_62)))))
+                                                                  (if (if (not ((lambda x_17 (not result_61)) v_68))
                                                                         (not #f)
                                                                         #f)
-                                                                    (for-loop_56 result_60 rest_67)
-                                                                    result_60)))
-                                                              result_59))))
-                                           for-loop_56)
+                                                                    (for-loop_57 result_61 rest_68)
+                                                                    result_61)))
+                                                              result_60))))
+                                           for-loop_57)
                                          #t
-                                         lst_126)))
+                                         lst_128)))
                                     #f))
                               (let-values (((d_357) (cdr d_354))) (list? d_357))
                               #f)
@@ -5044,18 +5127,18 @@
                                   (let-values (((idss_34 rhss_91)
                                                 (let-values (((a_364) (car d_358)))
                                                   (let-values (((idss_35 rhss_92)
-                                                                (let-values (((lst_128) a_364))
+                                                                (let-values (((lst_130) a_364))
                                                                   (begin
-                                                                    (check-list lst_128)
-                                                                    ((letrec-values (((for-loop_57)
-                                                                                      (lambda (idss_36 rhss_93 lst_129)
-                                                                                        (if (pair? lst_129)
+                                                                    (check-list lst_130)
+                                                                    ((letrec-values (((for-loop_58)
+                                                                                      (lambda (idss_36 rhss_93 lst_131)
+                                                                                        (if (pair? lst_131)
                                                                                           (let-values (((v_69)
                                                                                                         (unsafe-car
-                                                                                                         lst_129))
-                                                                                                       ((rest_68)
+                                                                                                         lst_131))
+                                                                                                       ((rest_69)
                                                                                                         (unsafe-cdr
-                                                                                                         lst_129)))
+                                                                                                         lst_131)))
                                                                                             (let-values (((idss_37
                                                                                                            rhss_94)
                                                                                                           (let-values (((idss_38)
@@ -5095,33 +5178,33 @@
                                                                                                                idss_39
                                                                                                                rhss_96)))))
                                                                                               (if (not #f)
-                                                                                                (for-loop_57
+                                                                                                (for-loop_58
                                                                                                  idss_37
                                                                                                  rhss_94
-                                                                                                 rest_68)
+                                                                                                 rest_69)
                                                                                                 (values
                                                                                                  idss_37
                                                                                                  rhss_94))))
                                                                                           (values idss_36 rhss_93)))))
-                                                                       for-loop_57)
+                                                                       for-loop_58)
                                                                      null
                                                                      null
-                                                                     lst_128)))))
+                                                                     lst_130)))))
                                                     (values (reverse$1 idss_35) (reverse$1 rhss_92)))))
                                                ((bodys_34) (let-values (((d_360) (cdr d_358))) d_360)))
                                     (values idss_34 rhss_91 bodys_34)))))
                     (let-values (((new-mutated_0 simple-so-far?_0)
-                                  (let-values (((lst_130) idss_33) ((lst_131) rhss_90))
+                                  (let-values (((lst_132) idss_33) ((lst_133) rhss_90))
                                     (begin
-                                      (check-list lst_130)
-                                      (check-list lst_131)
-                                      ((letrec-values (((for-loop_58)
-                                                        (lambda (mutated_36 simple-so-far?_1 lst_132 lst_133)
-                                                          (if (if (pair? lst_132) (pair? lst_133) #f)
-                                                            (let-values (((ids_60) (unsafe-car lst_132))
-                                                                         ((rest_69) (unsafe-cdr lst_132))
-                                                                         ((rhs_41) (unsafe-car lst_133))
-                                                                         ((rest_70) (unsafe-cdr lst_133)))
+                                      (check-list lst_132)
+                                      (check-list lst_133)
+                                      ((letrec-values (((for-loop_59)
+                                                        (lambda (mutated_36 simple-so-far?_1 lst_134 lst_135)
+                                                          (if (if (pair? lst_134) (pair? lst_135) #f)
+                                                            (let-values (((ids_60) (unsafe-car lst_134))
+                                                                         ((rest_70) (unsafe-cdr lst_134))
+                                                                         ((rhs_42) (unsafe-car lst_135))
+                                                                         ((rest_71) (unsafe-cdr lst_135)))
                                                               (let-values (((mutated_37 simple-so-far?_2)
                                                                             (let-values (((mutated_38) mutated_36)
                                                                                          ((simple-so-far?_3)
@@ -5132,35 +5215,35 @@
                                                                                               (let-values (((still-simple?_0)
                                                                                                             (if simple-so-far?_3
                                                                                                               (simple?
-                                                                                                               rhs_41
+                                                                                                               rhs_42
                                                                                                                mutated_38)
                                                                                                               #f)))
                                                                                                 (if still-simple?_0
                                                                                                   (values
                                                                                                    (find-mutated
-                                                                                                    rhs_41
+                                                                                                    rhs_42
                                                                                                     mutated_38
                                                                                                     pending_14)
                                                                                                    #t)
                                                                                                   (values
                                                                                                    (find-mutated
-                                                                                                    rhs_41
-                                                                                                    (let-values (((lst_134)
+                                                                                                    rhs_42
+                                                                                                    (let-values (((lst_136)
                                                                                                                   ids_60))
                                                                                                       (begin
                                                                                                         (check-list
-                                                                                                         lst_134)
-                                                                                                        ((letrec-values (((for-loop_59)
+                                                                                                         lst_136)
+                                                                                                        ((letrec-values (((for-loop_60)
                                                                                                                           (lambda (mutated_40
-                                                                                                                                   lst_135)
+                                                                                                                                   lst_137)
                                                                                                                             (if (pair?
-                                                                                                                                 lst_135)
-                                                                                                                              (let-values (((id_20)
+                                                                                                                                 lst_137)
+                                                                                                                              (let-values (((id_21)
                                                                                                                                             (unsafe-car
-                                                                                                                                             lst_135))
-                                                                                                                                           ((rest_71)
+                                                                                                                                             lst_137))
+                                                                                                                                           ((rest_72)
                                                                                                                                             (unsafe-cdr
-                                                                                                                                             lst_135)))
+                                                                                                                                             lst_137)))
                                                                                                                                 (let-values (((mutated_41)
                                                                                                                                               (let-values (((mutated_42)
                                                                                                                                                             mutated_40))
@@ -5168,36 +5251,36 @@
                                                                                                                                                               (let-values ()
                                                                                                                                                                 (hash-set
                                                                                                                                                                  mutated_42
-                                                                                                                                                                 id_20
+                                                                                                                                                                 id_21
                                                                                                                                                                  #t))))
                                                                                                                                                   (values
                                                                                                                                                    mutated_43)))))
                                                                                                                                   (if (not
                                                                                                                                        #f)
-                                                                                                                                    (for-loop_59
+                                                                                                                                    (for-loop_60
                                                                                                                                      mutated_41
-                                                                                                                                     rest_71)
+                                                                                                                                     rest_72)
                                                                                                                                     mutated_41)))
                                                                                                                               mutated_40))))
-                                                                                                           for-loop_59)
+                                                                                                           for-loop_60)
                                                                                                          mutated_38
-                                                                                                         lst_134)))
+                                                                                                         lst_136)))
                                                                                                     pending_14)
                                                                                                    #f))))))
                                                                                 (values mutated_39 simple-so-far?_4)))))
                                                                 (if (not #f)
-                                                                  (for-loop_58
+                                                                  (for-loop_59
                                                                    mutated_37
                                                                    simple-so-far?_2
-                                                                   rest_69
-                                                                   rest_70)
+                                                                   rest_70
+                                                                   rest_71)
                                                                   (values mutated_37 simple-so-far?_2))))
                                                             (values mutated_36 simple-so-far?_1)))))
-                                         for-loop_58)
+                                         for-loop_59)
                                        mutated_31
                                        #t
-                                       lst_130
-                                       lst_131)))))
+                                       lst_132
+                                       lst_133)))))
                       (find-mutated* bodys_33 new-mutated_0 pending_14)))
                   (if (if (pair? v_63)
                         (if (let-values (((a_367) (car v_63))) (equal? 'if a_367))
@@ -5298,14 +5381,14 @@
                                       #f))
                                   #f)
                                 #f)
-                            (let-values (((id_21 rhs_42)
+                            (let-values (((id_22 rhs_43)
                                           (let-values (((d_382) (cdr v_63)))
-                                            (let-values (((id_22) (let-values (((a_386) (car d_382))) a_386))
-                                                         ((rhs_43)
+                                            (let-values (((id_23) (let-values (((a_386) (car d_382))) a_386))
+                                                         ((rhs_44)
                                                           (let-values (((d_383) (cdr d_382)))
                                                             (let-values (((a_387) (car d_383))) a_387))))
-                                              (values id_22 rhs_43)))))
-                              (find-mutated rhs_42 (hash-set mutated_31 id_21 #t) pending_14))
+                                              (values id_23 rhs_44)))))
+                              (find-mutated rhs_43 (hash-set mutated_31 id_22 #t) pending_14))
                             (if (if (pair? v_63)
                                   (if (let-values (((a_388) (car v_63))) (equal? '#%variable-reference a_388))
                                     (let-values (((d_384) (cdr v_63))) #t)
@@ -5329,34 +5412,34 @@
  (define-values
   (find-mutated*)
   (lambda (l_14 mutated_44 pending_15)
-    (let-values (((lst_136) l_14))
+    (let-values (((lst_138) l_14))
       (begin
-        (check-list lst_136)
-        ((letrec-values (((for-loop_60)
-                          (lambda (mutated_45 lst_137)
-                            (if (pair? lst_137)
-                              (let-values (((v_70) (unsafe-car lst_137)) ((rest_72) (unsafe-cdr lst_137)))
+        (check-list lst_138)
+        ((letrec-values (((for-loop_61)
+                          (lambda (mutated_45 lst_139)
+                            (if (pair? lst_139)
+                              (let-values (((v_70) (unsafe-car lst_139)) ((rest_73) (unsafe-cdr lst_139)))
                                 (let-values (((mutated_46)
                                               (let-values (((mutated_47) mutated_45))
                                                 (let-values (((mutated_48)
                                                               (let-values ()
                                                                 (find-mutated v_70 mutated_47 pending_15))))
                                                   (values mutated_48)))))
-                                  (if (not #f) (for-loop_60 mutated_46 rest_72) mutated_46)))
+                                  (if (not #f) (for-loop_61 mutated_46 rest_73) mutated_46)))
                               mutated_45))))
-           for-loop_60)
+           for-loop_61)
          mutated_44
-         lst_136)))))
+         lst_138)))))
  (define-values
   (make-set-variables)
   (lambda (accum_2 exports_8)
-    (let-values (((lst_138) accum_2))
+    (let-values (((lst_140) accum_2))
       (begin
-        (check-list lst_138)
-        ((letrec-values (((for-loop_61)
-                          (lambda (assigns_0 lst_139)
-                            (if (pair? lst_139)
-                              (let-values (((v_71) (unsafe-car lst_139)) ((rest_73) (unsafe-cdr lst_139)))
+        (check-list lst_140)
+        ((letrec-values (((for-loop_62)
+                          (lambda (assigns_0 lst_141)
+                            (if (pair? lst_141)
+                              (let-values (((v_71) (unsafe-car lst_141)) ((rest_74) (unsafe-cdr lst_141)))
                                 (let-values (((assigns_1)
                                               (let-values (((assigns_2) assigns_0))
                                                 (let-values (((assigns_3)
@@ -5387,18 +5470,18 @@
                                                                                   (let-values (((d_390) (cdr v_72)))
                                                                                     (let-values (((a_394) (car d_390)))
                                                                                       a_394))))
-                                                                      (let-values (((lst_140) ids_61))
+                                                                      (let-values (((lst_142) ids_61))
                                                                         (begin
-                                                                          (check-list lst_140)
-                                                                          ((letrec-values (((for-loop_62)
-                                                                                            (lambda (assigns_4 lst_141)
-                                                                                              (if (pair? lst_141)
-                                                                                                (let-values (((id_23)
+                                                                          (check-list lst_142)
+                                                                          ((letrec-values (((for-loop_63)
+                                                                                            (lambda (assigns_4 lst_143)
+                                                                                              (if (pair? lst_143)
+                                                                                                (let-values (((id_24)
                                                                                                               (unsafe-car
-                                                                                                               lst_141))
-                                                                                                             ((rest_74)
+                                                                                                               lst_143))
+                                                                                                             ((rest_75)
                                                                                                               (unsafe-cdr
-                                                                                                               lst_141)))
+                                                                                                               lst_143)))
                                                                                                   (let-values (((assigns_5)
                                                                                                                 (let-values (((assigns_6)
                                                                                                                               assigns_4))
@@ -5407,7 +5490,7 @@
                                                                                                                                   (let-values (((ex-var_0)
                                                                                                                                                 (hash-ref
                                                                                                                                                  exports_8
-                                                                                                                                                 id_23
+                                                                                                                                                 id_24
                                                                                                                                                  #f)))
                                                                                                                                     (if ex-var_0
                                                                                                                                       (cons
@@ -5417,24 +5500,24 @@
                                                                                                                                         (list
                                                                                                                                          'variable-set!
                                                                                                                                          ex-var_0
-                                                                                                                                         id_23))
+                                                                                                                                         id_24))
                                                                                                                                        assigns_6)
                                                                                                                                       assigns_6)))))
                                                                                                                     (values
                                                                                                                      assigns_7)))))
                                                                                                     (if (not #f)
-                                                                                                      (for-loop_62
+                                                                                                      (for-loop_63
                                                                                                        assigns_5
-                                                                                                       rest_74)
+                                                                                                       rest_75)
                                                                                                       assigns_5)))
                                                                                                 assigns_4))))
-                                                                             for-loop_62)
+                                                                             for-loop_63)
                                                                            assigns_2
-                                                                           lst_140))))
+                                                                           lst_142))))
                                                                     (let-values () assigns_2))))))
                                                   (values assigns_3)))))
-                                  (if (not #f) (for-loop_61 assigns_1 rest_73) assigns_1)))
+                                  (if (not #f) (for-loop_62 assigns_1 rest_74) assigns_1)))
                               assigns_0))))
-           for-loop_61)
+           for-loop_62)
          null
-         lst_138))))))
+         lst_140))))))
