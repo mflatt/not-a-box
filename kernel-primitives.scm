@@ -93,6 +93,8 @@
    current-directory
    current-environment-variables
    current-eval
+   current-gc-milliseconds
+   current-inexact-milliseconds
    current-input-port
    current-inspector
    current-library-collection-links
@@ -102,10 +104,12 @@
    current-load-relative-directory
    current-load/use-compiled
    current-logger
+   current-milliseconds
    current-output-port
    current-print
    current-prompt-read
    current-read-interaction
+   current-seconds
    current-thread
    datum-intern-literal
    default-continuation-prompt-tag
@@ -401,6 +405,7 @@
    thread-send
    thread-wait
    true-object?
+   time-apply
    unbox
    use-collection-link-paths
    use-compiled-file-paths

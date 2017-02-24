@@ -58,7 +58,7 @@ hash-demo: core.so
 struct-demo: core.so
 	scheme core.so struct-demo.ss
 
-core.so: core.sls core-equal.ss core-hash-code.ss core-struct.ss core-hamt.ss core-hash.ss core-error.ss core-bytes.ss
+core.so: core.sls core-equal.ss core-hash-code.ss core-struct.ss core-hamt.ss core-hash.ss core-error.ss core-bytes.ss core-time.ss
 	$(COMP) '(compile-file "core.sls")' | scheme -q
 
 

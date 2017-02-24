@@ -14,6 +14,12 @@
           current-inspector
           make-inspector
 
+          time-apply
+          current-inexact-milliseconds
+          current-milliseconds
+          current-gc-milliseconds
+          current-seconds
+
           struct:exn exn exn? exn-message exn-continuation-marks
           struct:exn:break exn:break exn:break? exn:break-continuation
           struct:exn:break:hang-up exn:break:hang-up exn:break:hang-up?
@@ -160,6 +166,7 @@
   (include "core-bytes.ss")
   (include "core-string.ss")
   (include "core-keyword.ss")
+  (include "core-time.ss")
   
   (set-base-exception-handler!)
   (set-primitive-applicables!))
