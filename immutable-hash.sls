@@ -23,6 +23,7 @@
 
 (library (immutable-hash)
   (export hash hasheqv hasheq
+          empty-hash empty-hasheqv empty-hasheq
           make-immutable-hash make-immutable-hasheqv make-immutable-hasheq
           immutable-hash-ref immutable-hash-set immutable-hash-remove
           immutable-hash-iterate-first immutable-hash-iterate-next
@@ -104,6 +105,9 @@
   
   (define empty-array (array))
   (define empty-bnode (make-bnode empty-array 0 0))
+  (define empty-hasheq (make-bnode/eq empty-array 0 0))
+  (define empty-hash (make-bnode/equal empty-array 0 0))
+  (define empty-hasheqv (make-bnode/eqv empty-array 0 0))
 
   (define immutable-hash? bnode?)
 

@@ -296,12 +296,6 @@
    [(s proc try-fail) (proc)]
    [(s proc try-fail . args) (apply proc args)]))
 
-(define (prefab-key? v) #t)
-(define (prefab-struct-key v) #f)
-(define (prefab-key->struct-type key field-count) #f)
-(define (make-prefab-struct key args) (error 'make-prefab-struct "not ready"))
-(define (struct->vector s) (error 'struct->vector "not ready"))
-
 (define (srcloc->string s)
   (and (srcloc-source s)
        (format "~s:~s:~s"
@@ -407,7 +401,7 @@
     [(|#%kernel|) kernel-table]
     [(|#%read|) tbd-table]
     [(|#%paramz|) tbd-table]
-    [(|#%unsafe|) tbd-table]
+    [(|#%unsafe|) unsafe-table]
     [(|#%foreign|) tbd-table]
     [(|#%futures|) tbd-table]
     [(|#%place|) tbd-table]
@@ -429,7 +423,8 @@
        ...
        ht)]))
 
-(include "kernel.scm")
+(include "kernel-primitives.scm")
+(include "unsafe-primitives.scm")
 
 (define linklet-table
   (make-primitive-table
@@ -469,6 +464,10 @@
 (define (fill-environment!)
   (eval `(import (error) (hash-code) (hash) (struct) (bytes) (equal) (port) (regexp)))
   (eval `(define raise-result-arity-error ',raise-result-arity-error))
-  (hash-for-each kernel-table
-                 (lambda (k v)
-                   (eval `(define ,k ',v)))))
+  (let ([install-table
+         (lambda (table)
+           (hash-for-each table
+                          (lambda (k v)
+                            (eval `(define ,k ',v)))))])
+    (install-table kernel-table)
+    (install-table unsafe-table)))

@@ -4,7 +4,9 @@ COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 expander-demo: expander.so expander-demo.ss
 	scheme regexp.so error.so struct.so hash-code.so hash.so equal.so port.so expander.so expander-demo.ss
 
-expander.so: expander.sls expander.scm expander-compat.scm compat.scm kernel.scm struct.so hash-code.so hash.so equal.so port.so bytes.so regexp.so linklet.so
+PRIMITIVES_TABLES = kernel-primitives.scm unsafe-primitives.scm
+
+expander.so: expander.sls expander.scm expander-compat.scm compat.scm $(PRIMITIVES_TABLES) struct.so hash-code.so hash.so equal.so port.so bytes.so regexp.so linklet.so
 	$(COMP) '(compile-file "expander.sls")' | scheme -q error.so struct.so equal.so hash-code.so hash.so port.so bytes.so regexp.so linklet.so
 
 expander.scm: expander.rktl convert.rkt schemify.rkt

@@ -40,8 +40,8 @@
 (define unsafe-fx- #3%fx-)
 (define unsafe-fx= #3%fx=)
 (define unsafe-fx<= #3%fx<=)
-(define unsafe-fxrshift fxarithmetic-shift-right)
-(define unsafe-fxlshift fxarithmetic-shift-left)
+(define unsafe-fxrshift #3%fxarithmetic-shift-right)
+(define unsafe-fxlshift #3%fxarithmetic-shift-left)
 
 (define vector-copy!
   (case-lambda

@@ -8,14 +8,11 @@
    eval-jit-enabled
    hash-set
    prefab-key->struct-type
-   unsafe-vector-ref
    wrap-evt
    arity-at-least?
    arithmetic-shift
    current-load-relative-directory
-   unsafe-fxvector-ref
    string?
-   unsafe-vector*-set!
    peek-char-or-special
    string<?
    sync
@@ -39,10 +36,8 @@
    char-numeric?
    filesystem-change-evt
    char>=?
-   unsafe-fx<
    default-continuation-prompt-tag
    make-weak-hasheq
-   unsafe-vector-set!
    datum-intern-literal
    string-locale-downcase
    flvector-length
@@ -51,7 +46,6 @@
    byte-pregexp?
    char<?
    current-load-extension
-   unsafe-fx-
    bitwise-ior
    hash-iterate-next
    simplify-path
@@ -60,9 +54,7 @@
    bytes?
    arity-at-least-value
    exn-continuation-marks
-   unsafe-bytes-length
    bytes->string/locale
-   unsafe-fx>=
    values
    reverse
    eof
@@ -76,7 +68,6 @@
    make-vector
    bytes<?
    bytes-append
-   unsafe-fxvector-set!
    negative?
    hash-remove
    expand-user-path
@@ -84,8 +75,6 @@
    error-print-source-location
    list->vector
    always-evt
-   unsafe-fx<=
-   unsafe-fx=
    list-ref
    hash-ref
    thread-wait
@@ -113,11 +102,9 @@
    semaphore-peek-evt
    exact?
    exact-nonnegative-integer?
-   unsafe-flvector-set!
    andmap
    string->symbol
    read-char-or-special
-   unsafe-vector*-ref
    eq-hash-code
    string-ci>=?
    hash-iterate-key+value
@@ -139,7 +126,6 @@
    string->uninterned-symbol
    call-with-values
    set-box!
-   unsafe-immutable-hash-iterate-key+value
    open-input-bytes
    prop:equal+hash
    make-hasheq
@@ -147,7 +133,6 @@
    byte-pregexp
    make-hasheqv
    peek-bytes
-   unsafe-fl>=
    use-compiled-file-paths
    path->complete-path
    log-level?
@@ -179,7 +164,6 @@
    vector
    real?
    resolve-path
-   unsafe-fxrshift
    parameterization-key
    vector->immutable-vector
    system-type
@@ -228,7 +212,6 @@
    fprintf
    bytes->path-element
    continuation-mark-set-first
-   unsafe-fl<
    call-with-escape-continuation
    current-read-interaction
    char-whitespace?
@@ -251,10 +234,7 @@
    string->path
    string-append
    make-string
-   unsafe-fx>
-   unsafe-fx+
    hash-keys-subset?
-   unsafe-fl>
    unbox
    vector-copy!
    current-compile
@@ -262,7 +242,6 @@
    apply
    close-input-port
    fxvector?
-   unsafe-flvector-ref
    fixnum?
    current-inspector
    string-length
@@ -271,7 +250,6 @@
    string-copy!
    list*
    hash-iterate-first
-   unsafe-immutable-hash-iterate-first
    list?
    prop:custom-write
    append
@@ -289,7 +267,6 @@
    pregexp?
    hash-map
    current-directory
-   unsafe-bytes-ref
    <
    current-compiled-file-roots
    log-message
@@ -299,9 +276,7 @@
    caadr
    length
    make-reader-graph
-   unsafe-struct-set!
    prop:procedure
-   unsafe-immutable-hash-iterate-next
    =
    *
    void?
@@ -317,7 +292,6 @@
    make-thread-cell
    +
    prefab-key?
-   unsafe-immutable-hash-iterate-key
    port-next-location
    box
    current-load
@@ -334,14 +308,11 @@
    make-bytes
    zero?
    current-code-inspector
-   unsafe-string-length
-   unsafe-vector-length
    byte?
    load-on-demand-enabled
    string>=?
    bytes->string/utf-8
    port-count-lines!
-   unsafe-vector*-length
    hash-iterate-value
    port-read-handler
    string->bytes/utf-8
@@ -353,7 +324,6 @@
    exception-handler-key
    flonum?
    procedure-arity
-   unsafe-fl<=
    gensym
    map
    system-path-convention-type
@@ -367,7 +337,6 @@
    hasheq
    bytes
    current-thread
-   unsafe-struct-ref
    read-decimal-as-inexact
    max
    struct?
@@ -383,11 +352,6 @@
    caaar caadr cadar caddr cdaar cdadr cddar cdddr
    caaaar caaadr caadar caaddr cadaar cadadr caddar cadddr
    cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr
-   
-   unsafe-car
-   unsafe-cdr
-   unsafe-list-tail
-   unsafe-list-ref
 
    mpair?
    mcons

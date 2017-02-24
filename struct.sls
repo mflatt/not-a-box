@@ -11,9 +11,14 @@
           struct-type-field-count
           unsafe-struct-ref
           unsafe-struct-set!
+          struct->vector
           struct-equal-hashity
           struct-type-transparent?
           struct-transparent-type
+          prefab-key?
+          prefab-struct-key
+          prefab-key->struct-type
+          make-prefab-struct
           prop:equal+hash
           prop:procedure
           prop:method-arity-error
@@ -74,12 +79,14 @@
 
   (define make-struct-type
     (case-lambda 
+     [(name parent-rtd fields auto-fields)
+      (make-struct-type name parent-rtd fields auto-fields #f '() (current-inspector) #f '() #f name)]
      [(name parent-rtd fields auto-fields auto-val)
-      (make-struct-type name parent-rtd fields auto-fields auto-val '() (current-inspector) '() #f name)]
+      (make-struct-type name parent-rtd fields auto-fields auto-val '() (current-inspector) #f '() #f name)]
      [(name parent-rtd fields auto-fields auto-val props)
-      (make-struct-type name parent-rtd fields auto-fields auto-val props (current-inspector) '() #f name)]
+      (make-struct-type name parent-rtd fields auto-fields auto-val props (current-inspector) #f '() #f name)]
      [(name parent-rtd fields auto-fields auto-val props insp)
-      (make-struct-type name parent-rtd fields auto-fields auto-val props insp #f name)]
+      (make-struct-type name parent-rtd fields auto-fields auto-val props insp #f '() #f name)]
      [(name parent-rtd fields auto-fields auto-val props insp proc-spec)
       (make-struct-type name parent-rtd fields auto-fields auto-val props insp proc-spec '() #f name)]
      [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables)
@@ -111,9 +118,9 @@
   (define struct-type-install-properties!
     (case-lambda
      [(rtd name fields auto-fields parent-rtd)
-      (struct-type-install-properties! rtd parent-rtd '() (current-inspector) '() #f name)]
+      (struct-type-install-properties! rtd parent-rtd '() (current-inspector) #f '() #f name)]
      [(rtd name fields auto-fields parent-rtd props)
-      (struct-type-install-properties! rtd parent-rtd props '(current-inspector) '() #f name)]
+      (struct-type-install-properties! rtd parent-rtd props '(current-inspector) #f '() #f name)]
      [(rtd name fields auto-fields parent-rtd props insp)
       (struct-type-install-properties! rtd parent-rtd props insp #f name)]
      [(rtd name fields auto-fields parent-rtd props insp proc-spec)
@@ -229,6 +236,128 @@
       (and (struct-type-transparent? t)
            t)))
 
+  (define (struct->vector s)
+    (if (record? s)
+        (let ([rtd (record-rtd s)])
+          ;; Create that vector that has '... for opaque ranges and each field
+          ;; value otherwise
+          (let-values ([(vec-len rec-len)
+                        ;; First, get the vector and record sizes
+                        (let loop ([vec-len 1] [rec-len 0] [rtd rtd] [dots-already? #f])
+                          (cond
+                           [(not rtd) (values vec-len rec-len)]
+                           [else
+                            (let ([insp (hashtable-ref rtd-inspectors rtd #f)]
+                                  [len (vector-length (record-type-field-names rtd))])
+                              (cond
+                               [(or (not insp)
+                                    (inspector-superior? (current-inspector) insp))
+                                ;; A transparent region
+                                (loop (+ vec-len len) (+ rec-len len) (record-type-parent rtd) #f)]
+                               [dots-already?
+                                ;; An opaque region that follows an opaque region
+                                (loop vec-len (+ rec-len len) (record-type-parent rtd) #t)]
+                               [else
+                                ;; The start of opaque regions
+                                (loop (add1 vec-len) (+ rec-len len) (record-type-parent rtd) #t)]))]))])
+            ;; Walk though the record's types again, this time filling in the vector
+            (let ([vec (make-vector vec-len '...)])
+              (vector-set! vec 0 (string->symbol (format "struct:~a" (record-type-name rtd))))
+              (let loop ([vec-pos vec-len] [rec-pos rec-len] [rtd rtd] [dots-already? #f])
+                (when rtd
+                  (let* ([insp (hashtable-ref rtd-inspectors rtd #f)]
+                         [len (vector-length (record-type-field-names rtd))]
+                         [rec-pos (- rec-pos len)])
+                    (cond
+                     [(or (not insp)
+                          (inspector-superior? (current-inspector) insp))
+                      ;; Copy over a transparent region
+                      (let ([vec-pos (- vec-pos len)])
+                        (let floop ([n 0])
+                          (cond
+                           [(= n len) (loop vec-pos rec-pos (record-type-parent rtd) #f)]
+                           [else
+                            (vector-set! vec (+ vec-pos n) (unsafe-struct-ref s (+ rec-pos n)))
+                            (floop (add1 n))])))]
+                     [dots-already?
+                      ;; Skip another opaque region
+                      (loop vec-pos rec-pos (record-type-parent rtd) #t)]
+                     [else
+                      ;; The vector already has '...
+                      (loop (sub1 vec-pos) rec-pos (record-type-parent rtd) #t)]))))
+              vec)))
+        ;; Any value that is not implemented as a record is treated as
+        ;; a fully opaque struct
+        (vector (string->symbol (format "struct:~a" ((inspect/object s) 'type))) '...)))
+
+  ;; ----------------------------------------
+
+  (define (exact-nonnegative-integer? v)
+    (and (integer? v)
+         (exact? v)
+         (not (negative? v))))
+
+  (define (prefab-key? k)
+    (or (symbol? k)
+        (and (pair? k)
+             (symbol? (car k))
+             (let* ([k (cdr k)] ; skip name
+                    [prev-k k]
+                    ;; The initial field count can be omitted:
+                    [k (if (and (pair? k)
+                                (exact-nonnegative-integer? (car k)))
+                           (cdr k)
+                           k)]
+                    [field-count (if (eq? prev-k k)
+                                     #f
+                                     (car prev-k))])
+               (let loop ([field-count field-count] [k k]) ; `k` is after name and field count
+                 (or (null? k)
+                     (and (pair? k)
+                          (let* ([prev-k k]
+                                 [k (if (and (pair? (car k))
+                                             (pair? (cdar k))
+                                             (null? (cddar k))
+                                             (exact-nonnegative-integer? (caar k)))
+                                        ;; Has a (list <auto-count> <auto-val>) element
+                                        (cdr k)
+                                        ;; Doesn't have auto-value element:
+                                        k)]
+                                 [auto-count (if (eq? prev-k k)
+                                                 0
+                                                 (caar prev-k))])
+                            (or (null? k)
+                                (and (pair? k)
+                                     (let* ([k (if (and (pair? k)
+                                                        (vector? (car k)))
+                                                   ;; Make sure it's a vector of indices
+                                                   ;; that are in range and distinct:
+                                                   (let* ([vec (car k)]
+                                                          [len (vector-length vec)])
+                                                     (let loop ([i 0] [set 0])
+                                                       (cond
+                                                        [(= i len) (cdr k)]
+                                                        [else
+                                                         (let ([pos (vector-ref vec i)])
+                                                           (and (exact-nonnegative-integer? pos)
+                                                                (or (not field-count)
+                                                                    (< pos (+ field-count auto-count)))
+                                                                (not (bitwise-bit-set? set pos))
+                                                                (loop (add1 i) (bitwise-ior set (bitwise-arithmetic-shift-left 1 pos)))))])))
+                                                   k)])
+                                       (or (null? k)
+                                           (and (pair? k)
+                                                ;; Supertype: make sure it's a pair with a
+                                                ;; symbol and a field count, and loop:
+                                                (symbol? (car k))
+                                                (pair? (cdr k))
+                                                (exact-nonnegative-integer? (cadr k))
+                                                (loop (cadr k) (cddr k)))))))))))))))
+
+  (define (prefab-struct-key v) #f)
+  (define (prefab-key->struct-type key field-count) #f)
+  (define (make-prefab-struct key args) (error 'make-prefab-struct "not ready"))
+
   ;; ----------------------------------------
 
   (define-values (prop:procedure procedure-struct? procedure-struct-ref)
@@ -288,7 +417,7 @@
                     (if (and (record? s (position-based-accessor-rtd pba))
                              (< p (position-based-accessor-field-count pba)))
                         (unsafe-struct-ref s (+ p (position-based-accessor-offset pba)))
-                        (error "bad access"))))
+                        (error 'struct-ref "bad access"))))
 
   (hashtable-set! (struct-type-prop-table prop:procedure)
                   (record-type-descriptor position-based-mutator)
@@ -296,4 +425,4 @@
                     (if (and (record? s (position-based-mutator-rtd pbm))
                              (< p (position-based-mutator-field-count pbm)))
                         (unsafe-struct-set! s (+ p (position-based-mutator-offset pbm)) v)
-                        (error "bad assignment")))))
+                        (error 'struct-set! "bad assignment")))))
