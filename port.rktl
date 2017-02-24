@@ -1724,7 +1724,7 @@
                                                                      ((v88_0) v_32)
                                                                      ((str89_0) str_0)
                                                                      ((start90_0) start_5)
-                                                                     ((amt91_0) amt_9)
+                                                                     ((temp91_0) (+ start_5 amt_9))
                                                                      ((temp92_0) '#\?)
                                                                      ((temp93_1) 'state))
                                                           (utf-8-decode!14.1
@@ -1739,7 +1739,7 @@
                                                            v88_0
                                                            str89_0
                                                            start90_0
-                                                           amt91_0))))
+                                                           temp91_0))))
                                             (if (zero? got-chars_2)
                                               (let-values ()
                                                 ((letrec-values (((loop_10)

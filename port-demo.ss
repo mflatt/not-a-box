@@ -1,17 +1,16 @@
 (import (port))
 
 (time
- (let loop ([j 1000])
+ (let loop ([j 10])
    (unless (zero? j)
      (let ()
        (define p (open-input-file "port.rktl"))
        (port-count-lines! p)
-       (let loop ()
+       (let loop ([total 0])
          (define s (read-string 100 p))
          (unless (eof-object? s)
-           (loop)))
+           (loop (+ total (string-length s)))))
        (loop (sub1 j))))))
-
 
 (time
  (let loop ([j 10])
