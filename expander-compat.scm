@@ -462,7 +462,7 @@
    primitive-table))
 
 (define (fill-environment!)
-  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (equal) (port) (regexp)))
+  (eval `(import (core) (port) (regexp)))
   (eval `(define raise-result-arity-error ',raise-result-arity-error))
   (let ([install-table
          (lambda (table)

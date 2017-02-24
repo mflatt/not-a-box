@@ -68,14 +68,8 @@
                   [gensym chez:gensym]
                   [file-exists? chez:file-exists?]
                   [directory-list chez:directory-list])
+          (core)
           (regexp)
-          (error)
-          (hash)
-          (immutable-hash)
-          (bytes)
-          (hash-code)
-          (equal)
-          (struct)
           (port)
           (linklet))
   (include "compat.scm")

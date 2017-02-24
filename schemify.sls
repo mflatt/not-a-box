@@ -13,12 +13,8 @@
                           format printf fprintf
                           write display newline port-name)
                   [void chez:void])
-          (hash)
-          (error)
-          (equal)
-          (struct)
+          (core)
           (regexp)
-          (bytes)
           (port)
           (primitive-procs))
 

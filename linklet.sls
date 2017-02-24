@@ -30,12 +30,9 @@
           variable-reference->instance
           variable-reference-constant?)
   (import (except (chezscheme)
-                  error make-parameter)
-          (hash)
-          (error)
-          (struct)
+                  error make-parameter equal?)
+          (core)
           (regexp)
-          (bytes)
           (schemify))
 
   (define (primitive->compiled-position prim) #f)

@@ -1,8 +1,4 @@
-(import (hash-code)
-        (immutable-hash)
-        (hash)
-        (equal)
-        (struct))
+(import (core))
 
 (define-values (struct:top top top? top-ref top-set!)
   (make-struct-type 'top #f 2 0 #f

@@ -1,5 +1,7 @@
 (import (linklet))
 
+(eval '(import (core)))
+
 (define l1 (compile-linklet
             '(linklet 
               () ; imports
@@ -16,4 +18,4 @@
               (display (f x))
               (newline))))
 
-(instantiate-linklet l2 (list (instantiate-linklet l1 null)))
+(instantiate-linklet l2 (list (instantiate-linklet l1 '())))

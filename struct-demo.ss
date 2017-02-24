@@ -1,7 +1,4 @@
-(load "struct.sls")
-(load "equal.sls")
-(import (struct)
-        (equal))
+(import (core))
 
 (define (show v) (printf "~s\n" v) v)
 
@@ -54,7 +51,7 @@
 
 (check (struct->vector an-a) '#(struct:a ...))
 
-(define sub-i (new-inspector root-inspector))
+(define sub-i (make-inspector (current-inspector)))
 (define-values (struct:q make-q q? q-ref q-set!)
   (make-struct-type 'q #f 2 0 #f '() sub-i))
 

@@ -83,12 +83,7 @@
            (1/open-output-string open-output-string)
            (1/input-port? input-port?)
            (1/output-port? output-port?)))
-  (import (struct)
-          (hash-code)
-          (hash)
-          (equal)
-          (error)
-          (bytes)
+  (import (core)
           (rename (except (chezscheme)
                           memv memq member
                           output-port-buffer-mode

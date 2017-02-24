@@ -3,11 +3,15 @@ Work-in-progress for running Racket on Chez Scheme.
 The files:
 
  *.sls - Chez Scheme libraries that provide implementations of Racket
-         primitives. In a few cases, such as hash tables, the library
-         is implemented directly in Chez. In other cases (and most of
-         them, in the long run), a corresponding "*.scm" file contains
-         the implementation extracted from from expanded and flattened
+         primitives, building up to the Racket expander. The
+         "core.sls" library is implemented directly in Chez. In other
+         cases, a corresponding "*.scm" file contains the
+         implementation extracted from from expanded and flattened
          Racket code.
+
+ core-*.ss - Part of "core.sls" (via `include`) to implement core data
+         structures (especially immutable hash tables), structs,
+         equality (with `prop:equal+hash` extension), etc.
 
  *.scm - Either a conversion from a ".rktl" file or a temporary
          compatibility layer to be `include`d into an ".sls" library.
@@ -23,21 +27,24 @@ The files:
 
             https://github.com/mflatt/racket
 
- * convert.rkt - A stop-gap linklet-to-library-body compiler, which is
+ convert.rkt - A stop-gap linklet-to-library-body compiler, which is
          used to convert a ".rktl" file to a ".sls" file.
 
- *.ss - Chez scripts to check that a library basically works. For
+ *-demo.ss - Chez scripts to check that a library basically works. For
          example "regexp-demo.ss" runs the regexp matcher on a few
          examples.
 
- *.rkt - Racket scripts like "convert.rkt" or comparisions like
+ schemify.rkt and match.rkt - Source to "schemify.scm", which is part
+         of the implementation of linklets.
+
+ other *.rkt - Racket scripts like "convert.rkt" or comparisions like
          "regexp-demo.rkt". For example, you can run "regexp-demo.rkt"
          and compare the reported timing to "regexp-dem.ss".
 
 
 Status and thoughts on various Racket subsystems:
 
- * "struct.sls" is half an implementation of Racket structures, with
+ * "core-struct.ss" is half an implementation of Racket structures, with
    structure-type properties, applicable structs, `gen:equal+hash`,
    and so on in terms of Chez records. Applicable structs work by
    adding an indirection to each function call (in a little compiler
