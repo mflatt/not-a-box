@@ -469,10 +469,11 @@
                (let ([k (entry*-key e)])
                  (cond [(key= key k)
                         (let ([new-arr (array-remove arr idx)])
-                          (cond [(contract-node? new-arr idx shift)
-                                 (array-ref new-arr 0)]
-                                [else
-                                 (make-bnode* key= new-arr (fxxor bitmap bit) (sub1 count))]))]
+                          (cond
+                           [(contract-node? new-arr shift)
+                            (array-ref new-arr 0)]
+                           [else
+                            (make-bnode* key= new-arr (fxxor bitmap bit) (sub1 count))]))]
                        [else
                         node]))]
               [else
@@ -483,7 +484,12 @@
                  (cond [(eq? child new-child)
                         node]
                        [else
-                        (make-bnode* key= (array-replace arr idx new-child) bitmap (sub1 count))]))]))]
+                        (let ([new-arr (array-replace arr idx new-child)])
+                          (cond
+                           [(contract-node? new-arr shift)
+                            (array-ref new-arr 0)]
+                           [else
+                            (make-bnode* key= new-arr bitmap (sub1 count))]))]))]))]
           [else node]))
 
   (define (cnode-remove node key keyhash key= shift)
@@ -493,7 +499,7 @@
            (let ([idx (cnode-index arr key key=)])
              (cond [idx
                     (let ([new-arr (array-remove arr idx)])
-                      (cond [(contract-node? new-arr idx shift)
+                      (cond [(contract-node? new-arr shift)
                              (array-ref new-arr 0)]
                             [else
                              (make-cnode new-arr hashcode)]))]
@@ -530,7 +536,7 @@
                          [(n _) (node-set n k2 v2 k2hash key= key-num shift)])
              n)]))
   
-  (define (contract-node? arr idx shift)
+  (define (contract-node? arr shift)
     (and (= (array-length arr) 1)
          (> shift 0)
          (entry*? (array-ref arr 0))))
