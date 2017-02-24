@@ -8,6 +8,10 @@
 (define-values (prop:incomplete-arity incomplete-arity? incomplete-arity-ref)
   (make-struct-type-property 'incomplete-arity))
 
+(define (procedure? v) (procedure-or-applicable-struct? v))
+
+(define apply apply/extract)
+
 (define (check-for-break) (void))
 (define break-enabled-key 'break-enabled-key)
 (define make-thread-cell box)
@@ -54,9 +58,16 @@
    [(output-port? o) (port-name o)]
    [else 'unknown-name]))
 
-(define (mpair? v) #f)
-(define (mcar m) #f)
-(define (mcdr m) #f)
+(define-record mpair (car cdr))
+(define (mcons a b) (make-mpair a b))
+(define (mcar m) (mpair-car m))
+(define (mcdr m) (mpair-cdr m))
+(define (set-mcar! m v) (set-mpair-car! m v))
+(define (set-mcdr! m v) (set-mpair-cdr! m v))
+
+(define (symbol<? a b)
+  (string<? (symbol->string a)
+            (symbol->string b)))
 
 (define-record keyword (symbol))
 
@@ -67,9 +78,8 @@
         (putprop sym 'keyword kw)
         kw)))
 
-(define (symbol<? a b)
-  (string<? (symbol->string a)
-            (symbol->string b)))
+(define (keyword->string kw)
+  (symbol->string (keyword-symbol kw)))
 
 (define (keyword<? a b)
   (symbol<? (keyword-symbol a) (keyword-symbol b)))
@@ -83,12 +93,19 @@
 
 (define string-copy!
   (case-lambda
-   [(dest dest-start src) (chez:string-copy! src 0 dest dest-start
-                                             (if (string? src) (string-length src) 0))]
-   [(dest dest-start src src-start) (chez:string-copy! src src-start dest dest-start
-                                                       (if (and (string? src) (number? src-start)) (- (string-length src) src-start) 0))]
-   [(dest dest-start src src-start src-end) (chez:string-copy! src src-start dest dest-start
-                                                               (if (and (number? src-start) (number? src-end)) (- src-end src-start) 0))]))
+   [(dest dest-start src)
+    (chez:string-copy! src 0 dest dest-start
+                       (if (string? src) (string-length src) 0))]
+   [(dest dest-start src src-start)
+    (chez:string-copy! src src-start dest dest-start
+                       (if (and (string? src) (number? src-start))
+                           (- (string-length src) src-start)
+                           0))]
+   [(dest dest-start src src-start src-end)
+    (chez:string-copy! src src-start dest dest-start
+                       (if (and (number? src-start) (number? src-end))
+                           (- src-end src-start)
+                           0))]))
 
 (define (box-cas! b v1 v2)
   (and (eq? v1 (unbox b))
@@ -414,7 +431,6 @@
 
 (include "kernel.scm")
 
-
 (define linklet-table
   (make-primitive-table
    linklet?
@@ -449,3 +465,10 @@
    variable-reference-constant?
 
    primitive-table))
+
+(define (fill-environment!)
+  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (equal) (port) (regexp)))
+  (eval `(define raise-result-arity-error ',raise-result-arity-error))
+  (hash-for-each kernel-table
+                 (lambda (k v)
+                   (eval `(define ,k ',v)))))

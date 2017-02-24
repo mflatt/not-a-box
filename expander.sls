@@ -59,7 +59,8 @@
                           open-input-string open-output-string get-output-string
                           format printf fprintf
                           write display newline
-                          input-port? output-port? port-name)
+                          input-port? output-port? port-name
+                          procedure? apply)
                   [void chez:void]
                   [string->number chez:string->number]
                   [substring chez:substring]
@@ -79,4 +80,5 @@
           (linklet))
   (include "compat.scm")
   (include "expander-compat.scm")
-  (include "expander.scm"))
+  (include "expander.scm")
+  (fill-environment!))

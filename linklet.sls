@@ -217,7 +217,5 @@
   (define (variable-reference->instance vr)
     (car (variable-reference-instance-link vr)))
 
-  (eval `(import (error) (hash-code) (hash) (struct) (bytes) (equal) (port) (regexp)))
-  (eval `(define null '()))
   (eval `(define variable-set! ',variable-set!))
   (eval `(define variable-ref ',variable-ref)))

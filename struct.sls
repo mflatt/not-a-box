@@ -17,6 +17,8 @@
           prop:equal+hash
           prop:procedure
           prop:method-arity-error
+          procedure-or-applicable-struct?
+          apply/extract
           |#%app|
           inspector?
           inspector-superior?
@@ -67,6 +69,9 @@
           (or (eq? parent sup-insp)
               (inspector-superior? sup-insp parent)))))
 
+  (define-record position-based-accessor (rtd offset field-count))
+  (define-record position-based-mutator (rtd offset field-count))
+
   (define make-struct-type
     (case-lambda 
      [(name parent-rtd fields auto-fields auto-val)
@@ -91,16 +96,17 @@
                                  (loop (sub1 fields)))))]
              [rtd (if parent-rtd
                       (make-record-type parent-rtd (symbol->string name) fields)
-                      (make-record-type (symbol->string name) fields))])
-        (define accessor rtd) ; pseduo-accessor for accessor maker
-        (define mutator rtd)  ; pseduo-mutator for mutator maker
+                      (make-record-type (symbol->string name) fields))]
+             [parent-count (if parent-rtd
+                               (struct-type-field-count parent-rtd)
+                               0)])
         (struct-type-install-properties! rtd name fields-count auto-fields parent-rtd
                                          props insp proc-spec immutables guard name)
         (values rtd
                 (record-constructor rtd)
                 (lambda (v) (record? v rtd))
-                accessor
-                mutator))]))
+                (make-position-based-accessor rtd parent-count (+ fields-count auto-fields))
+                (make-position-based-mutator rtd parent-count (+ fields-count auto-fields))))]))
 
   (define struct-type-install-properties!
     (case-lambda
@@ -117,8 +123,6 @@
      [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard)
       (struct-type-install-properties! rtd parent-rtd props insp proc-spec immutables guard name)]
      [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard constructor-name)
-      (define accessor rtd) ; pseduo-accessor for accessor maker
-      (define mutator rtd)  ; pseduo-mutator for mutator maker
       (define parent-props
         (cond
          [parent-rtd
@@ -130,7 +134,10 @@
             props)]
          [else
           '()]))
-      (hashtable-set! rtd-props rtd (append (map car props) parent-props))
+      (hashtable-set! rtd-props rtd (let ([props (append (map car props) parent-props)])
+                                      (if proc-spec
+                                          (cons prop:procedure props)
+                                          props)))
       (for-each (lambda (prop+val)
                   (let ([prop (car prop+val)]
                         [val (cdr prop+val)])
@@ -138,31 +145,38 @@
                                     rtd
                                     (let ([guard (struct-type-prop-guard prop)])
                                       (if guard
-                                          (guard val
-                                                 (list name
-                                                       fields
-                                                       auto-fields
-                                                       accessor
-                                                       mutator
-                                                       immutables
-                                                       parent-rtd
-                                                       #f))
+                                          (let ([parent-count (if parent-rtd
+                                                                  (struct-type-field-count parent-rtd)
+                                                                  0)])
+                                            (guard val
+                                                   (list name
+                                                         fields
+                                                         auto-fields
+                                                         (make-position-based-accessor rtd parent-count (+ fields auto-fields))
+                                                         (make-position-based-mutator rtd parent-count (+ fields auto-fields))
+                                                         immutables
+                                                         parent-rtd
+                                                         #f)))
                                           val)))))
                 props)
+      (when proc-spec
+        (hashtable-set! (struct-type-prop-table prop:procedure) rtd proc-spec))
       (hashtable-set! rtd-inspectors rtd insp)]))
   
   (define make-struct-field-accessor
     (case-lambda
-     [(rtd pos)
-      (record-field-accessor rtd (+ pos  (struct-type-parent-field-count rtd)))]
-     [(rtd pos name)
-      (make-struct-field-accessor rtd pos)]))
+     [(pba pos)
+      (record-field-accessor (position-based-accessor-rtd pba)
+                             (+ pos (position-based-accessor-offset pba)))]
+     [(pba pos name)
+      (make-struct-field-accessor pba pos)]))
   (define make-struct-field-mutator
     (case-lambda
-     [(rtd pos)
-      (record-field-mutator rtd (+ pos (struct-type-parent-field-count rtd)))]
-     [(rtd pos name)
-      (make-struct-field-mutator rtd pos)]))
+     [(pbm pos)
+      (record-field-mutator (position-based-mutator-rtd pbm)
+                            (+ pos (position-based-mutator-offset pbm)))]
+     [(pbm pos name)
+      (make-struct-field-mutator pbm pos)]))
 
   (define struct? record?)
   (define struct-type? record-type-descriptor?)
@@ -219,6 +233,22 @@
 
   (define-values (prop:procedure procedure-struct? procedure-struct-ref)
     (make-struct-type-property 'procedure))
+
+  (define (procedure-or-applicable-struct? v)
+    (or (procedure? v)
+        (and (record? v)
+             (hashtable-ref (struct-type-prop-table prop:procedure) (record-rtd v) #f))))
+
+  (define apply/extract
+    (case-lambda
+     [(proc args)
+      (if (procedure? proc)
+          (apply proc args)
+          (apply (extract-procedure proc) args))]
+     [(proc . argss)
+      (if (procedure? proc)
+          (apply apply proc argss)
+          (apply apply (extract-procedure proc) argss))]))
   
   (define-syntax |#%app|
     (syntax-rules ()
@@ -243,9 +273,27 @@
      [else (not-a-procedure f)]))
 
   (define (not-a-procedure f)
-    (error 'apply "not a procedure: ~s" f))
+    (error 'apply (format "not a procedure: ~s" f)))
 
   ;; ----------------------------------------
 
   (define-values (prop:method-arity-error method-arity-error? method-arity-error-ref)
-    (make-struct-type-property 'method-arity-error)))
+    (make-struct-type-property 'method-arity-error))
+
+  ;; ----------------------------------------
+
+  (hashtable-set! (struct-type-prop-table prop:procedure)
+                  (record-type-descriptor position-based-accessor)
+                  (lambda (pba s p)
+                    (if (and (record? s (position-based-accessor-rtd pba))
+                             (< p (position-based-accessor-field-count pba)))
+                        (unsafe-struct-ref s (+ p (position-based-accessor-offset pba)))
+                        (error "bad access"))))
+
+  (hashtable-set! (struct-type-prop-table prop:procedure)
+                  (record-type-descriptor position-based-mutator)
+                  (lambda (pbm s p v)
+                    (if (and (record? s (position-based-mutator-rtd pbm))
+                             (< p (position-based-mutator-field-count pbm)))
+                        (unsafe-struct-set! s (+ p (position-based-mutator-offset pbm)) v)
+                        (error "bad assignment")))))

@@ -3,7 +3,6 @@
   (make-primitive-table
    make-hasheq-placeholder
    vector?
-   srcloc-span
    hash
    sub1
    eval-jit-enabled
@@ -13,12 +12,9 @@
    wrap-evt
    arity-at-least?
    arithmetic-shift
-   keyword<?
    current-load-relative-directory
    unsafe-fxvector-ref
    string?
-   caddar
-   cadddr
    unsafe-vector*-set!
    peek-char-or-special
    string<?
@@ -29,14 +25,12 @@
    make-immutable-hasheq
    directory-exists?
    bytes=?
-   srcloc-line
    write
    make-fxvector
    make-flvector
    make-hash
    equal-hash-code
    read-accept-bar-quote
-   cadadr
    byte-regexp?
    struct-type?
    not
@@ -49,7 +43,6 @@
    default-continuation-prompt-tag
    make-weak-hasheq
    unsafe-vector-set!
-   mcar
    datum-intern-literal
    string-locale-downcase
    flvector-length
@@ -58,12 +51,10 @@
    byte-pregexp?
    char<?
    current-load-extension
-   srcloc?
    unsafe-fx-
    bitwise-ior
    hash-iterate-next
    simplify-path
-   raise-argument-error
    hash-copy
    string->number
    bytes?
@@ -106,24 +97,18 @@
    immutable?
    regexp?
    vector-set!
-   raise-range-error
    make-immutable-hasheqv
    current-eval
    string->bytes/latin-1
-   raise-result-error
    subbytes
    bytes-ref
    fxvector-length
    make-semaphore
    inspector-superior?
-   string->keyword
    version
    string-ref
-   raise-mismatch-error
    symbol<?
    void
-   cdddr
-   caar
    string-ci<?
    semaphore-peek-evt
    exact?
@@ -137,10 +122,8 @@
    string-ci>=?
    hash-iterate-key+value
    regexp-replace*
-   struct:exn:fail:filesystem
    make-struct-type
    vector-ref
-   srcloc-column
    write-string
    make-ephemeron
    abs
@@ -153,12 +136,9 @@
    placeholder-set!
    make-weak-hash
    modulo
-   srcloc-position
    string->uninterned-symbol
-   srcloc->string
    call-with-values
    set-box!
-   car
    unsafe-immutable-hash-iterate-key+value
    open-input-bytes
    prop:equal+hash
@@ -170,28 +150,22 @@
    unsafe-fl>=
    use-compiled-file-paths
    path->complete-path
-   exn:fail:filesystem?
    log-level?
    filesystem-change-evt-cancel
    cleanse-path
    <=
-   cddr
    char->integer
    list-tail
    path?
-   cdar
    exact-integer?
    path->bytes
    abort-current-continuation
    format
-   unsafe-car
-   mpair?
    for-each
    box-immutable
    flvector-set!
    string->bytes/locale
    eof-object?
-   unsafe-cdr
    read-bytes
    make-continuation-prompt-tag
    current-continuation-marks
@@ -200,14 +174,11 @@
    use-collection-link-paths
    break-enabled-key
    bytes-length
-   exn:fail:read
-   cons
    make-prefab-struct
    boolean?
    vector
    real?
    resolve-path
-   exn:fail:contract:variable
    unsafe-fxrshift
    parameterization-key
    vector->immutable-vector
@@ -220,7 +191,6 @@
    open-input-file
    eqv?
    make-inspector
-   caddr
    vector-immutable
    build-path
    cache-configuration
@@ -230,10 +200,7 @@
    hash?
    raise
    ephemeron-value
-   pair?
-   keyword?
    make-weak-box
-   exn:fail:contract
    make-parameter
    symbol->string
    make-hash-placeholder
@@ -248,7 +215,6 @@
    read-char
    make-struct-field-mutator
    exn?
-   cadar
    byte-regexp
    string<=?
    hash-remove!
@@ -271,18 +237,15 @@
    char>?
    make-placeholder
    current-print
-   srcloc
    char<=?
    integer->integer-bytes
    hash-eq?
    box-cas!
    hash-clear!
-   mcdr
    add1
    regexp-match?
    directory-list
    vector-length
-   srcloc-source
    make-hasheqv-placeholder
    check-for-break
    string->path
@@ -303,19 +266,15 @@
    fixnum?
    current-inspector
    string-length
-   cadr
    semaphore-post
    current-logger
    string-copy!
-   exn:fail?
    list*
    hash-iterate-first
    unsafe-immutable-hash-iterate-first
    list?
    prop:custom-write
    append
-   cdr
-   struct:exn:fail
    list->string
    system-library-subpath
    substring
@@ -328,7 +287,6 @@
    -
    list
    pregexp?
-   raise-arguments-error
    hash-map
    current-directory
    unsafe-bytes-ref
@@ -383,14 +341,11 @@
    string>=?
    bytes->string/utf-8
    port-count-lines!
-   exn:fail:read:non-char
    unsafe-vector*-length
    hash-iterate-value
-   prop:exn:srclocs
    port-read-handler
    string->bytes/utf-8
    struct->vector
-   exn:fail:read:eof
    >=
    inspector?
    with-input-from-file
@@ -416,6 +371,52 @@
    read-decimal-as-inexact
    max
    struct?
+   
+   keyword<?
+   string->keyword
+   keyword->string
+   keyword?
+
+   cons pair?
+   car cdr
+   caar cadr cdar cddr
+   caaar caadr cadar caddr cdaar cdadr cddar cdddr
+   caaaar caaadr caadar caaddr cadaar cadadr caddar cadddr
+   cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr
+   
+   unsafe-car
+   unsafe-cdr
+   unsafe-list-tail
+   unsafe-list-ref
+
+   mpair?
+   mcons
+   mcar
+   mcdr
+   set-mcar!
+   set-mcdr!
+
+   raise-argument-error
+   raise-arguments-error
+   raise-result-error
+   raise-mismatch-error
+   raise-range-error
+
+   struct:exn exn exn? exn-message exn-continuation-marks
+   struct:exn:break exn:break exn:break? exn:break-continuation
+   struct:exn:fail exn:fail exn:fail?
+   struct:exn:fail:contract exn:fail:contract exn:fail:contract?
+   struct:exn:fail:contract:variable exn:fail:contract:variable exn:fail:contract:variable?
+   struct:exn:fail:filesystem exn:fail:filesystem exn:fail:filesystem?
+   struct:exn:fail:read exn:fail:read exn:fail:read? exn:fail:read-srclocs
+   struct:exn:fail:read:eof exn:fail:read:eof exn:fail:read:eof?
+   struct:exn:fail:read:non-char exn:fail:read:non-char exn:fail:read:non-char?
+
+   prop:exn:srclocs exn:srclocs? exn:srclocs-accessor
+
+   struct:srcloc srcloc srcloc?
+   srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
+   srcloc->string
 
    [host:datum->syntax datum->syntax]
    [host:syntax->datum syntax->datum]

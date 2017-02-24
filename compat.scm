@@ -23,6 +23,9 @@
 
 (define unsafe-car #3%car)
 (define unsafe-cdr #3%cdr)
+(define unsafe-list-tail #3%list-tail)
+(define unsafe-list-ref #3%list-ref)
+
 (define unsafe-fl< #3%fl<)
 (define unsafe-fl> #3%fl>)
 (define unsafe-fl= #3%fl=)

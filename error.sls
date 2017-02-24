@@ -14,6 +14,7 @@
           make-inspector
 
           struct:exn exn exn? exn-message exn-continuation-marks
+          struct:exn:break exn:break exn:break? exn:break-continuation
           struct:exn:fail exn:fail exn:fail?
           struct:exn:fail:contract exn:fail:contract exn:fail:contract?
           struct:exn:fail:contract:variable exn:fail:contract:variable exn:fail:contract:variable?
@@ -189,6 +190,7 @@
                (define make-name name)))])))
   
   (struct exn (message continuation-marks))
+  (struct exn:break exn (continuation))
   (struct exn:fail exn ())
   (struct exn:fail:filesystem exn:fail ())
   (struct exn:fail:read exn:fail (srclocs))
