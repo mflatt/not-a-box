@@ -21,6 +21,7 @@
    append
    apply
    arithmetic-shift
+   arity-at-least
    arity-at-least-value
    arity-at-least?
    assoc
@@ -52,12 +53,20 @@
    bytes?
    caadr
    cache-configuration
+   call/cc
    call-with-continuation-barrier
    call-with-continuation-prompt
+   call-with-current-continuation
    call-with-escape-continuation
    call-with-semaphore
    call-with-values
    ceiling
+   channel?
+   channel-put-evt
+   chaperone-of?
+   chaperone-procedure
+   chaperone-procedure*
+   chaperone-struct
    char->integer
    char-alphabetic?
    char-numeric?
@@ -69,8 +78,10 @@
    char>?
    char?
    check-for-break
+   checked-procedure-check-and-extract
    cleanse-path
    close-input-port
+   compile-enforce-module-constants
    complete-path?
    continuation-mark-set-first
    continuation-prompt-available?
@@ -90,7 +101,9 @@
    current-load-relative-directory
    current-load/use-compiled
    current-logger
+   current-output-port
    current-print
+   current-prompt-read
    current-read-interaction
    current-thread
    datum-intern-literal
@@ -100,6 +113,7 @@
    display
    dynamic-wind
    environment-variables-ref
+   environment-variables-set!
    eof
    eof-object?
    ephemeron-value
@@ -115,6 +129,7 @@
    exact-nonnegative-integer?
    exact-positive-integer?
    exact?
+   exact->inexact
    exception-handler-key
    exn-continuation-marks
    exn-message
@@ -130,6 +145,7 @@
    find-system-path
    fixnum?
    flonum?
+   floor
    flvector-length
    flvector-set!
    flvector?
@@ -163,6 +179,13 @@
    hasheq
    hasheqv
    immutable?
+   impersonate-procedure
+   impersonate-procedure*
+   impersonate-struct
+   impersonator-of?
+   impersonator-property?
+   inexact?
+   inexact->exact
    input-port?
    inspector-superior?
    inspector?
@@ -177,10 +200,13 @@
    list-ref
    list-tail
    list?
+   load
+   load-extension
    load-on-demand-enabled
    logger?
    log-level?
    log-message
+   make-arity-at-least
    make-bytes
    make-continuation-prompt-tag
    make-ephemeron
@@ -213,8 +239,10 @@
    make-weak-hasheq
    map
    max
+   min
    modulo
    negative?
+   newline
    not
    null
    null?
@@ -224,6 +252,8 @@
    open-input-bytes
    open-input-file
    ormap
+   output-port?
+   parameterization?
    parameterization-key
    path->bytes
    path->complete-path
@@ -246,12 +276,21 @@
    pregexp
    pregexp?
    primitive-table
+   print
    procedure-arity
    procedure-arity-includes?
+   procedure-extract-target
+   procedure-reduce-arity
+   procedure-rename
+   procedure->method
    procedure?
+   prop:arity-string
+   prop:checked-procedure
    prop:custom-write
    prop:equal+hash
    prop:evt
+   prop:impersonator-of
+   prop:incomplete-arity
    prop:method-arity-error
    prop:procedure
    raise
@@ -284,6 +323,7 @@
    string->bytes/latin-1
    string->bytes/locale
    string->bytes/utf-8
+   string->immutable-string
    string->number
    string->path
    string->symbol
@@ -309,6 +349,7 @@
    struct->vector
    struct-type?
    struct?
+   struct:arity-at-least
    sub1
    subbytes
    substring

@@ -5,32 +5,57 @@
 
 (define l (cdddr (read)))
 
-(define rxes (make-hash))
+(define lifts (make-hash))
+(define ordered-lifts null)
 
-;; Hack to deal with a special case in "expander.rktl":
+(define (lift-set! k v)
+  (unless (hash-ref lifts k #f)
+    (hash-set! lifts k v)
+    (set! ordered-lifts (cons k ordered-lifts))))
+
+;; Ad hoc patterns to deal with a special case in "expander.rktl":
+(define (quote? v)
+  (and (pair? v)
+       (eq? (car v) 'quote)
+       (pair? (cdr v))
+       (null? (cddr v))))
 (define (nested-hash? v)
   (and (pair? v)
        (eq? #f (car v))
        (hash? (cdr v))))
+(define (list-of-keywords? v)
+  (and (pair? v)
+       (list? v)
+       (andmap keyword? v)))
 
 ;; Gather all literal regexps and hash tables
-(define (rx v)
+(define (lift v)
   (cond
    [(or (regexp? v) (byte-regexp? v))
     (define s (gensym 'rx))
-    (hash-set! rxes v s)]
+    (lift-set! v s)]
    [(or (pregexp? v) (byte-pregexp? v))
     (define s (gensym 'px))
-    (hash-set! rxes v s)]
-   [(or (hash? v)
-        (nested-hash? v))
+    (lift-set! v s)]
+   [(hash? v)
     (define s (gensym 'hash))
-    (hash-set! rxes v s)]
+    (lift-set! v s)]
+   [(and (quote? v)
+         (nested-hash? (cadr v)))
+    (define s (gensym 'nhash))
+    (lift-set! (cadr v) s)]
+   [(keyword? v)
+    (define s (gensym 'kw))
+    (lift-set! v s)]
+   [(and (quote? v)
+         (list-of-keywords? (cadr v)))
+    (define s (gensym 'kws))
+    (lift-set! (cadr v) s)]
    [(pair? v)
-    (rx (car v))
-    (rx (cdr v))]))
+    (lift (car v))
+    (lift (cdr v))]))
 
-(rx l)
+(lift l)
 
 ;; Set a hook to redirect literal regexps and
 ;; hash tables to lifted bindings
@@ -45,12 +70,19 @@
               (pregexp? (cadr v))
               (byte-pregexp? (cadr v))
               (hash? (cadr v))
-              (nested-hash? (cadr v))))
+              (nested-hash? (cadr v))
+              (keyword? (cadr v))
+              (list-of-keywords? (cadr v))))
      10]
     [(bytes? v) (* 3 (bytes-length v))]
     [(and (symbol? v) (regexp-match? #rx"#" (symbol->string v)))
      (+ 2 (string-length (symbol->string v)))]
     [(char? v) 5]
+    [(or (keyword? v)
+         (regexp? v)
+         (pregexp? v)
+         (hash? v))
+     (error 'lift "value that needs lifting is in an unrecognized context: ~v" v)]
     [else #f])))
 
 ;; This hook goes with `pretty-print-size-hook`
@@ -64,8 +96,10 @@
               (pregexp? (cadr v))
               (byte-pregexp? (cadr v))
               (hash? (cadr v))
-              (nested-hash? (cadr v))))
-     (write (hash-ref rxes (cadr v)) out)]
+              (nested-hash? (cadr v))
+              (keyword? (cadr v))
+              (list-of-keywords? (cadr v))))
+     (write (hash-ref lifts (cadr v)) out)]
     [(bytes? v)
      (display "#vu8")
      (write (bytes->list v) out)]
@@ -76,7 +110,8 @@
     [else #f])))
 
 ;; Write out lifted regexp and hash-table literals
-(for ([(k v) (in-hash rxes)])
+(for ([k (in-list (reverse ordered-lifts))])
+  (define v (hash-ref lifts k))
   (pretty-write
    `(define ,v
      ,(let loop ([k k])
@@ -98,6 +133,9 @@
                 `(quote ,e)))]
          [(pair? k)
           `(cons ,(loop (car k)) ,(loop (cdr k)))]
+         [(keyword? k)
+          `(string->keyword ,(keyword->string k))]
+         [(null? k) ''()]
          [else k])))))
 
 ;; Keep track of symbols that are known to be plain

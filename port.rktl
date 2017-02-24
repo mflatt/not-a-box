@@ -3679,9 +3679,9 @@
                        1/prop:custom-write
                        (lambda (p_7 port_0 mode_1)
                          (begin
-                           (1/write-string "#<path:" port_0)
+                           (if mode_1 (let-values () (1/write-string "#<path:" port_0)) (void))
                            (1/write-string (1/bytes->string/locale (path-bytes p_7)) port_0)
-                           (1/write-string ">" port_0)))))
+                           (if mode_1 (let-values () (1/write-string ">" port_0)) (void))))))
                      (current-inspector)
                      #f
                      '(0 1)

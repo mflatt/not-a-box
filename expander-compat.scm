@@ -1,12 +1,21 @@
 
 (define-values (prop:checked-procedure checked-procedure? checked-procedure-ref)
   (make-struct-type-property 'checked-procedure))
-(define-values (prop:impersonator-of impersonator-of? impersonator-of-ref)
+(define-values (prop:impersonator-of -impersonator-of? impersonator-of-ref)
   (make-struct-type-property 'impersonator-of))
 (define-values (prop:arity-string arity-string? arity-string-ref)
   (make-struct-type-property 'arity-string))
 (define-values (prop:incomplete-arity incomplete-arity? incomplete-arity-ref)
   (make-struct-type-property 'incomplete-arity))
+
+(define (checked-procedure-check-and-extract st v alt-proc v1 v2)
+  (if (and (record? v st)
+           (checked-procedure? v))
+      ((checked-procedure-ref v) v1 v2)
+      (|#%app| alt-proc v1 v2)))
+
+(define (unsafe-chaperone-procedure . args) (error "unsafe-chaperone-procedure not ready"))
+(define (unsafe-impersonate-procedure . args) (error "unsafe-impersonate-procedure not ready"))
 
 (define (procedure? v) (procedure-or-applicable-struct? v))
 
@@ -64,25 +73,6 @@
 (define (mcdr m) (mpair-cdr m))
 (define (set-mcar! m v) (set-mpair-car! m v))
 (define (set-mcdr! m v) (set-mpair-cdr! m v))
-
-(define (symbol<? a b)
-  (string<? (symbol->string a)
-            (symbol->string b)))
-
-(define-record keyword (symbol))
-
-(define (string->keyword s)
-  (define sym (string->symbol s))
-  (or (getprop sym 'keyword #f)
-      (let ([kw (make-keyword sym)])
-        (putprop sym 'keyword kw)
-        kw)))
-
-(define (keyword->string kw)
-  (symbol->string (keyword-symbol kw)))
-
-(define (keyword<? a b)
-  (symbol<? (keyword-symbol a) (keyword-symbol b)))
 
 (define string-locale-downcase string-downcase)
 
@@ -149,6 +139,8 @@
 (define (environment-variables-ref e k)
   (getenv (bytes->string/utf-8 k)))
 (define (current-environment-variables) #f)
+(define (environment-variables-set! e k v)
+  (error "environment-variables-set! not ready"))
 
 (define (->string p)
   (if (path? p) (path->string p) p))
@@ -220,6 +212,8 @@
   (make-parameter #f))
 (define error-print-source-location
   (make-parameter #t))
+(define current-prompt-read
+  (make-parameter #f))
 
 (define current-compile
   (make-parameter 'current-compile))
@@ -227,6 +221,11 @@
   (make-parameter 'current-load))
 (define load-on-demand-enabled
   (make-parameter #f))
+
+(define compile-enforce-module-constants
+  (make-parameter #t))
+
+(define (load-extension f) (error "no load-extension"))
 
 (define (cache-configuration id proc) (proc))
 
@@ -297,9 +296,12 @@
    [(s proc try-fail) (proc)]
    [(s proc try-fail . args) (apply proc args)]))
 
+(define (channel? v) #f)
+(define (channel-put-evt ch v) #f)
+
 (define (srcloc->string s)
   (and (srcloc-source s)
-       (format "~s:~s:~s"
+       (format "~a:~s:~s"
                (srcloc-source s)
                (srcloc-line s)
                (srcloc-column s))))
@@ -309,6 +311,30 @@
 (define arity-at-least (make-record-constructor-descriptor struct:arity-at-least #f #f))
 (define arity-at-least-value (record-accessor struct:arity-at-least 0))
 (define make-arity-at-least arity-at-least)
+
+(define (procedure-arity p)
+  (arity-at-least 0))
+
+(define (procedure-reduce-arity p a)
+  p)
+
+(define (procedure->method p)
+  p)
+
+(define (procedure-rename p name)
+  p)
+
+(define (chaperone-procedure p . args) p)
+(define (chaperone-procedure* p . args) p)
+(define (impersonate-procedure p . args) p)
+(define (impersonate-procedure* p . args) p)
+(define (chaperone-struct s . args) s)
+(define (impersonate-struct s . args) s)
+
+(define (chaperone-of? a b) (equal? a b))
+(define (impersonator-of? a b) (equal? a b))
+
+(define (impersonator-property? v) #f)
 
 (define (make-hash-placeholder v) #f)
 (define (make-hasheq-placeholder v) #f)
@@ -352,9 +378,6 @@
 
 (define current-load-extension
   (make-parameter (lambda args (error "no extensions"))))
-
-(define (procedure-arity p)
-  (arity-at-least 0))
 
 (define string->number
   (case-lambda [(s) (string->number s 10 #f 'decimal-as-inexact)]

@@ -25,7 +25,7 @@
        (cond
         [(null? marks)
          (if (eq? k parameterization-key)
-             empty-hasheq
+             empty-parameterization
              none-v)]
         [(eq? k (caar marks)) (cdar marks)]
         [else (loop (cdr marks))]))]))
@@ -40,11 +40,15 @@
 
 (define parameterization-key (gensym "parameterization-key"))
 
+(define-record parameterization (ht))
+
+(define empty-parameterization (make-parameterization empty-hasheq))
+
 (define (extend-parameterization p . args)
-  (let loop ([p p] [args args])
+  (let loop ([ht (parameterization-ht p)] [args args])
     (cond
-     [(null? args) p]
-     [else (loop (hamt-set p (car args) (cadr args))
+     [(null? args) (make-parameterization ht)]
+     [else (loop (hamt-set ht (car args) (cadr args))
                  (cddr args))])))
 
 (define make-parameter
@@ -54,10 +58,11 @@
      (define self
        (case-lambda
          [() (hamt-ref
-              (continuation-mark-set-first
-               (current-continuation-marks)
-               parameterization-key
-               empty-hasheq)
+              (parameterization-ht
+               (continuation-mark-set-first
+                (current-continuation-marks)
+                parameterization-key
+                empty-parameterization))
               self
               (lambda () v))]
          [(v2) (set! v v2)]))

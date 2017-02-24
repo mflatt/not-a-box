@@ -6,6 +6,7 @@
           parameterization-key
           make-parameter
           extend-parameterization
+          parameterization?
 
           error-print-width
           error-value->string-handler
@@ -59,6 +60,7 @@
           procedure-or-applicable-struct?
           apply/extract
           |#%app|
+          procedure-extract-target
           inspector?
           inspector-superior?
 
@@ -92,7 +94,14 @@
           bytes-copy! bytes-copy
           bytes=? bytes<? bytes>? bytes<=? bytes>=?
           bytes-append
-          subbytes)
+          subbytes
+
+          keyword?
+          keyword->string
+          string->keyword
+          keyword<?
+
+          symbol<?)
   (import (rename (except (chezscheme)
                           equal?)
                   [make-parameter chez:make-parameter])
@@ -109,6 +118,7 @@
   (include "core-hash.ss")
   (include "core-error.ss")
   (include "core-bytes.ss")
+  (include "core-keyword.ss")
   
   (set-base-exception-handler!)
   (set-primitive-applicables!))

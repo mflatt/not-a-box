@@ -49,4 +49,7 @@
    unsafe-immutable-hash-iterate-key+value
    unsafe-immutable-hash-iterate-first
    unsafe-immutable-hash-iterate-next
-   unsafe-immutable-hash-iterate-key))
+   unsafe-immutable-hash-iterate-key
+
+   unsafe-chaperone-procedure
+   unsafe-impersonate-procedure))

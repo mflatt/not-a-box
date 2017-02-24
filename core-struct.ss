@@ -61,7 +61,7 @@
                               (struct-type-field-count parent-rtd)
                               0)])
        (struct-type-install-properties! rtd name fields-count auto-fields parent-rtd
-                                        props insp proc-spec immutables guard name)
+                                        props insp proc-spec immutables guard constructor-name)
        (values rtd
                (record-constructor rtd)
                (lambda (v) (record? v rtd))
@@ -71,17 +71,17 @@
 (define struct-type-install-properties!
   (case-lambda
     [(rtd name fields auto-fields parent-rtd)
-     (struct-type-install-properties! rtd parent-rtd '() (current-inspector) #f '() #f name)]
+     (struct-type-install-properties! rtd name fields auto-fields parent-rtd '() (current-inspector) #f '() #f name)]
     [(rtd name fields auto-fields parent-rtd props)
-     (struct-type-install-properties! rtd parent-rtd props '(current-inspector) #f '() #f name)]
+     (struct-type-install-properties! rtd name fields auto-fields parent-rtd props '(current-inspector) #f '() #f name)]
     [(rtd name fields auto-fields parent-rtd props insp)
-     (struct-type-install-properties! rtd parent-rtd props insp #f name)]
+     (struct-type-install-properties! rtd name fields auto-fields parent-rtd props insp #f name)]
     [(rtd name fields auto-fields parent-rtd props insp proc-spec)
-     (struct-type-install-properties! rtd parent-rtd props insp proc-spec '() #f name)]
+     (struct-type-install-properties! rtd name fields auto-fields parent-rtd props insp proc-spec '() #f name)]
     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables)
-     (struct-type-install-properties! rtd parent-rtd props insp proc-spec immutables #f name)]
+     (struct-type-install-properties! rtd name fields auto-fields parent-rtd props insp proc-spec immutables #f name)]
     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard)
-     (struct-type-install-properties! rtd parent-rtd props insp proc-spec immutables guard name)]
+     (struct-type-install-properties! rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard name)]
     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard constructor-name)
      (define parent-props
        (cond
@@ -114,7 +114,9 @@
                                                         auto-fields
                                                         (make-position-based-accessor rtd parent-count (+ fields auto-fields))
                                                         (make-position-based-mutator rtd parent-count (+ fields auto-fields))
-                                                        immutables
+                                                        (if (integer? proc-spec)
+                                                            (cons proc-spec immutables)
+                                                            immutables)
                                                         parent-rtd
                                                         #f)))
                                          val)))))
@@ -345,14 +347,26 @@
 (define (try-extract-procedure f)
   (cond
    [(record? f)
-    (let ()
-      (define rtd (record-rtd f))
-      (define v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f))
+    (let* ([rtd (record-rtd f)]
+           [v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f)])
       (cond
        [(procedure? v) (lambda args (apply v f args))]
        [(fixnum? v) (unsafe-struct-ref f v)]
        [else (not-a-procedure f)]))]
    [else (not-a-procedure f)]))
+
+;; Public, limited variant:
+(define (procedure-extract-target f)
+  (cond
+   [(record? f)
+    (let* ([rtd (record-rtd f)]
+           [v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f)])
+      (cond
+       [(fixnum? v)
+        (let ([v (unsafe-struct-ref f v)])
+          (and (procedure? v) v))]
+       [else #f]))]
+   [else #f]))
 
 (define (not-a-procedure f)
   (error 'apply (format "not a procedure: ~s" f)))
