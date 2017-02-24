@@ -247,6 +247,7 @@
 (define (log-level? logger v) #f)
 (define (log-message . args) (void))
 (define (current-logger) 'logger)
+(define (logger? v) (eq? v 'logger))
 
 (define (port-read-handler p) read)
 
