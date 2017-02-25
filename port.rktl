@@ -44,6 +44,7 @@
   (1/bytes-utf-8-length bytes-utf-8-length)
   (1/cleanse-path cleanse-path)
   (1/peek-string peek-string)
+  (1/read-line read-line)
   (1/write-bytes-avail/enable-break write-bytes-avail/enable-break)
   (1/display display)
   (1/read-char read-char)
@@ -73,6 +74,7 @@
   (1/split-path split-path)
   (1/printf printf)
   (1/read-string read-string)
+  (1/read-bytes-line read-bytes-line)
   (1/bytes->string/latin-1 bytes->string/latin-1)
   (1/port-count-lines! port-count-lines!)
   (port-name port-name)
@@ -3647,6 +3649,142 @@
      ((str_0 out_15 start_30 end3_3) (write-string8_0 str_0 out_15 start_30 end3_3 #t #t #t))
      ((str_37 out_16 start2_2) (write-string8_0 str_37 out_16 start2_2 #f #t #t #f))
      ((str_38 out1_1) (write-string8_0 str_38 out1_1 #f #f #t #f #f)))))
+ (define-values (ok-mode?) (lambda (v_48) (memq v_48 '(linefeed return return-linefeed any any-one))))
+ (define-values (ok-mode-str) "(or/c 'linefeed 'return 'return-linefeed 'any 'any-one)")
+ (define-values
+  (1/read-line)
+  (let-values (((read-line5_0)
+                (lambda (in1_2 mode2_0 in3_0 mode4_0)
+                  (let-values (((in_42) (if in3_0 in1_2 (1/current-input-port))))
+                    (let-values (((mode_1) (if mode4_0 mode2_0 'linefeed)))
+                      (let-values ()
+                        (let-values ((()
+                                      (begin
+                                        (if (1/input-port? in_42)
+                                          (void)
+                                          (let-values () (raise-argument-error 'read-line "input-port?" in_42)))
+                                        (values))))
+                          (let-values ((()
+                                        (begin
+                                          (if (ok-mode? mode_1)
+                                            (void)
+                                            (let-values () (raise-argument-error 'read-line ok-mode-str mode_1)))
+                                          (values))))
+                            (let-values (((cr?_0) (memq mode_1 '(return any any-one))))
+                              (let-values (((lf?_0) (memq mode_1 '(linefeed any any-one))))
+                                (let-values (((crlf?_0) (memq mode_1 '(return-linefeed any))))
+                                  ((letrec-values (((loop_3)
+                                                    (lambda (str_39 pos_1)
+                                                      (let-values (((ch_0) (1/read-char in_42)))
+                                                        (let-values (((keep-char_0)
+                                                                      (lambda ()
+                                                                        (if (< pos_1 (string-length str_39))
+                                                                          (begin
+                                                                            (string-set! str_39 pos_1 ch_0)
+                                                                            (loop_3 str_39 (add1 pos_1)))
+                                                                          (let-values (((new-str_0)
+                                                                                        (make-string
+                                                                                         (* (string-length str_39) 2))))
+                                                                            (begin
+                                                                              (string-copy! new-str_0 0 str_39 0)
+                                                                              (string-set! new-str_0 pos_1 ch_0)
+                                                                              (loop_3 new-str_0 (add1 pos_1))))))))
+                                                          (if (eof-object? ch_0)
+                                                            (let-values ()
+                                                              (if (zero? pos_1) eof (substring str_39 0 pos_1)))
+                                                            (if (if (let-values (((or-part_17) cr?_0))
+                                                                      (if or-part_17 or-part_17 crlf?_0))
+                                                                  (eqv? ch_0 (values '#\return))
+                                                                  #f)
+                                                              (let-values ()
+                                                                (if (if crlf?_0
+                                                                      (char=? (1/peek-char in_42) (values '#\newline))
+                                                                      #f)
+                                                                  (let-values ()
+                                                                    (begin
+                                                                      (1/read-char in_42)
+                                                                      (substring str_39 0 pos_1)))
+                                                                  (if cr?_0
+                                                                    (let-values () (substring str_39 0 pos_1))
+                                                                    (let-values () (keep-char_0)))))
+                                                              (if (if lf?_0 (eqv? ch_0 (values '#\newline)) #f)
+                                                                (let-values () (substring str_39 0 pos_1))
+                                                                (let-values () (keep-char_0))))))))))
+                                     loop_3)
+                                   (make-string 32)
+                                   0))))))))))))
+    (case-lambda
+     (() (read-line5_0 #f #f #f #f))
+     ((in_43 mode2_1) (read-line5_0 in_43 mode2_1 #t #t))
+     ((in1_3) (read-line5_0 in1_3 #f #t #f)))))
+ (define-values
+  (1/read-bytes-line)
+  (let-values (((read-bytes-line11_0)
+                (lambda (in7_0 mode8_0 in9_0 mode10_0)
+                  (let-values (((in_44) (if in9_0 in7_0 (1/current-input-port))))
+                    (let-values (((mode_2) (if mode10_0 mode8_0 'linefeed)))
+                      (let-values ()
+                        (let-values ((()
+                                      (begin
+                                        (if (1/input-port? in_44)
+                                          (void)
+                                          (let-values () (raise-argument-error 'read-bytes-line "input-port?" in_44)))
+                                        (values))))
+                          (let-values ((()
+                                        (begin
+                                          (if (ok-mode? mode_2)
+                                            (void)
+                                            (let-values () (raise-argument-error 'read-bytes-line ok-mode-str mode_2)))
+                                          (values))))
+                            (let-values (((cr?_1) (memq mode_2 '(return any any-one))))
+                              (let-values (((lf?_1) (memq mode_2 '(linefeed any any-one))))
+                                (let-values (((crlf?_1) (memq mode_2 '(return-linefeed any))))
+                                  ((letrec-values (((loop_18)
+                                                    (lambda (str_40 pos_2)
+                                                      (let-values (((ch_1) (1/read-byte in_44)))
+                                                        (let-values (((keep-char_1)
+                                                                      (lambda ()
+                                                                        (if (< pos_2 (bytes-length str_40))
+                                                                          (begin
+                                                                            (bytes-set! str_40 pos_2 ch_1)
+                                                                            (loop_18 str_40 (add1 pos_2)))
+                                                                          (let-values (((new-str_1)
+                                                                                        (make-bytes
+                                                                                         (* (bytes-length str_40) 2))))
+                                                                            (begin
+                                                                              (bytes-copy! new-str_1 0 str_40 0)
+                                                                              (bytes-set! new-str_1 pos_2 ch_1)
+                                                                              (loop_18 new-str_1 (add1 pos_2))))))))
+                                                          (if (eof-object? ch_1)
+                                                            (let-values ()
+                                                              (if (zero? pos_2) eof (subbytes str_40 0 pos_2)))
+                                                            (if (if (let-values (((or-part_18) cr?_1))
+                                                                      (if or-part_18 or-part_18 crlf?_1))
+                                                                  (eqv? ch_1 (char->integer '#\return))
+                                                                  #f)
+                                                              (let-values ()
+                                                                (if (if crlf?_1
+                                                                      (char=?
+                                                                       (1/peek-byte in_44)
+                                                                       (char->integer '#\newline))
+                                                                      #f)
+                                                                  (let-values ()
+                                                                    (begin
+                                                                      (1/read-byte in_44)
+                                                                      (subbytes str_40 0 pos_2)))
+                                                                  (if cr?_1
+                                                                    (let-values () (subbytes str_40 0 pos_2))
+                                                                    (let-values () (keep-char_1)))))
+                                                              (if (if lf?_1 (eqv? ch_1 (char->integer '#\newline)) #f)
+                                                                (let-values () (subbytes str_40 0 pos_2))
+                                                                (let-values () (keep-char_1))))))))))
+                                     loop_18)
+                                   (make-bytes 32)
+                                   0))))))))))))
+    (case-lambda
+     (() (read-bytes-line11_0 #f #f #f #f))
+     ((in_45 mode8_1) (read-bytes-line11_0 in_45 mode8_1 #t #t))
+     ((in7_1) (read-bytes-line11_0 in7_1 #f #t #f)))))
  (define-values
   (1/prop:custom-write 1/custom-write? custom-write-ref)
   (make-struct-type-property
@@ -3677,11 +3815,11 @@
                         (lambda (p_6 hc_1) (hc_1 (path-bytes p_6)))))
                       (cons
                        1/prop:custom-write
-                       (lambda (p_7 port_0 mode_1)
+                       (lambda (p_7 port_0 mode_3)
                          (begin
-                           (if mode_1 (let-values () (1/write-string "#<path:" port_0)) (void))
+                           (if mode_3 (let-values () (1/write-string "#<path:" port_0)) (void))
                            (1/write-string (1/bytes->string/locale (path-bytes p_7)) port_0)
-                           (if mode_1 (let-values () (1/write-string ">" port_0)) (void))))))
+                           (if mode_3 (let-values () (1/write-string ">" port_0)) (void))))))
                      (current-inspector)
                      #f
                      '(0 1)
@@ -3713,9 +3851,9 @@
               (begin
                 #f
                 ((letrec-values (((for-loop_0)
-                                  (lambda (result_0 pos_1)
-                                    (if (unsafe-fx< pos_1 len_5)
-                                      (let-values (((c_0) (string-ref vec_0 pos_1)))
+                                  (lambda (result_0 pos_3)
+                                    (if (unsafe-fx< pos_3 len_5)
+                                      (let-values (((c_0) (string-ref vec_0 pos_3)))
                                         (let-values (((result_1)
                                                       (let-values ()
                                                         (let-values (((result_2)
@@ -3723,7 +3861,7 @@
                                                                         (let-values () (not (char=? c_0 '#\nul))))))
                                                           (values result_2)))))
                                           (if (if (not ((lambda x_3 (not result_1)) c_0)) (not #f) #f)
-                                            (for-loop_0 result_1 (unsafe-fx+ 1 pos_1))
+                                            (for-loop_0 result_1 (unsafe-fx+ 1 pos_3))
                                             result_1)))
                                       result_0))))
                    for-loop_0)
@@ -3792,38 +3930,38 @@
                                            ((temp23_0) (input-bytes-data1.1))
                                            ((temp24_0)
                                             (lambda ()
-                                              (let-values (((pos_2) i_2))
-                                                (if (< pos_2 len_6)
-                                                  (begin (set! i_2 (add1 pos_2)) (bytes-ref bstr_64 pos_2))
+                                              (let-values (((pos_4) i_2))
+                                                (if (< pos_4 len_6)
+                                                  (begin (set! i_2 (add1 pos_4)) (bytes-ref bstr_64 pos_4))
                                                   eof))))
                                            ((temp25_0)
                                             (lambda (dest-bstr_5 start_31 end_22 copy?_5)
-                                              (let-values (((pos_3) i_2))
-                                                (if (< pos_3 len_6)
+                                              (let-values (((pos_5) i_2))
+                                                (if (< pos_5 len_6)
                                                   (let-values ()
-                                                    (let-values (((amt_2) (min (- end_22 start_31) (- len_6 pos_3))))
+                                                    (let-values (((amt_2) (min (- end_22 start_31) (- len_6 pos_5))))
                                                       (begin
-                                                        (set! i_2 (+ pos_3 amt_2))
-                                                        (bytes-copy! dest-bstr_5 start_31 bstr_64 pos_3 (+ pos_3 amt_2))
+                                                        (set! i_2 (+ pos_5 amt_2))
+                                                        (bytes-copy! dest-bstr_5 start_31 bstr_64 pos_5 (+ pos_5 amt_2))
                                                         amt_2)))
                                                   (let-values () eof)))))
                                            ((temp26_0)
                                             (lambda ()
-                                              (let-values (((pos_4) i_2))
-                                                (if (< pos_4 len_6) (bytes-ref bstr_64 pos_4) eof))))
+                                              (let-values (((pos_6) i_2))
+                                                (if (< pos_6 len_6) (bytes-ref bstr_64 pos_6) eof))))
                                            ((temp27_0)
                                             (lambda (dest-bstr_6 start_14 end_13 skip_5 copy?_6)
-                                              (let-values (((pos_5) (+ i_2 skip_5)))
-                                                (if (< pos_5 len_6)
+                                              (let-values (((pos_7) (+ i_2 skip_5)))
+                                                (if (< pos_7 len_6)
                                                   (let-values ()
-                                                    (let-values (((amt_24) (min (- end_13 start_14) (- len_6 pos_5))))
+                                                    (let-values (((amt_24) (min (- end_13 start_14) (- len_6 pos_7))))
                                                       (begin
                                                         (bytes-copy!
                                                          dest-bstr_6
                                                          start_14
                                                          bstr_64
-                                                         pos_5
-                                                         (+ pos_5 amt_24))
+                                                         pos_7
+                                                         (+ pos_7 amt_24))
                                                         amt_24)))
                                                   (let-values () eof)))))
                                            ((void28_0) void))
@@ -3911,7 +4049,7 @@
                           (let-values ()
                             (let-values ((()
                                           (begin
-                                            (if ((lambda (v_48) (if (1/output-port? o_1) (1/string-port? o_1) #f)) o_1)
+                                            (if ((lambda (v_49) (if (1/output-port? o_1) (1/string-port? o_1) #f)) o_1)
                                               (void)
                                               (let-values ()
                                                 (raise-argument-error
@@ -3925,8 +4063,8 @@
                                                 (-
                                                  (min
                                                   len_7
-                                                  (let-values (((or-part_17) end-pos_13))
-                                                    (if or-part_17 or-part_17 len_7)))
+                                                  (let-values (((or-part_19) end-pos_13))
+                                                    (if or-part_19 or-part_19 len_7)))
                                                  start-pos_25)))
                                     (let-values (((bstr_85) (make-bytes amt_25)))
                                       (begin (1/peek-bytes! bstr_85 start-pos_25 i_10) bstr_85))))))))))))))
@@ -3947,17 +4085,17 @@
   (1/open-input-string)
   (let-values (((open-input-string4_0)
                 (lambda (str3_0 name1_1 name2_4)
-                  (let-values (((str_39) str3_0))
+                  (let-values (((str_41) str3_0))
                     (let-values (((name_7) (if name2_4 name1_1 'string)))
                       (let-values ()
                         (begin
-                          (if (string? str_39)
+                          (if (string? str_41)
                             (void)
-                            (let-values () (raise-argument-error 'open-input-string "string?" str_39)))
-                          (1/open-input-bytes (1/string->bytes/utf-8 str_39) name_7))))))))
+                            (let-values () (raise-argument-error 'open-input-string "string?" str_41)))
+                          (1/open-input-bytes (1/string->bytes/utf-8 str_41) name_7))))))))
     (case-lambda
-     ((str_40) (open-input-string4_0 str_40 #f #f))
-     ((str_41 name1_0) (open-input-string4_0 str_41 name1_0 #t)))))
+     ((str_42) (open-input-string4_0 str_42 #f #f))
+     ((str_43 name1_0) (open-input-string4_0 str_43 name1_0 #t)))))
  (define-values
   (1/open-output-string)
   (let-values (((open-output-string8_0)
@@ -3968,7 +4106,7 @@
   (1/get-output-string)
   (lambda (o_6)
     (begin
-      (if ((lambda (v_49) (if (1/output-port? o_6) (1/string-port? o_6) #f)) o_6)
+      (if ((lambda (v_50) (if (1/output-port? o_6) (1/string-port? o_6) #f)) o_6)
         (void)
         (let-values () (raise-argument-error 'get-output-string "(and/c output-port? string-port?)" o_6)))
       (1/bytes->string/utf-8 (1/get-output-bytes o_6) '#\?))))
@@ -4009,11 +4147,11 @@
                                                                         (if (let-values (((or-part_2) copy?_5))
                                                                               (if or-part_2
                                                                                 or-part_2
-                                                                                (let-values (((or-part_18)
+                                                                                (let-values (((or-part_20)
                                                                                               (not
                                                                                                (zero? dest-start_2))))
-                                                                                  (if or-part_18
-                                                                                    or-part_18
+                                                                                  (if or-part_20
+                                                                                    or-part_20
                                                                                     (not (= len_8 dest-end_2))))))
                                                                           (make-bytes len_8)
                                                                           dest-bstr_5)))
@@ -4470,7 +4608,7 @@
  (define-values
   (check-convention)
   (lambda (who_0 c_1)
-    (if ((lambda (c_2) (let-values (((or-part_19) (eq? c_2 'windows))) (if or-part_19 or-part_19 (eq? c_2 'unix)))) c_1)
+    (if ((lambda (c_2) (let-values (((or-part_21) (eq? c_2 'windows))) (if or-part_21 or-part_21 (eq? c_2 'unix)))) c_1)
       (void)
       (let-values () (raise-argument-error who_0 "(or/c 'windows 'unix)" c_1)))))
  (define-values
@@ -4484,9 +4622,9 @@
         (begin
           #f
           ((letrec-values (((for-loop_1)
-                            (lambda (pos_6)
-                              (if (unsafe-fx< pos_6 len_9)
-                                (let-values (((c_3) (string-ref vec_2 pos_6)))
+                            (lambda (pos_8)
+                              (if (unsafe-fx< pos_8 len_9)
+                                (let-values (((c_3) (string-ref vec_2 pos_8)))
                                   (let-values ((()
                                                 (let-values ()
                                                   (let-values ((()
@@ -4503,7 +4641,7 @@
                                                                         (void)))
                                                                     (values)))))
                                                     (values)))))
-                                    (if (not #f) (for-loop_1 (unsafe-fx+ 1 pos_6)) (values))))
+                                    (if (not #f) (for-loop_1 (unsafe-fx+ 1 pos_8)) (values))))
                                 (values)))))
              for-loop_1)
            0)))
@@ -4519,9 +4657,9 @@
         (begin
           #f
           ((letrec-values (((for-loop_2)
-                            (lambda (pos_7)
-                              (if (unsafe-fx< pos_7 len_10)
-                                (let-values (((c_4) (unsafe-bytes-ref vec_4 pos_7)))
+                            (lambda (pos_9)
+                              (if (unsafe-fx< pos_9 len_10)
+                                (let-values (((c_4) (unsafe-bytes-ref vec_4 pos_9)))
                                   (let-values ((()
                                                 (let-values ()
                                                   (let-values ((()
@@ -4538,7 +4676,7 @@
                                                                         (void)))
                                                                     (values)))))
                                                     (values)))))
-                                    (if (not #f) (for-loop_2 (unsafe-fx+ 1 pos_7)) (values))))
+                                    (if (not #f) (for-loop_2 (unsafe-fx+ 1 pos_9)) (values))))
                                 (values)))))
              for-loop_2)
            0)))
@@ -4557,7 +4695,7 @@
   (lambda (who_13 init-convention_0 base_2 subs_2)
     (let-values ((() (begin (check-build-path-arg who_13 base_2) (values))))
       (let-values (((convention_2)
-                    ((letrec-values (((loop_18)
+                    ((letrec-values (((loop_19)
                                       (lambda (convention_3 subs_3)
                                         (if (null? subs_3)
                                           (let-values () convention_3)
@@ -4565,11 +4703,11 @@
                                             (let-values (((sub_0) (car subs_3)))
                                               (begin
                                                 (check-build-path-arg who_13 sub_0)
-                                                (loop_18
+                                                (loop_19
                                                  (let-values (((temp12_0) #f))
                                                    (argument->convention6.1 temp12_0 sub_0 convention_3 who_13))
                                                  (cdr subs_3)))))))))
-                       loop_18)
+                       loop_19)
                      (let-values (((temp16_3) #t)) (argument->convention6.1 temp16_3 base_2 init-convention_0 who_13))
                      subs_2)))
         (path1.1 (append-path-parts convention_2 who_13 base_2 subs_2) convention_2)))))
@@ -4577,13 +4715,13 @@
   (check-build-path-arg)
   (lambda (who_14 p_2)
     (if ((lambda (p_3)
-           (let-values (((or-part_20) (path-string? p_3)))
-             (if or-part_20
-               or-part_20
-               (let-values (((or-part_21) (1/path-for-some-system? p_3)))
-                 (if or-part_21
-                   or-part_21
-                   (let-values (((or-part_22) (eq? p_3 'up))) (if or-part_22 or-part_22 (eq? p_3 'same))))))))
+           (let-values (((or-part_22) (path-string? p_3)))
+             (if or-part_22
+               or-part_22
+               (let-values (((or-part_23) (1/path-for-some-system? p_3)))
+                 (if or-part_23
+                   or-part_23
+                   (let-values (((or-part_24) (eq? p_3 'up))) (if or-part_24 or-part_24 (eq? p_3 'same))))))))
          p_2)
       (void)
       (let-values () (raise-argument-error who_14 "(or/c path-string? path-for-some-system? 'up 'same)" p_2)))))
@@ -4623,7 +4761,7 @@
   (lambda (convention_5 who_16 base_3 subs_4)
     (apply
      bytes-append
-     ((letrec-values (((loop_19)
+     ((letrec-values (((loop_20)
                        (lambda (prev_0 subs_5)
                          (if (null? subs_5)
                            (let-values () (list prev_0))
@@ -4644,12 +4782,12 @@
                                        (cons
                                         prev_0
                                         (if (is-sep? (bytes-ref prev_0 (sub1 (bytes-length prev_0))) 'unix)
-                                          (let-values () (loop_19 bstr_86 (cdr subs_5)))
-                                          (let-values () (cons #"/" (loop_19 bstr_86 (cdr subs_5))))))))
+                                          (let-values () (loop_20 bstr_86 (cdr subs_5)))
+                                          (let-values () (cons #"/" (loop_20 bstr_86 (cdr subs_5))))))))
                                    (let-values ()
                                      (let-values (((cleaned-prev_0) (strip-trailing-spaces prev_0)))
                                        cleaned-prev_0))))))))))
-        loop_19)
+        loop_20)
       (as-bytes base_3)
       subs_4))))
  (define-values
@@ -4667,7 +4805,7 @@
   (check-path-argument)
   (lambda (who_0 p_13)
     (if ((lambda (p_16)
-           (let-values (((or-part_19) (path-string? p_16))) (if or-part_19 or-part_19 (1/path-for-some-system? p_16))))
+           (let-values (((or-part_21) (path-string? p_16))) (if or-part_21 or-part_21 (1/path-for-some-system? p_16))))
          p_13)
       (void)
       (let-values () (raise-argument-error who_0 "(or/c path-string? path-for-some-system?)" p_13)))))
@@ -4687,16 +4825,16 @@
   (clean-double-slashes)
   (lambda (bstr_88 convention_6 allow-double-before_0)
     (let-values (((extra-count_0)
-                  ((letrec-values (((loop_20)
+                  ((letrec-values (((loop_21)
                                     (lambda (i_11)
                                       (if (= i_11 allow-double-before_0)
                                         (let-values () 0)
                                         (if (if (is-sep? (bytes-ref bstr_88 i_11) convention_6)
                                               (is-sep? (bytes-ref bstr_88 (sub1 i_11)) convention_6)
                                               #f)
-                                          (let-values () (add1 (loop_20 (sub1 i_11))))
-                                          (let-values () (loop_20 (sub1 i_11))))))))
-                     loop_20)
+                                          (let-values () (add1 (loop_21 (sub1 i_11))))
+                                          (let-values () (loop_21 (sub1 i_11))))))))
+                     loop_21)
                    (sub1 (bytes-length bstr_88)))))
       (if (zero? extra-count_0)
         (let-values () bstr_88)
@@ -4834,10 +4972,10 @@
                                       (path-bytes p_19)
                                       (clean-double-slashes (path-bytes p_19) convention_7 allow-double-before_1))))
                         (let-values (((len_11)
-                                      (let-values (((or-part_23) in-len_0))
-                                        (if or-part_23 or-part_23 (bytes-length bstr_89)))))
+                                      (let-values (((or-part_25) in-len_0))
+                                        (if or-part_25 or-part_25 (bytes-length bstr_89)))))
                           (let-values (((split-pos_0 ends-sep?_0)
-                                        ((letrec-values (((loop_21)
+                                        ((letrec-values (((loop_22)
                                                           (lambda (i_12 ends-sep?_1)
                                                             (if (< i_12 drive-end_0)
                                                               (let-values () (values #f ends-sep?_1))
@@ -4854,16 +4992,16 @@
                                                                     (let-values ()
                                                                       (if (< i_12 (sub1 len_11))
                                                                         (values i_12 ends-sep?_1)
-                                                                        (loop_21 (sub1 i_12) #t)))
+                                                                        (loop_22 (sub1 i_12) #t)))
                                                                     (let-values ()
-                                                                      (loop_21 (sub1 i_12) ends-sep?_1)))))))))
-                                           loop_21)
+                                                                      (loop_22 (sub1 i_12) ends-sep?_1)))))))))
+                                           loop_22)
                                          (sub1 len_11)
                                          #f)))
                             (if (not split-pos_0)
                               (let-values ()
-                                (if (let-values (((or-part_24) (is-sep? (bytes-ref bstr_89 0) convention_7)))
-                                      (if or-part_24 or-part_24 (positive? drive-end_0)))
+                                (if (let-values (((or-part_26) (is-sep? (bytes-ref bstr_89 0) convention_7)))
+                                      (if or-part_26 or-part_26 (positive? drive-end_0)))
                                   (let-values ()
                                     (let-values (((new-p_0) (path1.1 (subbytes bstr_89 0 len_11) convention_7)))
                                       (if explode?_1 (list new-p_0) (values #f new-p_0 #t))))
@@ -4957,8 +5095,8 @@
                         (if (<= (+ start-pos_27 2) len_12)
                           (if (eq? (bytes-ref bstr_90 start-pos_27) (char->integer '#\.))
                             (if (eq? (bytes-ref bstr_90 (+ start-pos_27 1)) (char->integer '#\.))
-                              (let-values (((or-part_25) (= (+ start-pos_27 2) len_12)))
-                                (if or-part_25 or-part_25 (if (= (+ start-pos_27 3) len_12) ends-sep?_2 #f)))
+                              (let-values (((or-part_27) (= (+ start-pos_27 2) len_12)))
+                                (if or-part_27 or-part_27 (if (= (+ start-pos_27 3) len_12) ends-sep?_2 #f)))
                               #f)
                             #f)
                           #f)
@@ -4967,8 +5105,8 @@
                     (if (if (not no-up?_1)
                           (if (<= (+ start-pos_27 1) len_12)
                             (if (eq? (bytes-ref bstr_90 start-pos_27) (char->integer '#\.))
-                              (let-values (((or-part_26) (= (+ start-pos_27 1) len_12)))
-                                (if or-part_26 or-part_26 (if (= (+ start-pos_27 2) len_12) ends-sep?_2 #f)))
+                              (let-values (((or-part_28) (= (+ start-pos_27 1) len_12)))
+                                (if or-part_28 or-part_28 (if (= (+ start-pos_27 2) len_12) ends-sep?_2 #f)))
                               #f)
                             #f)
                           #f)
@@ -4981,8 +5119,8 @@
                                           (let-values () (bytes->immutable-bytes bstr_90))
                                           (let-values () (subbytes bstr_90 start-pos_27))))))
                           (let-values (((prot-bstr_0)
-                                        (if (let-values (((or-part_27) no-up?_1))
-                                              (if or-part_27 or-part_27 ends-sep?_2))
+                                        (if (let-values (((or-part_29) no-up?_1))
+                                              (if or-part_29 or-part_29 ends-sep?_2))
                                           (protect-path-element new-bstr_2 convention_8)
                                           new-bstr_2)))
                             (values (path1.1 prot-bstr_0 convention_8) ends-sep?_2)))))))))))))))
@@ -4990,7 +5128,7 @@
   (bytes->exposed-path-bytes39.1)
   (lambda (already-protected?34_0 bstr36_0 pos37_0 convention38_0)
     (let-values (((bstr_91) bstr36_0))
-      (let-values (((pos_8) pos37_0)) (let-values () (let-values () (let-values () (values bstr_91 pos_8))))))))
+      (let-values (((pos_10) pos37_0)) (let-values () (let-values () (let-values () (values bstr_91 pos_10))))))))
  (define-values (protect-path-element) (lambda (new-bstr_3 convention_9) new-bstr_3))
  (define-values (parse-//?-drive) (lambda (bstr_30) (abort "finish me")))
  (define-values (parse-//-drive) (lambda (bstr_92) (abort "finish-me")))
@@ -5075,24 +5213,24 @@
         (let-values (((tmp_7) (path-convention p_27)))
           (if (equal? tmp_7 'unix)
             (let-values ()
-              (let-values (((or-part_28) (is-sep? (bytes-ref bstr_88 (sub1 len_13)) 'unix)))
-                (if or-part_28
-                  or-part_28
-                  (let-values (((or-part_29)
+              (let-values (((or-part_30) (is-sep? (bytes-ref bstr_88 (sub1 len_13)) 'unix)))
+                (if or-part_30
+                  or-part_30
+                  (let-values (((or-part_31)
                                 (if (>= len_13 2)
                                   (if (eq? (bytes-ref bstr_88 (sub1 len_13)) (char->integer '#\.))
                                     (if (eq? (bytes-ref bstr_88 (- len_13 2)) (char->integer '#\.))
-                                      (let-values (((or-part_30) (= len_13 2)))
-                                        (if or-part_30 or-part_30 (is-sep? (bytes-ref bstr_88 (- len_13 3)) 'unix)))
+                                      (let-values (((or-part_32) (= len_13 2)))
+                                        (if or-part_32 or-part_32 (is-sep? (bytes-ref bstr_88 (- len_13 3)) 'unix)))
                                       #f)
                                     #f)
                                   #f)))
-                    (if or-part_29
-                      or-part_29
+                    (if or-part_31
+                      or-part_31
                       (if (>= len_13 1)
                         (if (eq? (bytes-ref bstr_88 (sub1 len_13)) (char->integer '#\.))
-                          (let-values (((or-part_31) (= len_13 1)))
-                            (if or-part_31 or-part_31 (is-sep? (bytes-ref bstr_88 (- len_13 2)) 'unix)))
+                          (let-values (((or-part_33) (= len_13 1)))
+                            (if or-part_33 or-part_33 (is-sep? (bytes-ref bstr_88 (- len_13 2)) 'unix)))
                           #f)
                         #f))))))
             (let-values () (abort "dir-path? for Windows"))))))))
@@ -5146,7 +5284,7 @@
   (lambda (p_20 convention_10)
     (let-values (((bstr_65) (path-bytes p_20)))
       (let-values (((len_14) (bytes-length bstr_65)))
-        ((letrec-values (((loop_22)
+        ((letrec-values (((loop_23)
                           (lambda (i_13)
                             (if (= i_13 len_14)
                               (let-values () #t)
@@ -5157,41 +5295,41 @@
                                     (if (is-sep? (bytes-ref bstr_65 (add1 i_13)) convention_10)
                                       (let-values () #f)
                                       (if (if (eq? (bytes-ref bstr_65 (add1 i_13)) (char->integer '#\.))
-                                            (let-values (((or-part_20) (= (+ i_13 2) len_14)))
-                                              (if or-part_20
-                                                or-part_20
-                                                (let-values (((or-part_21)
+                                            (let-values (((or-part_22) (= (+ i_13 2) len_14)))
+                                              (if or-part_22
+                                                or-part_22
+                                                (let-values (((or-part_23)
                                                               (is-sep? (bytes-ref bstr_65 (+ i_13 2)) convention_10)))
-                                                  (if or-part_21
-                                                    or-part_21
+                                                  (if or-part_23
+                                                    or-part_23
                                                     (if (eq? (bytes-ref bstr_65 (+ i_13 2)) (char->integer '#\.))
-                                                      (let-values (((or-part_22) (= (+ i_13 3) len_14)))
-                                                        (if or-part_22
-                                                          or-part_22
+                                                      (let-values (((or-part_24) (= (+ i_13 3) len_14)))
+                                                        (if or-part_24
+                                                          or-part_24
                                                           (is-sep? (bytes-ref bstr_65 (+ i_13 3)) convention_10)))
                                                       #f)))))
                                             #f)
                                         (let-values () #f)
-                                        (let-values () (loop_22 (add1 i_13)))))))
+                                        (let-values () (loop_23 (add1 i_13)))))))
                                 (if (if (zero? i_13)
                                       (if (eq? (bytes-ref bstr_65 0) (char->integer '#\.))
-                                        (let-values (((or-part_32) (= 1 len_14)))
-                                          (if or-part_32
-                                            or-part_32
-                                            (let-values (((or-part_33) (is-sep? (bytes-ref bstr_65 1) convention_10)))
-                                              (if or-part_33
-                                                or-part_33
+                                        (let-values (((or-part_34) (= 1 len_14)))
+                                          (if or-part_34
+                                            or-part_34
+                                            (let-values (((or-part_35) (is-sep? (bytes-ref bstr_65 1) convention_10)))
+                                              (if or-part_35
+                                                or-part_35
                                                 (if (eq? (bytes-ref bstr_65 1) (char->integer '#\.))
-                                                  (let-values (((or-part_34) (= 2 len_14)))
-                                                    (if or-part_34
-                                                      or-part_34
+                                                  (let-values (((or-part_36) (= 2 len_14)))
+                                                    (if or-part_36
+                                                      or-part_36
                                                       (is-sep? (bytes-ref bstr_65 2) convention_10)))
                                                   #f)))))
                                         #f)
                                       #f)
                                   (let-values () #f)
-                                  (let-values () (loop_22 (add1 i_13)))))))))
-           loop_22)
+                                  (let-values () (loop_23 (add1 i_13)))))))))
+           loop_23)
          0)))))
  (define-values
   (1/path->complete-path)
@@ -5211,8 +5349,8 @@
                               (if wrt-given?_0
                                 (let-values ()
                                   (if ((lambda (p_4)
-                                         (if (let-values (((or-part_21) (path-string? p_4)))
-                                               (if or-part_21 or-part_21 (1/path-for-some-system? p_4)))
+                                         (if (let-values (((or-part_23) (path-string? p_4)))
+                                               (if or-part_23 or-part_23 (1/path-for-some-system? p_4)))
                                            (1/complete-path? p_4)
                                            #f))
                                        wrt_1)
@@ -5332,9 +5470,9 @@
                      #f
                      (check-naturals start_32)
                      ((letrec-values (((for-loop_3)
-                                       (lambda (result_3 pos_9 pos_10)
-                                         (if (if (unsafe-fx< pos_9 len_15) #t #f)
-                                           (let-values (((c_7) (unsafe-bytes-ref vec_6 pos_9)) ((i_14) pos_10))
+                                       (lambda (result_3 pos_11 pos_12)
+                                         (if (if (unsafe-fx< pos_11 len_15) #t #f)
+                                           (let-values (((c_7) (unsafe-bytes-ref vec_6 pos_11)) ((i_14) pos_12))
                                              (let-values (((result_4)
                                                            (let-values ()
                                                              (let-values (((result_5)
@@ -5347,7 +5485,7 @@
                                                (if (if (not ((lambda x_4 result_4) c_7))
                                                      (if (not ((lambda x_5 result_4) i_14)) (not #f) #f)
                                                      #f)
-                                                 (for-loop_3 result_4 (unsafe-fx+ 1 pos_9) (+ pos_10 1))
+                                                 (for-loop_3 result_4 (unsafe-fx+ 1 pos_11) (+ pos_12 1))
                                                  result_4)))
                                            result_3))))
                         for-loop_3)
@@ -5398,7 +5536,7 @@
    ((p_35 . ps_0)
     (begin
       (if (is-path? p_35) (void) (let-values () (raise-argument-error 'path<? "path?" p_35)))
-      ((letrec-values (((loop_23)
+      ((letrec-values (((loop_18)
                         (lambda (bstr_97 ps_1)
                           (if (null? ps_1)
                             (let-values () #t)
@@ -5411,8 +5549,8 @@
                                                   (let-values () (raise-argument-error 'path<? "path?" p_36)))
                                                 (values))))
                                   (let-values (((bstr2_0) (path-bytes p_36)))
-                                    (if (bytes<? bstr_97 bstr2_0) (loop_23 bstr2_0 (cdr ps_1)) #f)))))))))
-         loop_23)
+                                    (if (bytes<? bstr_97 bstr2_0) (loop_18 bstr2_0 (cdr ps_1)) #f)))))))))
+         loop_18)
        (path-bytes p_35)
        ps_0)))))
  (define-values
@@ -5447,9 +5585,9 @@
                                             (1/write-string str_35 o_7 start_33 (+ start_33 max-length_0))
                                             'full))))))))))))))))
     (case-lambda
-     ((str_42 o_8 max-length_1) (write-string/max8_0 str_42 o_8 max-length_1 #f #f #f #f))
+     ((str_44 o_8 max-length_1) (write-string/max8_0 str_44 o_8 max-length_1 #f #f #f #f))
      ((str_0 o_9 max-length_2 start_34 end2_1) (write-string/max8_0 str_0 o_9 max-length_2 start_34 end2_1 #t #t))
-     ((str_43 o_10 max-length_3 start1_1) (write-string/max8_0 str_43 o_10 max-length_3 start1_1 #f #t #f)))))
+     ((str_45 o_10 max-length_3 start1_1) (write-string/max8_0 str_45 o_10 max-length_3 start1_1 #f #t #f)))))
  (define-values
   (make-output-port/max)
   (lambda (o_11 max-length_4)
@@ -5491,8 +5629,8 @@
                           (lambda (start-i_0 i_3 max-length_8)
                             (if (eq? max-length_8 'full)
                               (let-values () 'full)
-                              (if (let-values (((or-part_30) (= i_3 len_19)))
-                                    (if or-part_30 or-part_30 (if max-length_8 (> (- i_3 start-i_0) max-length_8) #f)))
+                              (if (let-values (((or-part_32) (= i_3 len_19)))
+                                    (if or-part_32 or-part_32 (if max-length_8 (> (- i_3 start-i_0) max-length_8) #f)))
                                 (let-values ()
                                   (let-values (((max-length_0)
                                                 (write-string/max str_15 o_13 max-length_8 start-i_0 i_3)))
@@ -5529,8 +5667,8 @@
                                             (let-values (((max-length_10)
                                                           (write-string/max escaped_0 o_13 max-length_9)))
                                               (let-values (((i_15) (add1 i_3))) (loop_24 i_15 i_15 max-length_10)))))
-                                        (if (let-values (((or-part_35) (char-graphic? c_3)))
-                                              (if or-part_35 or-part_35 (char-blank? c_3)))
+                                        (if (let-values (((or-part_37) (char-graphic? c_3)))
+                                              (if or-part_37 or-part_37 (char-blank? c_3)))
                                           (let-values () (loop_24 start-i_0 (add1 i_3) max-length_8))
                                           (let-values ()
                                             (let-values (((n_4) (char->integer c_3)))
@@ -5578,7 +5716,7 @@
  (define-values
   (print-symbol)
   (lambda (sym_0 o_13 max-length_6)
-    (let-values (((str_44) (symbol->string sym_0))) (write-string/max str_44 o_13 max-length_6))))
+    (let-values (((str_46) (symbol->string sym_0))) (write-string/max str_46 o_13 max-length_6))))
  (define-values
   (print-char)
   (lambda (c_5 o_13 max-length_6)
@@ -5640,9 +5778,9 @@
                             (dots (p 'display v_24 #f o_14 (sub3 max-length_8)) o_14)
                             (void)))))))))
     (case-lambda
-     ((v_50) (display6_0 v_50 #f #f #f #f))
-     ((v_51 o_15 max-length2_1) (display6_0 v_51 o_15 max-length2_1 #t #t))
-     ((v_52 o1_1) (display6_0 v_52 o1_1 #f #t #f)))))
+     ((v_51) (display6_0 v_51 #f #f #f #f))
+     ((v_52 o_15 max-length2_1) (display6_0 v_52 o_15 max-length2_1 #t #t))
+     ((v_53 o1_1) (display6_0 v_53 o1_1 #f #t #f)))))
  (define-values
   (1/write)
   (let-values (((write13_0)
@@ -5662,7 +5800,7 @@
                             (void)))))))))
     (case-lambda
      ((v_26) (write13_0 v_26 #f #f #f #f))
-     ((v_53 o_11 max-length9_1) (write13_0 v_53 o_11 max-length9_1 #t #t))
+     ((v_48 o_11 max-length9_1) (write13_0 v_48 o_11 max-length9_1 #t #t))
      ((v_3 o8_1) (write13_0 v_3 o8_1 #f #t #f)))))
  (define-values
   (1/print)
@@ -5678,7 +5816,7 @@
                                 (void)
                                 (let-values () (raise-argument-error 'print "output-port?" o_17)))
                               (if ((lambda (v_55)
-                                     (let-values (((or-part_36) (eq? v_55 0))) (if or-part_36 or-part_36 (eq? v_55 1))))
+                                     (let-values (((or-part_38) (eq? v_55 0))) (if or-part_38 or-part_38 (eq? v_55 1))))
                                    quote-depth_0)
                                 (void)
                                 (let-values () (raise-argument-error 'print "(or/c 0 1)" quote-depth_0)))
@@ -5707,8 +5845,8 @@
  (define-values
   (max-length?)
   (lambda (v_58)
-    (let-values (((or-part_37) (not v_58)))
-      (if or-part_37 or-part_37 (if (exact-nonnegative-integer? v_58) (>= v_58 3) #f)))))
+    (let-values (((or-part_39) (not v_58)))
+      (if or-part_39 or-part_39 (if (exact-nonnegative-integer? v_58) (>= v_58 3) #f)))))
  (define-values (max-length-contract) "(or/c #f (and/c exact-integer? (>=/c 3)))")
  (define-values (sub3) (lambda (n_8) (if n_8 (- n_8 3) #f)))
  (define-values
@@ -5716,26 +5854,26 @@
   (lambda (max-length_18 o_21) (if (eq? max-length_18 'full) (let-values () (1/write-string "..." o_21)) (void))))
  (define-values
   (p)
-  (lambda (who_18 v_59 mode_2 o_22 max-length_19)
+  (lambda (who_18 v_59 mode_4 o_22 max-length_19)
     (if (eq? max-length_19 'full)
       (let-values () 'full)
       (if (number? v_59)
         (let-values () (write-string/max (number->string v_59) o_22 max-length_19))
         (if (string? v_59)
           (let-values ()
-            (let-values (((tmp_10) mode_2))
+            (let-values (((tmp_10) mode_4))
               (if (equal? tmp_10 #f)
                 (let-values () (write-string/max v_59 o_22 max-length_19))
                 (let-values () (print-string v_59 o_22 max-length_19)))))
           (if (symbol? v_59)
             (let-values ()
-              (let-values (((tmp_11) mode_2))
+              (let-values (((tmp_11) mode_4))
                 (if (equal? tmp_11 #f)
                   (let-values () (write-string/max (symbol->string v_59) o_22 max-length_19))
                   (let-values () (print-symbol v_59 o_22 max-length_19)))))
             (if (char? v_59)
               (let-values ()
-                (let-values (((tmp_12) mode_2))
+                (let-values (((tmp_12) mode_4))
                   (if (equal? tmp_12 #f)
                     (let-values () (write-string/max (string v_59) o_22 max-length_19))
                     (let-values () (print-char v_59 o_22 max-length_19)))))
@@ -5752,20 +5890,20 @@
                                             (if (null? (cdr v_60))
                                               (let-values ()
                                                 (let-values (((max-length_21)
-                                                              (p who_18 (car v_60) mode_2 o_22 max-length_20)))
+                                                              (p who_18 (car v_60) mode_4 o_22 max-length_20)))
                                                   (write-string/max ")" o_22 max-length_21)))
                                               (if (pair? (cdr v_60))
                                                 (let-values ()
                                                   (let-values (((max-length_22)
-                                                                (p who_18 (car v_60) mode_2 o_22 max-length_20)))
+                                                                (p who_18 (car v_60) mode_4 o_22 max-length_20)))
                                                     (loop_25 (cdr v_60) (write-string/max " " o_22 max-length_22))))
                                                 (let-values ()
                                                   (let-values (((max-length_23)
-                                                                (p who_18 (car v_60) mode_2 o_22 max-length_20)))
+                                                                (p who_18 (car v_60) mode_4 o_22 max-length_20)))
                                                     (let-values (((max-length_24)
                                                                   (write-string/max " . " o_22 max-length_23)))
                                                       (let-values (((max-length_25)
-                                                                    (p who_18 (cdr v_60) mode_2 o_22 max-length_24)))
+                                                                    (p who_18 (cdr v_60) mode_4 o_22 max-length_24)))
                                                         (write-string/max ")" o_22 max-length_25)))))))))))
                          loop_25)
                        v_59
@@ -5774,7 +5912,7 @@
                       (let-values ()
                         (let-values (((o_23) (make-output-port/max o_22 max-length_19)))
                           (begin
-                            ((custom-write-ref v_59) v_59 o_23 mode_2)
+                            ((custom-write-ref v_59) v_59 o_23 mode_4)
                             (output-port/max-max-length o_23 max-length_19))))
                       (let-values () (write-string/max (format "~s" v_59) o_22 max-length_19)))))))))))))
  (define-values
@@ -5962,10 +6100,10 @@
                                                                         (if (not error-thunk_0)
                                                                           (if (pair? args_1)
                                                                             (if (let-values (((a_2) (car args_1)))
-                                                                                  (let-values (((or-part_38)
+                                                                                  (let-values (((or-part_40)
                                                                                                 (not (number? a_2))))
-                                                                                    (if or-part_38
-                                                                                      or-part_38
+                                                                                    (if or-part_40
+                                                                                      or-part_40
                                                                                       (not (exact? a_2)))))
                                                                               (lambda ()
                                                                                 (arg-type-error
@@ -6256,7 +6394,7 @@
            0
            all-args_0)
           (void))))))
- (define-values (raise-error) (lambda (str_45) (raise (exn:fail:contract str_45 (current-continuation-marks)))))
+ (define-values (raise-error) (lambda (str_47) (raise (exn:fail:contract str_47 (current-continuation-marks)))))
  (define-values
   (check-conclusions)
   (lambda (who_19 expected-count_1 args_4 error-thunk_1 fmt_1 all-args_1)

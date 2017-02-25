@@ -47,9 +47,23 @@
    unsafe-struct-set!
    
    unsafe-immutable-hash-iterate-key+value
+   unsafe-immutable-hash-iterate-pair
+   unsafe-immutable-hash-iterate-value
+   unsafe-immutable-hash-iterate-key
    unsafe-immutable-hash-iterate-first
    unsafe-immutable-hash-iterate-next
-   unsafe-immutable-hash-iterate-key
+   unsafe-mutable-hash-iterate-key+value
+   unsafe-mutable-hash-iterate-pair
+   unsafe-mutable-hash-iterate-value
+   unsafe-mutable-hash-iterate-key
+   unsafe-mutable-hash-iterate-first
+   unsafe-mutable-hash-iterate-next
+   unsafe-weak-hash-iterate-key+value
+   unsafe-weak-hash-iterate-pair
+   unsafe-weak-hash-iterate-value
+   unsafe-weak-hash-iterate-key
+   unsafe-weak-hash-iterate-first
+   unsafe-weak-hash-iterate-next
 
    unsafe-chaperone-procedure
    unsafe-impersonate-procedure))

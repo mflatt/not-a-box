@@ -21,9 +21,6 @@
    append
    apply
    arithmetic-shift
-   arity-at-least
-   arity-at-least-value
-   arity-at-least?
    assoc
    assq
    assv
@@ -161,11 +158,13 @@
    hash-count
    hash-eq?
    hash-eqv?
+   hash-equal?
    hash-for-each
    hash-iterate-first
    hash-iterate-key
    hash-iterate-key+value
    hash-iterate-next
+   hash-iterate-pair
    hash-iterate-value
    hash-keys-subset?
    hash-map
@@ -174,6 +173,7 @@
    hash-remove!
    hash-set
    hash-set!
+   hash-weak?
    hash?
    hasheq
    hasheqv
@@ -191,6 +191,7 @@
    integer->char
    integer->integer-bytes
    integer?
+   interned-char?
    length
    list
    list*
@@ -199,13 +200,13 @@
    list-ref
    list-tail
    list?
+   list-pair?
    load
    load-extension
    load-on-demand-enabled
    logger?
    log-level?
    log-message
-   make-arity-at-least
    make-bytes
    make-continuation-prompt-tag
    make-ephemeron
@@ -237,6 +238,7 @@
    make-weak-box
    make-weak-hash
    make-weak-hasheq
+   make-weak-hasheqv
    map
    max
    min
@@ -262,6 +264,7 @@
    path-element->bytes
    path-for-some-system?
    path?
+   path<?
    peek-byte
    peek-bytes
    peek-char-or-special
@@ -277,7 +280,9 @@
    pregexp?
    primitive-table
    print
+   print-as-expression
    procedure-arity
+   procedure-arity?
    procedure-arity-includes?
    procedure-extract-target
    procedure-reduce-arity
@@ -293,14 +298,18 @@
    prop:incomplete-arity
    prop:method-arity-error
    prop:procedure
+   pseudo-random-generator?
+   random
    raise
    read-accept-bar-quote
    read-byte
    read-bytes
+   read-bytes-line
    read-case-sensitive
    read-char
    read-char-or-special
    read-decimal-as-inexact
+   read-line
    read-on-demand-source
    real?
    regexp
@@ -349,7 +358,6 @@
    struct->vector
    struct-type?
    struct?
-   struct:arity-at-least
    sub1
    subbytes
    substring
@@ -364,6 +372,7 @@
    system-type
    thread-send
    thread-wait
+   true-object?
    unbox
    use-collection-link-paths
    use-compiled-file-paths
@@ -412,22 +421,47 @@
    raise-result-error
    raise-mismatch-error
    raise-range-error
+   raise-arity-error
 
    struct:exn exn exn? exn-message exn-continuation-marks
    struct:exn:break exn:break exn:break? exn:break-continuation
+   struct:exn:break:hang-up exn:break:hang-up exn:break:hang-up?
+   struct:exn:break:terminate exn:break:terminate exn:break:terminate?
    struct:exn:fail exn:fail exn:fail?
    struct:exn:fail:contract exn:fail:contract exn:fail:contract?
+   struct:exn:fail:contract:arity exn:fail:contract:arity exn:fail:contract:arity?
+   struct:exn:fail:contract:divide-by-zero exn:fail:contract:divide-by-zero exn:fail:contract:divide-by-zero?
+   struct:exn:fail:contract:non-fixnum-result exn:fail:contract:non-fixnum-result exn:fail:contract:non-fixnum-result?
+   struct:exn:fail:contract:continuation exn:fail:contract:continuation exn:fail:contract:continuation?
    struct:exn:fail:contract:variable exn:fail:contract:variable exn:fail:contract:variable?
-   struct:exn:fail:filesystem exn:fail:filesystem exn:fail:filesystem?
    struct:exn:fail:read exn:fail:read exn:fail:read? exn:fail:read-srclocs
    struct:exn:fail:read:eof exn:fail:read:eof exn:fail:read:eof?
    struct:exn:fail:read:non-char exn:fail:read:non-char exn:fail:read:non-char?
+   struct:exn:fail:filesystem exn:fail:filesystem exn:fail:filesystem?
+   struct:exn:fail:filesystem:exists exn:fail:filesystem:exists exn:fail:filesystem:exists?
+   struct:exn:fail:filesystem:version exn:fail:filesystem:version exn:fail:filesystem:version?
+   struct:exn:fail:filesystem:errno exn:fail:filesystem:errno exn:fail:filesystem:errno? exn:fail:filesystem:errno-errno
+   struct:exn:fail:network exn:fail:network exn:fail:network?
+   struct:exn:fail:network:errno exn:fail:network:errno exn:fail:network:errno? exn:fail:network:errno-errno
+   struct:exn:fail:out-of-memory exn:fail:out-of-memory exn:fail:out-of-memory?
+   struct:exn:fail:unsupported exn:fail:unsupported exn:fail:unsupported?
+   struct:exn:fail:user exn:fail:user exn:fail:user?
 
    prop:exn:srclocs exn:srclocs? exn:srclocs-accessor
 
    struct:srcloc srcloc srcloc?
    srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
    srcloc->string
+
+   struct:date date? date make-date
+   date-second date-minute date-hour date-day date-month date-year
+   date-week-day date-year-day date-dst? date-time-zone-offset
+   
+   struct:date* date*? date* make-date*
+   date*-nanosecond date*-time-zone-name
+
+   struct:arity-at-least arity-at-least arity-at-least?
+   arity-at-least-value
 
    [host:datum->syntax datum->syntax]
    [host:syntax->datum syntax->datum]

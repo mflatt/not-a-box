@@ -223,6 +223,13 @@
                 (entry*-value e))
         (fail-k))))
 
+(define (hamt-iterate-pair h pos fail-k)
+  (let ([e (node-entry-at-position h pos)])
+    (if e
+        (cons (entry*-key e)
+              (entry*-value e))
+        (fail-k))))
+
 ;; "unsafe" iteration works with a record; it's unsafe only in the
 ;; sense that it doesn't make sure the iteration value is compatible
 ;; with the hash table
@@ -249,11 +256,17 @@
     (values (entry*-key e)
             (entry*-value e))))
 
+(define (unsafe-hamt-iterate-pair h pos)
+  (let ([e (hash-position-entry pos)])
+    (cons (entry*-key e)
+          (entry*-value e))))
+
 (define unsafe-immutable-hash-iterate-first unsafe-hamt-iterate-first)
 (define unsafe-immutable-hash-iterate-next unsafe-hamt-iterate-next)
 (define unsafe-immutable-hash-iterate-key unsafe-hamt-iterate-key)
 (define unsafe-immutable-hash-iterate-value unsafe-hamt-iterate-value)
 (define unsafe-immutable-hash-iterate-key+value unsafe-hamt-iterate-key+value)
+(define unsafe-immutable-hash-iterate-pair unsafe-hamt-iterate-pair)
 
 (define (node-ref node key keyhash key= shift default)
   (cond [(bnode? node) (bnode-ref node key keyhash key= shift default)]

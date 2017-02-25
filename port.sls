@@ -43,6 +43,7 @@
            (1/bytes-utf-8-length bytes-utf-8-length)
            (1/cleanse-path cleanse-path)
            (1/peek-string peek-string)
+           (1/read-line read-line)
            (1/write-bytes-avail/enable-break write-bytes-avail/enable-break)
            (1/display display)
            (1/read-char read-char)
@@ -70,6 +71,7 @@
            (1/split-path split-path)
            (1/printf printf)
            (1/read-string read-string)
+           (1/read-bytes-line read-bytes-line)
            (1/bytes->string/latin-1 bytes->string/latin-1)
            (1/port-count-lines! port-count-lines!)
            (1/path->string path->string)
@@ -90,7 +92,9 @@
                           equal? input-port? output-port?
                           open-input-file abort
                           current-output-port current-input-port current-error-port
-                          port-name)
+                          port-name string-copy!
+                          date? make-date date-second date-minute date-hour date-day date-month date-year
+                          date-week-day date-year-day)
                   [make-parameter chez:make-parameter]
                   [void chez:void]
                   [standard-input-port current-input-port]

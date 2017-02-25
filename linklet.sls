@@ -30,7 +30,9 @@
           variable-reference->instance
           variable-reference-constant?)
   (import (except (chezscheme)
-                  error make-parameter equal?)
+                  error make-parameter equal? string-copy!
+                  date? make-date date-second date-minute date-hour date-day date-month date-year
+                  date-week-day date-year-day)
           (core)
           (regexp)
           (schemify))

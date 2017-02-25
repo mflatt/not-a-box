@@ -114,56 +114,29 @@
 
 ;; ----------------------------------------
 
-(define-syntax struct
-  (lambda (stx)
-    (syntax-case stx  ()
-      [(_ name (field ...))
-       #'(struct name #f (field ...))]
-      [(_ name parent (field ...))
-       (let ([make-id (lambda (id fmt . args)
-                        (datum->syntax id
-                                       (string->symbol (apply format fmt args))))])
-         (with-syntax ([struct:name (make-id #'name "struct:~a" (syntax->datum #'name))]
-                       [name? (make-id #'name "~a?" (syntax->datum #'name))]
-                       [(name-field ...) (map (lambda (field)
-                                                (make-id field "~a-~a" (syntax->datum #'name) (syntax->datum field)))
-                                              #'(field ...))]
-                       [(field-index ...) (let loop ([fields #'(field ...)] [accum '()] [pos 0])
-                                            (cond
-                                             [(null? fields) (reverse accum)]
-                                             [else (loop (cdr fields) (cons pos accum) (add1 pos))]))]
-                       [struct:parent (if (syntax->datum #'parent)
-                                          (make-id #'parent "struct:~a" (syntax->datum #'parent))
-                                          #f)])
-           #'(begin
-               (define struct:name (make-record-type-descriptor 'name struct:parent #f #f #f '#((immutable field) ...)))
-               (define name? (record-predicate struct:name))
-               (define name (record-constructor (make-record-constructor-descriptor struct:name #f #f)))
-               (define name-field (record-accessor struct:name field-index))
-               ...)))])))
-
-(define-syntax define-struct
-  (lambda (stx)
-    (syntax-case stx ()
-      [(_ name . rest)
-       (with-syntax ([make-name
-                      (datum->syntax #'name
-                                     (string->symbol (format "make-~a" (syntax->datum #'name))))])
-         #'(begin
-             (struct name . rest)
-             (define make-name name)))])))
-
 (struct exn (message continuation-marks))
 (struct exn:break exn (continuation))
+(struct exn:break:hang-up exn:break ())
+(struct exn:break:terminate exn:break ())
 (struct exn:fail exn ())
-(struct exn:fail:filesystem exn:fail ())
+(struct exn:fail:contract exn:fail ())
+(struct exn:fail:contract:arity exn:fail:contract ())
+(struct exn:fail:contract:divide-by-zero exn:fail:contract ())
+(struct exn:fail:contract:non-fixnum-result exn:fail:contract ())
+(struct exn:fail:contract:continuation exn:fail:contract ())
+(struct exn:fail:contract:variable exn:fail:contract ())
 (struct exn:fail:read exn:fail (srclocs))
 (struct exn:fail:read:non-char exn:fail:read ())
 (struct exn:fail:read:eof exn:fail:read ())
-(struct exn:fail:contract exn:fail ())
-(struct exn:fail:contract:variable exn:fail:contract ())
-
-(define-struct srcloc (source line column position span))
+(struct exn:fail:filesystem exn:fail ())
+(struct exn:fail:filesystem:exists exn:fail:filesystem ())
+(struct exn:fail:filesystem:version exn:fail:filesystem ())
+(struct exn:fail:filesystem:errno exn:fail:filesystem (errno))
+(struct exn:fail:network exn:fail ())
+(struct exn:fail:network:errno exn:fail:network (errno))
+(struct exn:fail:out-of-memory exn:fail ())
+(struct exn:fail:unsupported exn:fail ())
+(struct exn:fail:user exn:fail ())
 
 ;; ----------------------------------------
 
@@ -267,13 +240,32 @@
      "range error...")
     (current-continuation-marks))))
 
+(define (raise-arity-error name arity . args)
+  (raise
+   (exn:fail:contract:arity
+    (string-append
+     "arity mismatch;\n"
+     " the expected number of arguments does not match the given number\n"
+     (expected-arity-string arity)
+     "  given: " (number->string (length args)))
+    (current-continuation-marks))))
+  
+(define (expected-arity-string arity)
+  (define (expected s) (string-append "  expected: " s "\n"))
+  (cond
+   [(number? arity) (expected (number->string arity))]
+   [(arity-at-least? arity) (expected
+                             (string-append "at least "
+                                            (number->string (arity-at-least-value arity))))]
+   [else ""]))
+
 (define (raise-result-arity-error expected-args args)
   (raise
    (exn:fail:contract
     (string-append
      "result arity mismatch;\n"
      " expected number of values not received\n"
-     "  received: " (length args) "\n" 
+     "  received: " (number->string (length args)) "\n" 
      "  in: local-binding form")
     (current-continuation-marks))))
 

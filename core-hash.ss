@@ -262,7 +262,7 @@
 (define (do-hash-iterate-key+value who ht i
                                    hamt-iterate-key+value
                                    weak-hash-iterate-key+value
-                                   key? value?)
+                                   key? value? pair?)
   (cond
    [(hamt? ht)
     (check-i who i)
@@ -286,7 +286,10 @@
           (raise-arguments-error who "no element at index"
                                  "index" i)
           (cond
-           [(and key? value?) (values key v)]
+           [(and key? value?)
+            (if pair?
+                (cons key v)
+                (values key v))]
            [key? key]
            [else v])))]
    [(weak-equal-hash? ht)
@@ -298,19 +301,39 @@
   (do-hash-iterate-key+value 'hash-iterate-key ht i
                              hamt-iterate-key
                              weak-hash-iterate-key
-                             #t #f))
+                             #t #f #f))
 
 (define (hash-iterate-value ht i)
   (do-hash-iterate-key+value 'hash-iterate-value ht i
                              hamt-iterate-value
                              weak-hash-iterate-value
-                             #f #t))
+                             #f #t #f))
 
 (define (hash-iterate-key+value ht i)
   (do-hash-iterate-key+value 'hash-iterate-key+value ht i
                              hamt-iterate-key+value
                              weak-hash-iterate-key+value
-                             #t #t))
+                             #t #t #f))
+
+(define (hash-iterate-pair ht i)
+  (do-hash-iterate-key+value 'hash-iterate-pair ht i
+                             hamt-iterate-pair
+                             weak-hash-iterate-pair
+                             #t #t #t))
+
+(define unsafe-mutable-hash-iterate-first hash-iterate-first)
+(define unsafe-mutable-hash-iterate-next hash-iterate-next)
+(define unsafe-mutable-hash-iterate-key hash-iterate-key)
+(define unsafe-mutable-hash-iterate-value hash-iterate-value)
+(define unsafe-mutable-hash-iterate-key+value hash-iterate-key+value)
+(define unsafe-mutable-hash-iterate-pair hash-iterate-pair)
+
+(define unsafe-weak-hash-iterate-first hash-iterate-first)
+(define unsafe-weak-hash-iterate-next hash-iterate-next)
+(define unsafe-weak-hash-iterate-key hash-iterate-key)
+(define unsafe-weak-hash-iterate-value hash-iterate-value)
+(define unsafe-weak-hash-iterate-key+value hash-iterate-key+value)
+(define unsafe-weak-hash-iterate-pair hash-iterate-pair)
 
 ;;  ----------------------------------------
 
@@ -513,6 +536,14 @@
                                   (raise-arguments-error
                                    'weak-hash-iterate-key+value "no element at index"
                                    "index" i)))))
+
+(define (weak-hash-iterate-pair ht i)
+  (define key (do-weak-hash-iterate-key 'weak-hash-iterate-pair ht i))
+  (cons key
+        (weak-hash-ref ht key (lambda ()
+                                (raise-arguments-error
+                                 'weak-hash-iterate-paur "no element at index"
+                                 "index" i)))))
 
 ;; Remove empty weak boxes from a table. Count the number
 ;; of remaining entries, and remember to prune again when

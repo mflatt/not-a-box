@@ -60,11 +60,13 @@
                           format printf fprintf
                           write display newline
                           input-port? output-port? port-name
-                          procedure? apply)
+                          procedure? apply
+                          string-copy!
+                          date? make-date date-second date-minute date-hour date-day date-month date-year
+                          date-week-day date-year-day)
                   [void chez:void]
                   [string->number chez:string->number]
                   [substring chez:substring]
-                  [string-copy! chez:string-copy!]
                   [gensym chez:gensym]
                   [file-exists? chez:file-exists?]
                   [directory-list chez:directory-list])

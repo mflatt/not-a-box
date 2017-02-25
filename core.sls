@@ -16,22 +16,47 @@
 
           struct:exn exn exn? exn-message exn-continuation-marks
           struct:exn:break exn:break exn:break? exn:break-continuation
+          struct:exn:break:hang-up exn:break:hang-up exn:break:hang-up?
+          struct:exn:break:terminate exn:break:terminate exn:break:terminate?
           struct:exn:fail exn:fail exn:fail?
           struct:exn:fail:contract exn:fail:contract exn:fail:contract?
+          struct:exn:fail:contract:arity exn:fail:contract:arity exn:fail:contract:arity?
+          struct:exn:fail:contract:divide-by-zero exn:fail:contract:divide-by-zero exn:fail:contract:divide-by-zero?
+          struct:exn:fail:contract:non-fixnum-result exn:fail:contract:non-fixnum-result exn:fail:contract:non-fixnum-result?
+          struct:exn:fail:contract:continuation exn:fail:contract:continuation exn:fail:contract:continuation?
           struct:exn:fail:contract:variable exn:fail:contract:variable exn:fail:contract:variable?
-          struct:exn:fail:filesystem exn:fail:filesystem exn:fail:filesystem?
           struct:exn:fail:read exn:fail:read exn:fail:read? exn:fail:read-srclocs
           struct:exn:fail:read:eof exn:fail:read:eof exn:fail:read:eof?
           struct:exn:fail:read:non-char exn:fail:read:non-char exn:fail:read:non-char?
+          struct:exn:fail:filesystem exn:fail:filesystem exn:fail:filesystem?
+          struct:exn:fail:filesystem:exists exn:fail:filesystem:exists exn:fail:filesystem:exists?
+          struct:exn:fail:filesystem:version exn:fail:filesystem:version exn:fail:filesystem:version?
+          struct:exn:fail:filesystem:errno exn:fail:filesystem:errno exn:fail:filesystem:errno? exn:fail:filesystem:errno-errno
+          struct:exn:fail:network exn:fail:network exn:fail:network?
+          struct:exn:fail:network:errno exn:fail:network:errno exn:fail:network:errno? exn:fail:network:errno-errno
+          struct:exn:fail:out-of-memory exn:fail:out-of-memory exn:fail:out-of-memory?
+          struct:exn:fail:unsupported exn:fail:unsupported exn:fail:unsupported?
+          struct:exn:fail:user exn:fail:user exn:fail:user?
 
           struct:srcloc srcloc srcloc?
           srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
+
+          struct:date date? date make-date
+          date-second date-minute date-hour date-day date-month date-year
+          date-week-day date-year-day date-dst? date-time-zone-offset
+
+          struct:date* date*? date* make-date*
+          date*-nanosecond date*-time-zone-name
+
+          struct:arity-at-least arity-at-least arity-at-least?
+          arity-at-least-value
 
           raise-argument-error
           raise-arguments-error
           raise-result-error
           raise-mismatch-error
           raise-range-error
+          raise-arity-error
           raise-result-arity-error
 
           make-struct-type-property
@@ -76,10 +101,19 @@
           hash-ref hash-set hash-set! hash-remove hash-remove!
           hash-for-each hash-map hash-copy hash-clear!
           hash-iterate-first hash-iterate-next
-          hash-iterate-key hash-iterate-value hash-iterate-key+value
+          hash-iterate-key hash-iterate-value
+          hash-iterate-key+value hash-iterate-pair
           unsafe-immutable-hash-iterate-first unsafe-immutable-hash-iterate-next
-          unsafe-immutable-hash-iterate-key unsafe-immutable-hash-iterate-value unsafe-immutable-hash-iterate-key+value
-          hash? hash-eq? hash-equal? hash-eqv? immutable-hash?
+          unsafe-immutable-hash-iterate-key unsafe-immutable-hash-iterate-value
+          unsafe-immutable-hash-iterate-key+value unsafe-immutable-hash-iterate-pair
+          unsafe-mutable-hash-iterate-first unsafe-mutable-hash-iterate-next
+          unsafe-mutable-hash-iterate-key unsafe-mutable-hash-iterate-value
+          unsafe-mutable-hash-iterate-key+value unsafe-mutable-hash-iterate-pair
+          unsafe-weak-hash-iterate-first unsafe-weak-hash-iterate-next
+          unsafe-weak-hash-iterate-key unsafe-weak-hash-iterate-value
+          unsafe-weak-hash-iterate-key+value unsafe-weak-hash-iterate-pair
+
+          hash? hash-eq? hash-equal? hash-eqv? hash-weak? immutable-hash?
           hash-count
           hash-keys-subset?
           ;; For intern tables:
@@ -96,6 +130,8 @@
           bytes-append
           subbytes
 
+          string-copy!
+
           keyword?
           keyword->string
           string->keyword
@@ -103,8 +139,11 @@
 
           symbol<?)
   (import (rename (except (chezscheme)
-                          equal?)
-                  [make-parameter chez:make-parameter])
+                          equal?
+                          date? make-date date-second date-minute date-hour date-day date-month date-year
+                          date-week-day date-year-day)
+                  [make-parameter chez:make-parameter]
+                  [string-copy! chez:string-copy!])
           (only (chezscheme csv7)
                 record-field-accessor
                 record-field-mutator))
@@ -118,6 +157,7 @@
   (include "core-hash.ss")
   (include "core-error.ss")
   (include "core-bytes.ss")
+  (include "core-string.ss")
   (include "core-keyword.ss")
   
   (set-base-exception-handler!)

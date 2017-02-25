@@ -394,3 +394,65 @@
                              (< p (position-based-mutator-field-count pbm)))
                         (unsafe-struct-set! s (+ p (position-based-mutator-offset pbm)) v)
                         (error 'struct-set! "bad assignment")))))
+
+;; ----------------------------------------
+;; Convenience for core:
+
+(define-syntax struct
+  (lambda (stx)
+    (syntax-case stx  ()
+      [(_ name (field ...))
+       #'(struct name #f (field ...))]
+      [(_ name parent (field ...))
+       (let ([make-id (lambda (id fmt . args)
+                        (datum->syntax id
+                                       (string->symbol (apply format fmt args))))])
+         (with-syntax ([struct:name (make-id #'name "struct:~a" (syntax->datum #'name))]
+                       [name? (make-id #'name "~a?" (syntax->datum #'name))]
+                       [(name-field ...) (map (lambda (field)
+                                                (make-id field "~a-~a" (syntax->datum #'name) (syntax->datum field)))
+                                              #'(field ...))]
+                       [(field-index ...) (let loop ([fields #'(field ...)] [accum '()] [pos 0])
+                                            (cond
+                                             [(null? fields) (reverse accum)]
+                                             [else (loop (cdr fields) (cons pos accum) (add1 pos))]))]
+                       [struct:parent (if (syntax->datum #'parent)
+                                          (make-id #'parent "struct:~a" (syntax->datum #'parent))
+                                          #f)])
+           #'(begin
+               (define struct:name (make-record-type-descriptor 'name struct:parent #f #f #f '#((immutable field) ...)))
+               (define name? (record-predicate struct:name))
+               (define name (record-constructor (make-record-constructor-descriptor struct:name #f #f)))
+               (define name-field (record-accessor struct:name field-index))
+               ...
+               (define dummy (hashtable-set! rtd-inspectors struct:name #t)))))])))
+
+(define-syntax define-struct
+  (lambda (stx)
+    (syntax-case stx ()
+      [(_ name . rest)
+       (with-syntax ([make-name
+                      (datum->syntax #'name
+                                     (string->symbol (format "make-~a" (syntax->datum #'name))))])
+         #'(begin
+             (struct name . rest)
+             (define make-name name)))])))
+
+;; ----------------------------------------
+
+(define-struct srcloc (source line column position span))
+
+(define-struct date (second
+                     minute
+                     hour
+                     day
+                     month
+                     year
+                     week-day
+                     year-day
+                     dst?
+                     time-zone-offset))
+
+(define-struct date* date (nanosecond time-zone-name))
+
+(define-struct arity-at-least (value))

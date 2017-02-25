@@ -81,22 +81,6 @@
    [(s start) (chez:substring s start (if (string? s) (string-length s) 0))]
    [(s start end) (chez:substring s start end)]))
 
-(define string-copy!
-  (case-lambda
-   [(dest dest-start src)
-    (chez:string-copy! src 0 dest dest-start
-                       (if (string? src) (string-length src) 0))]
-   [(dest dest-start src src-start)
-    (chez:string-copy! src src-start dest dest-start
-                       (if (and (string? src) (number? src-start))
-                           (- (string-length src) src-start)
-                           0))]
-   [(dest dest-start src src-start src-end)
-    (chez:string-copy! src src-start dest dest-start
-                       (if (and (number? src-start) (number? src-end))
-                           (- src-end src-start)
-                           0))]))
-
 (define (box-cas! b v1 v2)
   (and (eq? v1 (unbox b))
        (set-box! b v2)
@@ -222,6 +206,9 @@
 (define load-on-demand-enabled
   (make-parameter #f))
 
+(define print-as-expression
+  (make-parameter #t))
+
 (define compile-enforce-module-constants
   (make-parameter #t))
 
@@ -307,14 +294,10 @@
                (srcloc-line s)
                (srcloc-column s))))
 
-(define struct:arity-at-least (make-record-type-descriptor 'arity-at-least #f #f #f #f '#((immutable value))))
-(define arity-at-least? (record-predicate struct:arity-at-least))
-(define arity-at-least (make-record-constructor-descriptor struct:arity-at-least #f #f))
-(define arity-at-least-value (record-accessor struct:arity-at-least 0))
-(define make-arity-at-least arity-at-least)
-
 (define (procedure-arity p)
   (arity-at-least 0))
+(define (procedure-arity? v)
+  #t)
 
 (define (procedure-reduce-arity p a)
   p)
@@ -343,6 +326,12 @@
 (define (make-placeholder v) #f)
 (define (placeholder-set! ph v) (error "no placeholders, yet"))
 (define (make-reader-graph v) v)
+
+(define (pseudo-random-generator? v) #f)
+
+(define (list-pair? v) #f)
+(define (interned-char? v) #f)
+(define (true-object? v) (eq? v #t))
 
 (define (eval-jit-enabled) #t)
 
