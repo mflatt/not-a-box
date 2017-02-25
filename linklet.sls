@@ -87,6 +87,7 @@
          (if (linklet-compiled? linklet)
              (linklet-code linklet)
              (eval (linklet-code linklet)))
+         (make-variable-reference target-instance #f)
          (append (apply append
                         (map extract-variables
                              import-instances
@@ -164,8 +165,10 @@
   (define instance-variable-value
     (case-lambda
      [(i sym fail-k)
-      (define v (variable-val
-                 (hash-ref (instance-hash i) sym fail-k)))
+      (define var (hash-ref (instance-hash i) sym undefined))
+      (define v (if (eq? var undefined)
+                    undefined
+                    (variable-val var)))
       (if (eq? v undefined)
           (fail-k)
           v)]
@@ -209,10 +212,17 @@
   (define (linklet-bundle->hash b)
     (linklet-bundle-hash b))
 
-  (define-record variable-reference (var constant? instance-link))
+  (define-record variable-reference (instance var-or-info))
               
   (define (variable-reference->instance vr)
-    (car (variable-reference-instance-link vr)))
+    (variable-reference-instance vr))
+
+  (define (variable-reference-constant? vr)
+    (eq? (variable-reference-var-or-info vr) 'constant))
+
+  (define (make-instance-variable-reference vr v)
+    (make-variable-reference (variable-reference-instance vr) v))
 
   (eval `(define variable-set! ',variable-set!))
-  (eval `(define variable-ref ',variable-ref)))
+  (eval `(define variable-ref ',variable-ref))
+  (eval `(define make-instance-variable-reference ',make-instance-variable-reference)))

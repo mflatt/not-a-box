@@ -46,7 +46,8 @@
       (define id (if (pair? ex) (car ex) ex))
       (hash-set exports id (gensym (symbol->string id)))))
   ;; Build `lambda` with schemified body:
-  `(lambda (,@(for*/list ([ims (in-list (cadr lk))]
+  `(lambda (instance-variable-reference
+       ,@(for*/list ([ims (in-list (cadr lk))]
                      [im (in-list ims)])
            (hash-ref imports (if (pair? im) (cadr im) im)))
        ,@(for/list ([ex (in-list (caddr lk))])
@@ -409,8 +410,19 @@
              `(set! ,id ,(schemify rhs))))]
       [`(variable-reference-constant? (#%variable-reference ,id))
        (not (hash-ref mutated id #f))]
-      [`(#%variable-reference . ,_)
-       v]
+      [`(#%variable-reference)
+       'instance-variable-reference]
+      [`(#%variable-reference id)
+       (define e (hash-ref exports v #f))
+       (if e
+           `(make-instance-variable-reference 
+             instance-variable-reference
+             ,e)
+           `(make-instance-variable-reference 
+             instance-variable-reference
+             ,(if (hash-ref mutated v #f)
+                  'mutable
+                  'immutable)))]
       [`(,rator ,exps ...)
        (let ([args (map schemify exps)])
          (left-to-right/app

@@ -243,6 +243,7 @@
 (define-values (prop:exn:srclocs exn:srclocs? exn:srclocs-accessor)
   (make-struct-type-property 'exn:srclocs))
 
+(define (make-logger . args) 'logger)
 (define (log-level? logger v) #f)
 (define (log-message . args) (void))
 (define (current-logger) 'logger)

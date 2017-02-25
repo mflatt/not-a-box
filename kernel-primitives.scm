@@ -53,7 +53,6 @@
    bytes?
    caadr
    cache-configuration
-   call/cc
    call-with-continuation-barrier
    call-with-continuation-prompt
    call-with-current-continuation
@@ -222,6 +221,7 @@
    make-immutable-hasheq
    make-immutable-hasheqv
    make-inspector
+   make-logger
    make-parameter
    make-placeholder
    make-prefab-struct
