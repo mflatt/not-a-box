@@ -20,6 +20,13 @@
   (define k0 200)
   (define kb -20)
 
+  (define (eq-testable? x)
+    (or (eq? x #t)
+        (eq? x #f)
+        (eq? x '())
+        (symbol? x)
+        (fixnum? x)))
+
   (define (union-find ht x y) ; htcell version
     (define (find p n) ; splitting
       (if (pair? n)
@@ -194,12 +201,15 @@
   (define (precheck? x y k)
     (cond
      [(eq? x y) k]
+     [(eq-testable? x) #f]
+     [(eq-testable? y) #f]
      [(pair? x)
       (and (pair? y)
            (if (fx<= k 0)
                k
                (let ([k (precheck? (car x) (car y) (fx- k 1))])
                  (and k (precheck? (cdr x) (cdr y) k)))))]
+     [(pair? y) #f]
      [(vector? x)
       (and (vector? y)
            (let ([n (vector-length x)])
@@ -212,9 +222,13 @@
                                   (vector-ref y i)
                                   (fx- k 1))])
                           (and k (f (fx+ i 1) k))))))))]
+     [(vector? y) #f]
      [(string? x) (and (string? y) (string=? x y) k)]
+     [(string? y) #f]
      [(number? x) (and (eqv? x y) k)]
+     [(number? y) #f]
      [(bytevector? x) (and (bytevector? y) (bytevector=? x y) k)]
+     [(bytevector? y) #f]
      [(fxvector? x)
       (and (fxvector? y)
            (fx= (fxvector-length x) (fxvector-length y))
@@ -223,11 +237,13 @@
                  k
                  (and (fx= (fxvector-ref x i) (fxvector-ref y i))
                       (f (fx1- i))))))]
+     [(fxvector? y) #f] 
      [(box? x)
       (and (box? y)
            (if (fx<= k 0)
                k
                (precheck? (unbox x) (unbox y) (fx- k 1))))]
+     [(box? y) #f] 
      [(struct? x)
       (and (struct? y)
            (let ([x-type (struct-type x)]
@@ -255,7 +271,12 @@
                          (let ([k (precheck? (unsafe-struct-ref x i) (unsafe-struct-ref y i) k)])
                            (and k (loop (fx- i 1) k)))))]
                   [else #f])]))))]
+     [(struct? y) #f] 
      [else (and (eqv? x y) k)]))
 
-  (let ([k (precheck? x y k0)])
-    (and k (or (fx> k 0) (interleave? x y 0)))))
+  (cond
+    #;[(eq? x y) #t]
+    #;[(eq-testable? x) #f]
+    #;[(eq-testable? y) #f]  
+    [else (let ([k (precheck? x y k0)])
+            (and k (or (fx> k 0) (interleave? x y 0))))]))
