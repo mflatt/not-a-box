@@ -23,6 +23,7 @@
           current-milliseconds
           current-gc-milliseconds
           current-seconds
+          seconds->date
 
           struct:exn exn exn? exn-message exn-continuation-marks
           struct:exn:break exn:break exn:break? exn:break-continuation
@@ -243,8 +244,15 @@
           unsafe-string-length)
   (import (rename (except (chezscheme)
                           equal?
-                          date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day)
+                          date? make-date)
+                  [date-second chez:date-second]
+                  [date-minute chez:date-minute]
+                  [date-hour chez:date-hour]
+                  [date-day chez:date-day]
+                  [date-month chez:date-month]
+                  [date-year chez:date-year]
+                  [date-week-day chez:date-week-day]
+                  [date-year-day chez:date-year-day]
                   [make-parameter chez:make-parameter]
                   [string-copy! chez:string-copy!]
                   [void chez:void]
