@@ -223,7 +223,7 @@
          `(let ([,id ,(car rhss)])
            ,(loop (cdr ids) (cdr rhss) (cons `[,id ,id] binds)))]))]))
 
-;; Convert a `lte-values` to nested `let-values`es to
+;; Convert a `let-values` to nested `let-values`es to
 ;; enforce order
 (define (left-to-right/let-values v mutated)
   (match v
@@ -247,12 +247,18 @@
           (loop (cdr idss) (cdr rhss) (append (map (lambda (id) `[,id ,id]) ids) binds)))]))]))
 
 (define (make-let-values ids rhs body)
-  (if (and (pair? ids) (null? (cdr ids)))
-      `(let ([,(car ids) ,rhs]) ,body)
-      `(call-with-values (lambda () ,rhs)
-        (case-lambda 
-          [,ids ,body]
-          [args (raise-result-arity-error ',ids args)]))))
+  (cond
+   [(and (pair? ids) (null? (cdr ids)))
+    `(let ([,(car ids) ,rhs]) ,body)]
+   [else
+    (match (and (null? ids) rhs)
+      [`(begin ,rhs (values))
+       `(begin ,rhs ,body)]
+      [`,_
+       `(call-with-values (lambda () ,rhs)
+         (case-lambda 
+           [,ids ,body]
+           [args (raise-result-arity-error ',ids args)]))])]))
 
 ;; Convert an application to enforce left-to-right
 ;; evaluation order

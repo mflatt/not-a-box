@@ -43,7 +43,8 @@
           find-library-collection-links
           current-library-collection-links
           current-library-collection-paths
-          find-library-collection-paths)
+          find-library-collection-paths
+          flush)
   (import (rename (except (chezscheme)
                           apply procedure?
                           member memv memq
@@ -56,9 +57,9 @@
                           error current-eval
                           open-input-file
                           error make-parameter
-                          current-input-port current-output-port current-error-port
+                          current-input-port current-output-port
                           open-input-string open-output-string get-output-string
-                          format printf fprintf
+                          format printf
                           write display newline
                           input-port? output-port? port-name
                           procedure? apply
@@ -67,6 +68,8 @@
                           date-week-day date-year-day
                           open-input-output-file
                           void)
+                  [fprintf chez:fprintf]
+                  [current-error-port chez:current-error-port]
                   [string->number chez:string->number]
                   [gensym chez:gensym]
                   [file-exists? chez:file-exists?]

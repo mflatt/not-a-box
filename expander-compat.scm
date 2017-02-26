@@ -205,8 +205,12 @@
   (make-struct-type-property 'exn:srclocs))
 
 (define (make-logger . args) 'logger)
-(define (log-level? logger v) #f)
-(define (log-message . args) (void))
+(define (log-level? logger level . args) #f)
+(define (log-message logger level topic message . args)
+  (when (log-level? logger level)
+    (chez:fprintf (chez:current-error-port) "~a\n" (if (string? topic)
+                                                       topic
+                                                       message))))
 (define (current-logger) 'logger)
 (define (logger? v) (eq? v 'logger))
 
@@ -308,6 +312,17 @@
 (define (true-object? v) (eq? v #t))
 
 (define (eval-jit-enabled) #t)
+
+(define (current-memory-use . mode) 0)
+
+(define (current-plumber) 'plumber)
+(define (plumber-add-flush! p v) (set! at-exit (cons v null)))
+
+(define at-exit null)
+(define (flush)
+  (let ([l at-exit])
+    (set! at-exit null)
+    (for-each (lambda (p) (p #f)) l)))
 
 (define current-load-relative-directory
   (make-parameter #f))
@@ -635,6 +650,7 @@
    true-object?
    
    eval-jit-enabled
+   current-memory-use
 
    current-load-relative-directory
    read-char-or-special

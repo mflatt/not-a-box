@@ -1,5 +1,12 @@
 (import (core))
 
+(define-syntax time
+  (syntax-rules ()
+    [(_ expr1 expr ...)
+     (let-values ([(v cpu user gc) (time-apply (lambda () expr1 expr ...) null)])
+       (printf "cpu time: ~s real time: ~s gc time: ~s\n" cpu user gc)
+       (apply values v))]))
+
 (define-values (struct:top top top? top-ref top-set!)
   (make-struct-type 'top #f 2 0 #f
                     (list (cons prop:equal+hash
@@ -54,12 +61,25 @@
      (let loop ([ht (hasheqv)] [l l])
        (if (null? l)
            ht
-           (loop (immutable-hash-set ht (car l) #t) (cdr l)))))
+           (loop (hash-set ht (car l) #t) (cdr l)))))
    (unless (zero? j)
      (let loop ([v #f] [i 1000])
        (if (zero? i)
            v
-           (loop (immutable-hash-ref numbers i (lambda () (error 'oops "bad"))) (sub1 i))))
+           (loop (hash-ref numbers i (lambda () (error 'oops "bad"))) (sub1 i))))
+     (loop (sub1 j)))))
+(time
+ (let loop ([j 1000])
+   (define numbers
+     (let loop ([ht (hasheq)] [l l])
+       (if (null? l)
+           ht
+           (loop (hash-set ht l #t) (cdr l)))))
+   (unless (zero? j)
+     (let loop ([v #f] [l l])
+       (if (null? l)
+           v
+           (loop (hash-ref numbers l (lambda () (error 'oops "bad"))) (cdr l))))
      (loop (sub1 j)))))
 
 (printf "small tables\n")
@@ -69,28 +89,34 @@
      (let loop ([ht (hasheqv)] [i 10])
        (if (zero? i)
            ht
-           (loop (immutable-hash-set ht i #t) (sub1 i)))))
+           (loop (hash-set ht i #t) (sub1 i)))))
+   (define numbers2
+     (let loop ([ht (hasheqv)] [i 10])
+       (if (zero? i)
+           ht
+           (loop (hash-set ht i #t) (sub1 i)))))
    (unless (zero? j)
      (let loop ([v #f] [i 10])
        (if (zero? i)
            v
-           (loop (immutable-hash-ref numbers i (lambda () (error 'oops "bad"))) (sub1 i))))
+           (and (hash-keys-subset? numbers numbers2)
+                (loop (hash-ref numbers i (lambda () (error 'oops "bad"))) (sub1 i)))))
      (loop (sub1 j)))))
 
 (define numbers
   (let loop ([ht (hasheqv)] [l l])
     (if (null? l)
         ht
-        (loop (immutable-hash-set ht (car l) #t) (cdr l)))))
+        (loop (hash-set ht (car l) #t) (cdr l)))))
 
 (printf "safe iterate\n")
 (time
  (let loop ([j 1000])
    (unless (zero? j)
-     (let loop ([v #f] [i (immutable-hash-iterate-first numbers)])
+     (let loop ([v #f] [i (hash-iterate-first numbers)])
        (if i
-           (loop (immutable-hash-iterate-value numbers i #f)
-                 (immutable-hash-iterate-next numbers i))
+           (loop (hash-iterate-value numbers i)
+                 (hash-iterate-next numbers i))
            v))
      (loop (sub1 j)))))
 
@@ -268,7 +294,7 @@
         (let loop ([ht (hasheqv)] [l l2])
           (if (null? l)
               ht
-              (loop (immutable-hash-set ht (car l) #t) (cdr l)))))
-      (unless (immutable-hash-keys-subset? half-numbers numbers)
+              (loop (hash-set ht (car l) #t) (cdr l)))))
+      (unless (hash-keys-subset? half-numbers numbers)
         (error 'subset? "failed"))
       (loop (sub1 i)))))
