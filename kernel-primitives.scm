@@ -354,6 +354,7 @@
    resolve-path
    reverse
    round
+   seconds->date
    semaphore-peek-evt
    semaphore-post
    set-box!

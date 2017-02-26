@@ -33,3 +33,17 @@
   (let ((t (current-time 'time-utc)))
     (time-second t)))
 
+(define (seconds->date s)
+  (define off (date-zone-offset (current-date)))
+  (define tm (make-time 'time-utc (floor s) (/ (- s (floor s)) 1000000000)))
+  (define d (time-utc->date tm off))
+  (make-date (chez:date-second d)
+             (chez:date-minute d)
+             (chez:date-hour d)
+             (chez:date-day d)
+             (chez:date-month d)
+             (chez:date-year d)
+             (chez:date-week-day d)
+             (chez:date-year-day d)
+             #f ;(chez:date-dst? d) ;; FIXME when chez supports this
+             (date-zone-offset d)))
