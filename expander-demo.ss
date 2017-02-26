@@ -27,4 +27,4 @@
  (find-library-collection-links))
 (current-library-collection-paths
  (find-library-collection-paths))
-(eval '(|#%require| racket/base))
+(time (eval '(|#%require| racket/base)))

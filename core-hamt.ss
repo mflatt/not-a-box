@@ -119,7 +119,7 @@
            [(assocs)
             (let loop ([h (vararg-constructor)] [assocs assocs])
               (if (null? assocs)
-                  assocs
+                  h
                   (loop (hamt-set h (caar assocs) (cdar assocs))
                         (cdr assocs))))])))]))
 

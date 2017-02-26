@@ -165,35 +165,57 @@
           [else
            (cons (string-append "\n  "
                                 (car more) ": "
-                                ((error-value->string-handler)
-                                 (cadr more)
-                                 (error-print-width)))
+                                (error-value->string (cadr more)))
                  (loop (cddr more)))])]
         [else
          (raise-argument-error 'raise-arguments-error "string?" (car more))])))
     (current-continuation-marks))))
 
-(define (do-raise-argument-error e-who tag who what arg)
+(define (do-raise-argument-error e-who tag who what pos arg args)
   (unless (symbol? who)
     (raise-argument-error e-who "symbol?" who))
   (unless (string? what)
     (raise-argument-error e-who "string?" what))
+  (when pos
+    (unless (and (integer? pos)
+                 (exact? pos)
+                 (not (negative? pos)))
+      (raise-argument-error e-who "exact-nonnegative-integer?" pos)))
   (raise
    (exn:fail:contract
     (string-append (symbol->string who)
                    ": contract violation\n  expected: "
                    what
                    "\n  " tag ": "
-                   ((error-value->string-handler)
-                    arg
-                    (error-print-width)))
+                   (error-value->string
+                    (if pos (list-ref (cons arg args) pos) arg))
+                   (if (and pos (pair? args))
+                       (apply
+                        string-append
+                        "\n  other arguments:"
+                        (let loop ([pos pos] [args (cons arg args)])
+                          (cond
+                           [(null? args) '()]
+                           [(zero? pos) (loop (sub1 pos) (cdr args))]
+                           [else (cons (string-append "\n   " (error-value->string (car args)))
+                                       (loop (sub1 pos) (cdr args)))])))))
     (current-continuation-marks))))
+    
 
-(define (raise-argument-error who what arg)
-  (do-raise-argument-error 'raise-argument-error "given" who what arg))
+(define (error-value->string v)
+  ((error-value->string-handler)
+   v
+   (error-print-width)))
+
+(define raise-argument-error
+  (case-lambda
+    [(who what arg)
+     (do-raise-argument-error 'raise-argument-error "given" who what #f arg #f)]
+    [(who what pos arg . args)
+     (do-raise-argument-error 'raise-argument-error "given" who what pos arg args)]))
 
 (define (raise-result-error who what arg)
-  (do-raise-argument-error 'raise-result-error "result" who what arg))
+  (do-raise-argument-error 'raise-result-error "result" who what #f arg #f))
 
 (define (raise-mismatch-error who what . more)
   (unless (symbol? who)

@@ -216,6 +216,8 @@
 
 (define (cache-configuration id proc) (proc))
 
+(define (open-input-output-file . args) (error "no open-input-output-file"))
+
 (define (find-system-path key)
   (case key
     [(exec-file) (string->path (or (getenv "AS_IF_RACKET") "/usr/bin/racket"))]

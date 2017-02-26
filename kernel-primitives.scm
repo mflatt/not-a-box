@@ -45,6 +45,7 @@
    bytes-append
    bytes-length
    bytes-ref
+   bytes-utf-8-length
    bytes<?
    bytes=?
    bytes?
@@ -152,6 +153,7 @@
    fxvector-set!
    fxvector?
    gensym
+   get-output-bytes
    hash
    hash-clear!
    hash-copy
@@ -218,11 +220,13 @@
    make-hasheq-placeholder
    make-hasheqv
    make-hasheqv-placeholder
+   make-input-port
    make-immutable-hash
    make-immutable-hasheq
    make-immutable-hasheqv
    make-inspector
    make-logger
+   make-output-port
    make-parameter
    make-placeholder
    make-prefab-struct
@@ -253,6 +257,11 @@
    object-name
    open-input-bytes
    open-input-file
+   open-input-output-file
+   open-input-string
+   open-output-bytes
+   open-output-file
+   open-output-string
    ormap
    output-port?
    parameterization?
@@ -304,6 +313,8 @@
    read-accept-bar-quote
    read-byte
    read-bytes
+   read-bytes-avail!
+   read-bytes-avail!*
    read-bytes-line
    read-case-sensitive
    read-char
@@ -314,8 +325,17 @@
    real?
    regexp
    regexp-match
+   regexp-match/end
    regexp-match-positions
+   regexp-match-positions/end
+   regexp-match-peek
+   regexp-match-peek-immediate
+   regexp-match-peek-positions
+   regexp-match-peek-positions/end
+   regexp-match-peek-positions-immediate
+   regexp-match-peek-positions-immediate/end
    regexp-match?
+   regexp-max-lookbehind
    regexp-replace
    regexp-replace*
    regexp?
@@ -323,6 +343,7 @@
    reparameterize
    resolve-path
    reverse
+   round
    semaphore-peek-evt
    semaphore-post
    set-box!
@@ -349,6 +370,7 @@
    string-locale-downcase
    string-ref
    string-set!
+   string-utf-8-length
    string<=?
    string<?
    string=?
@@ -394,6 +416,10 @@
    with-input-from-file
    wrap-evt
    write
+   write-bytes
+   write-bytes-avail
+   write-bytes-avail*
+   write-bytes-avail/enable-break
    write-string
    zero?
    

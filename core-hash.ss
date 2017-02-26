@@ -116,7 +116,7 @@
            (hashtable-ref (mutable-hash-ht ht) k fail))]
       [(hamt? ht) (hamt-ref ht k fail)]
       [(weak-equal-hash? ht) (weak-hash-ref ht k fail)]
-      [else (raise-argument-error 'hash-ref "hash?" ht)])]))
+      [else (raise-argument-error 'hash-ref "hash?" 0 ht k)])]))
 
 (define (hash-for-each ht proc)
   (cond
