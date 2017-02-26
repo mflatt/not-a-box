@@ -30,9 +30,11 @@
           variable-reference->instance
           variable-reference-constant?)
   (import (except (chezscheme)
-                  error make-parameter equal? string-copy!
+                  apply procedure?
+                  error make-parameter equal? string-copy! substring
                   date? make-date date-second date-minute date-hour date-day date-month date-year
-                  date-week-day date-year-day)
+                  date-week-day date-year-day
+                  void)
           (core)
           (regexp)
           (schemify))
@@ -225,6 +227,10 @@
   (define (make-instance-variable-reference vr v)
     (make-variable-reference (variable-reference-instance vr) v))
 
-  (eval `(define variable-set! ',variable-set!))
-  (eval `(define variable-ref ',variable-ref))
+  (eval `(library (variable)
+           (export variable-set! variable-ref)
+           (import (chezscheme))
+           (define variable-set! ',variable-set!)
+           (define variable-ref ',variable-ref)))
+  (eval `(import (variable)))
   (eval `(define make-instance-variable-reference ',make-instance-variable-reference)))

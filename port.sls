@@ -89,12 +89,13 @@
            (1/open-output-string open-output-string)))
   (import (core)
           (rename (except (chezscheme)
+                          apply procedure?
                           memv memq member
                           output-port-buffer-mode
                           equal? input-port? output-port?
                           open-input-file abort
                           current-output-port current-input-port current-error-port
-                          port-name string-copy!
+                          port-name string-copy! substring
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [make-parameter chez:make-parameter]
@@ -111,8 +112,6 @@
      [(v wrt) (1/path->complete-path v wrt)]))
   (define (absolute-path? v) (1/absolute-path? v))
   (define (relative-path? v) (1/relative-path? v))
-
-  (include "compat.scm")
 
   (define string-locale-downcase string-downcase)
 

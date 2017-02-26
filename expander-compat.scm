@@ -17,10 +17,6 @@
 (define (unsafe-chaperone-procedure . args) (error "unsafe-chaperone-procedure not ready"))
 (define (unsafe-impersonate-procedure . args) (error "unsafe-impersonate-procedure not ready"))
 
-(define (procedure? v) (procedure-or-applicable-struct? v))
-
-(define apply apply/extract)
-
 (define (check-for-break) (void))
 (define break-enabled-key 'break-enabled-key)
 (define make-thread-cell box)
@@ -46,8 +42,6 @@
 (define call-with-escape-continuation
   call-with-current-continuation)
 
-(define box-immutable box)
-         
 (define (immutable? v) (immutable-hash? v))
 
 (define (equal-secondary-hash-code v) (equal-hash-code v))
@@ -69,31 +63,7 @@
    [(output-port? o) (port-name o)]
    [else 'unknown-name]))
 
-(define-record mpair (car cdr))
-(define (mcons a b) (make-mpair a b))
-(define (mcar m) (mpair-car m))
-(define (mcdr m) (mpair-cdr m))
-(define (set-mcar! m v) (set-mpair-car! m v))
-(define (set-mcdr! m v) (set-mpair-cdr! m v))
-
 (define string-locale-downcase string-downcase)
-
-(define substring
-  (case-lambda
-   [(s start) (chez:substring s start (if (string? s) (string-length s) 0))]
-   [(s start end) (chez:substring s start end)]))
-
-(define (box-cas! b v1 v2)
-  (and (eq? v1 (unbox b))
-       (set-box! b v2)
-       #t))
-
-(define (make-weak-box v) (weak-cons v #t))
-(define (weak-box? v) (weak-pair? v))
-(define (weak-box-value v) (let ([c (car v)])
-                             (if (eq? c #!bwp)
-                                 #f
-                                 c)))
 
 (define (integer->integer-bytes num size signed? big-endian?)
   (define bstr (make-bytes 4))
@@ -411,6 +381,24 @@
 
 ;; ----------------------------------------
 
+;; The environment is used to evaluate linklets, so all
+;; primitives need to be imported (prefered) or defined
+;; (less efficient to access) there
+(define (fill-environment!)
+  (eval `(import (core) (port) (regexp)))
+  
+  (let ([install-table
+         (lambda (table)
+           (hash-for-each table
+                          (lambda (k v)
+                            (eval `(define ,k ',v)))))])
+    (install-table compat-table)))
+
+;; ----------------------------------------
+
+;; The expander needs various tables to set up primitive modules, and
+;; the `primitive-table` function is the bridge between worlds
+
 (define tbd-table (make-hasheq))
 
 (define (primitive-table key)
@@ -479,13 +467,189 @@
 
    primitive-table))
 
-(define (fill-environment!)
-  (eval `(import (core) (port) (regexp)))
-  (eval `(define raise-result-arity-error ',raise-result-arity-error))
-  (let ([install-table
-         (lambda (table)
-           (hash-for-each table
-                          (lambda (k v)
-                            (eval `(define ,k ',v)))))])
-    (install-table kernel-table)
-    (install-table unsafe-table)))
+;; Table of things temporarily defined here; since these are
+;; not put in the evaluation einvironment with `(import (core))`,
+;; each must be specifically defined
+(define compat-table
+  (make-primitive-table
+   prop:checked-procedure checked-procedure? checked-procedure-ref
+   prop:impersonator-of -impersonator-of? impersonator-of-ref
+   prop:arity-string arity-string? arity-string-ref
+   prop:incomplete-arity incomplete-arity? incomplete-arity-ref
+
+   checked-procedure-check-and-extract
+
+   unsafe-chaperone-procedure
+   unsafe-impersonate-procedure
+
+   check-for-break
+   break-enabled-key
+   make-thread-cell
+
+   exception-handler-key
+
+   abort-current-continuation
+   make-continuation-prompt-tag
+   default-continuation-prompt-tag
+   continuation-prompt-available?
+   call-with-continuation-prompt
+   call-with-continuation-barrier
+   call-with-escape-continuation
+
+   box-immutable
+   immutable?
+
+   equal-secondary-hash-code
+
+   flvector?
+   flvector-length
+   flvector-ref
+   unsafe-flvector-ref
+   flvector-set!
+   unsafe-flvector-set!
+   make-flvector
+
+   object-name
+
+   string-locale-downcase
+
+   integer->integer-bytes
+
+   char-graphic?
+
+   system-type
+   system-library-subpath
+   system-path-convention-type
+
+   environment-variables-ref
+   current-environment-variables
+   environment-variables-set!
+
+   directory-exists?
+   file-exists?
+   directory-list
+   file-or-directory-modify-seconds
+   resolve-path
+   expand-user-path
+   
+   reparameterize
+   current-eval
+   read-decimal-as-inexact
+   read-accept-bar-quote
+
+   read-case-sensitive
+
+   current-library-collection-paths
+   current-library-collection-links
+   use-collection-link-paths
+   use-user-specific-search-paths
+   use-compiled-file-paths
+   current-compiled-file-roots
+
+   current-load/use-compiled
+   read-on-demand-source
+
+   current-code-inspector
+   current-print
+   current-read-interaction
+   error-print-source-location
+   current-prompt-read
+
+   current-compile
+   current-load
+   load-on-demand-enabled
+
+   print-as-expression
+
+   compile-enforce-module-constants
+
+   load-extension
+   cache-configuration
+
+   open-input-output-file
+
+   find-system-path
+
+   version
+
+   prop:exn:srclocs exn:srclocs? exn:srclocs-accessor
+
+   make-logger log-level? log-message current-logger logger?
+
+   port-read-handler
+
+   gensym
+
+   symbol-interned?
+   string->uninterned-symbol
+   string->unreadable-symbol
+
+   make-ephemeron
+   ephemeron-value
+   prop:evt evt? evt-ref
+   wrap-evt
+   always-evt
+   current-thread
+   thread-wait
+   thread-send
+   make-semaphore
+   semaphore-post
+   sync
+   sync/timeout
+   semaphore-peek-evt
+   filesystem-change-evt
+   filesystem-change-evt-cancel
+   call-with-semaphore
+   channel?
+   channel-put-evt
+
+   srcloc->string
+   
+   procedure-arity
+   procedure-arity?
+   procedure-reduce-arity
+   procedure->method
+   procedure-rename
+
+   chaperone-procedure
+   chaperone-procedure*
+   impersonate-procedure
+   impersonate-procedure*
+   chaperone-struct
+   impersonate-struct
+   chaperone-of?
+   impersonator-of?
+   impersonator-property?
+
+   make-hash-placeholder
+   make-hasheq-placeholder
+   make-hasheqv-placeholder
+   make-placeholder
+   placeholder-set!
+   make-reader-graph
+
+   pseudo-random-generator?
+
+   list-pair?
+   interned-char?
+   true-object?
+   
+   eval-jit-enabled
+
+   current-load-relative-directory
+   read-char-or-special
+   peek-char-or-special
+   datum-intern-literal
+   current-load-extension
+   string->number
+   host:datum->syntax
+   host:syntax->datum
+   syntax-property-symbol-keys
+   syntax-property
+   syntax-e
+   syntax-source
+   syntax-line
+   syntax-column
+   syntax-position
+   syntax-span
+   syntax?))

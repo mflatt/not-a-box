@@ -3,6 +3,7 @@
           schemify-body
           primitive-procs)
   (import (rename (except (chezscheme)
+                          apply procedure?
                           equal? read-char
                           close-input-port close-output-port
                           make-input-port make-output-port
@@ -12,7 +13,7 @@
                           open-input-string open-output-string get-output-string
                           format printf fprintf
                           write display newline port-name
-                          string-copy!
+                          string-copy! substring
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [void chez:void])
@@ -28,5 +29,4 @@
        [else (loop (hash-set ht (car l) #t)
                    (cdr l))])))
 
-  (include "compat.scm")
   (include "schemify.scm"))

@@ -7,22 +7,57 @@
    unsafe-list-tail
    unsafe-list-ref
 
+   unsafe-fx+
+   unsafe-fx-
+   unsafe-fx*
+   unsafe-fxquotient
+   unsafe-fxremainder
+   unsafe-fxmodulo
+   unsafe-fxabs
+   unsafe-fxand
+   unsafe-fxior
+   unsafe-fxxor
+   unsafe-fxnot
+   unsafe-fxrshift
+   unsafe-fxlshift
+
    unsafe-fx=
    unsafe-fx<
    unsafe-fx>
    unsafe-fx>=
    unsafe-fx<=
-   
-   unsafe-fx+
-   unsafe-fx-
-   unsafe-fxrshift
-   unsafe-fxlshift
+   unsafe-fxmin
+   unsafe-fxmax
+
+   unsafe-fl+
+   unsafe-fl-
+   unsafe-fl*
+   unsafe-fl/
+   unsafe-flabs
 
    unsafe-fl=
    unsafe-fl<
    unsafe-fl>
    unsafe-fl>=
    unsafe-fl<=
+   unsafe-flmin
+   unsafe-flmax
+
+   unsafe-flround
+   unsafe-flfloor
+   unsafe-flceiling
+   unsafe-fltruncate
+
+   unsafe-flsin
+   unsafe-flcos
+   unsafe-fltan
+   unsafe-flasin
+   unsafe-flacos
+   unsafe-flatan
+   unsafe-fllog
+   unsafe-flexp
+   unsafe-flsqrt
+   unsafe-flexpt
 
    unsafe-vector-ref
    unsafe-vector-set!

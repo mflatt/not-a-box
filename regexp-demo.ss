@@ -1,5 +1,5 @@
-(import (regexp)
-        (bytes)
+(import (core)
+        (regexp)
         (port))
 
 (include "regexp-demo.scm")

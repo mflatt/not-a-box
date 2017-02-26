@@ -1,5 +1,10 @@
-;; Temporary:
-(define (procedure-arity-includes? v n) #t)
+
+(define-syntax begin0
+  (syntax-rules ()
+    [(_ expr0 expr ...)
+     (let ([l (call-with-values (lambda () expr0) list)])
+       expr ...
+       (apply values l))]))
 
 ;; ----------------------------------------
 

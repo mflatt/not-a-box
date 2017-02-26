@@ -21,13 +21,6 @@
 ;; IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-(define (vector-copy! dest d-start src s-start s-end)
-  (let loop ([i (- s-end s-start)])
-    (unless (zero? i)
-      (let ([i (sub1 i)])
-        (vector-set! dest (+ d-start i) (vector-ref src (+ s-start i)))
-        (loop i)))))
-
 (define array-length vector-length)
 (define array-ref vector-ref)
 (define array vector)

@@ -6,7 +6,7 @@ expander-demo: expander.so expander-demo.ss
 
 PRIMITIVES_TABLES = kernel-primitives.scm unsafe-primitives.scm
 
-expander.so: expander.sls expander.scm expander-compat.scm compat.scm $(PRIMITIVES_TABLES) core.so port.so regexp.so linklet.so
+expander.so: expander.sls expander.scm expander-compat.scm $(PRIMITIVES_TABLES) core.so port.so regexp.so linklet.so
 	$(COMP) '(compile-file "expander.sls")' | scheme -q core.so port.so regexp.so linklet.so
 
 expander.scm: expander.rktl convert.rkt schemify.rkt
@@ -19,7 +19,7 @@ linklet-demo: linklet.so
 linklet.so: linklet.sls schemify.so primitive-procs.so
 	$(COMP) '(compile-file "linklet.sls")' | scheme -q core.so regexp.so primitive-procs.so schemify.so
 
-schemify.so: schemify.sls schemify.scm compat.scm primitive-procs.so regexp.so
+schemify.so: schemify.sls schemify.scm primitive-procs.so regexp.so
 	$(COMP) '(compile-file "schemify.sls")' | scheme -q core.so port.so regexp.so primitive-procs.so
 
 schemify.scm: schemify.rktl convert.rkt schemify.rkt
@@ -35,7 +35,7 @@ primitive-procs.sls: make-primitive-procs.rkt
 regexp-demo: regexp.so
 	scheme core.so port.so regexp.so regexp-demo.ss
 
-regexp.so: regexp.scm regexp.sls compat.scm core.so port.so
+regexp.so: regexp.scm regexp.sls core.so port.so
 	$(COMP) '(compile-file "regexp.sls")' | scheme -q core.so port.so
 
 regexp.scm: regexp.rktl convert.rkt schemify.rkt
@@ -45,7 +45,7 @@ regexp.scm: regexp.rktl convert.rkt schemify.rkt
 port-demo: port.so
 	scheme core.so port.so port-demo.ss
 
-port.so: port.scm port.sls compat.scm core.so
+port.so: port.scm port.sls core.so
 	$(COMP) '(compile-file "port.sls")' | scheme -q core.so
 
 port.scm: port.rktl convert.rkt schemify.rkt
@@ -58,7 +58,24 @@ hash-demo: core.so
 struct-demo: core.so
 	scheme core.so struct-demo.ss
 
-core.so: core.sls core-equal.ss core-hash-code.ss core-struct.ss core-hamt.ss core-hash.ss core-error.ss core-bytes.ss core-time.ss
+CORE_SRCS = core-constant.ss \
+            core-equal.ss \
+            core-hash-code.ss \
+            core-struct.ss \
+            core-hamt.ss \
+            core-hash.ss \
+            core-error.ss \
+            core-bytes.ss \
+            core-string.ss \
+            core-vector.ss \
+            core-box.ss \
+            core-keyword.ss \
+            core-mpair.ss \
+            core-integer.ss \
+            core-time.ss \
+            core-unsafe.ss
+
+core.so: core.sls $(CORE_SRCS)
 	$(COMP) '(compile-file "core.sls")' | scheme -q
 
 

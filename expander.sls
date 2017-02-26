@@ -45,6 +45,7 @@
           current-library-collection-paths
           find-library-collection-paths)
   (import (rename (except (chezscheme)
+                          apply procedure?
                           member memv memq
                           sort vector-sort vector-sort!
                           filter force delay identifier?
@@ -61,13 +62,12 @@
                           write display newline
                           input-port? output-port? port-name
                           procedure? apply
-                          string-copy!
+                          string-copy! substring
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day
-                          open-input-output-file)
-                  [void chez:void]
+                          open-input-output-file
+                          void)
                   [string->number chez:string->number]
-                  [substring chez:substring]
                   [gensym chez:gensym]
                   [file-exists? chez:file-exists?]
                   [directory-list chez:directory-list])
@@ -75,7 +75,6 @@
           (regexp)
           (port)
           (linklet))
-  (include "compat.scm")
   (include "expander-compat.scm")
   (include "expander.scm")
   (fill-environment!))

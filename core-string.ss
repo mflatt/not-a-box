@@ -1,4 +1,3 @@
-
 (define string-copy!
   (case-lambda
    [(dest dest-start src)
@@ -14,3 +13,10 @@
                        (if (and (number? src-start) (number? src-end))
                            (- src-end src-start)
                            0))]))
+
+(define (string->immutable-string x) x)
+
+(define substring
+  (case-lambda
+   [(s start) (chez:substring s start (if (string? s) (string-length s) 0))]
+   [(s start end) (chez:substring s start end)]))

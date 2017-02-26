@@ -1,5 +1,9 @@
 (library (core)
-  (export with-continuation-mark
+  (export null eof void void?
+
+          begin0
+
+          with-continuation-mark
           continuation-mark-set-first
           current-continuation-marks
 
@@ -87,10 +91,11 @@
           prefab-key->struct-type
           make-prefab-struct
           prop:equal+hash
+          procedure-arity-includes?
           prop:procedure
           prop:method-arity-error
-          procedure-or-applicable-struct?
-          apply/extract
+          apply
+          procedure?
           |#%app|
           procedure-extract-target
           inspector?
@@ -138,25 +143,121 @@
           subbytes
 
           string-copy!
+          string->immutable-string
+          substring
+
+          vector-copy!
+          vector-immutable
+          vector->immutable-vector
+
+          box-immutable
+          box-cas!
+          make-weak-box weak-box? weak-box-value
 
           keyword?
           keyword->string
           string->keyword
           keyword<?
 
-          symbol<?)
+          symbol<?
+
+          exact-integer?
+          exact-nonnegative-integer?
+          exact-positive-integer?
+          byte?
+          arithmetic-shift
+
+          mpair? mcons mcar mcdr set-mcar! set-mcdr!
+
+          unsafe-car
+          unsafe-cdr
+          unsafe-list-tail
+          unsafe-list-ref
+
+          unsafe-fx+
+          unsafe-fx-
+          unsafe-fx*
+          unsafe-fxquotient
+          unsafe-fxremainder
+          unsafe-fxmodulo
+          unsafe-fxabs
+          unsafe-fxand
+          unsafe-fxior
+          unsafe-fxxor
+          unsafe-fxnot
+          unsafe-fxrshift
+          unsafe-fxlshift
+
+          unsafe-fx=
+          unsafe-fx<
+          unsafe-fx>
+          unsafe-fx>=
+          unsafe-fx<=
+          unsafe-fxmin
+          unsafe-fxmax
+
+          unsafe-fl+
+          unsafe-fl-
+          unsafe-fl*
+          unsafe-fl/
+          unsafe-flabs
+
+          unsafe-fl=
+          unsafe-fl<
+          unsafe-fl>
+          unsafe-fl>=
+          unsafe-fl<=
+          unsafe-flmin
+          unsafe-flmax
+
+          unsafe-flround
+          unsafe-flfloor
+          unsafe-flceiling
+          unsafe-fltruncate
+
+          unsafe-flsin
+          unsafe-flcos
+          unsafe-fltan
+          unsafe-flasin
+          unsafe-flacos
+          unsafe-flatan
+          unsafe-fllog
+          unsafe-flexp
+          unsafe-flsqrt
+          unsafe-flexpt
+
+          unsafe-vector-ref
+          unsafe-vector-set!
+          unsafe-vector*-ref
+          unsafe-vector*-set!
+          unsafe-vector-length
+          unsafe-vector*-length
+          
+          unsafe-fxvector-ref
+          unsafe-fxvector-set!
+
+          unsafe-bytes-length
+          unsafe-bytes-ref
+          unsafe-bytes-set!
+
+          unsafe-string-length)
   (import (rename (except (chezscheme)
                           equal?
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [make-parameter chez:make-parameter]
-                  [string-copy! chez:string-copy!])
+                  [string-copy! chez:string-copy!]
+                  [void chez:void]
+                  [apply chez:apply]
+                  [procedure? chez:procedure?]
+                  [substring chez:substring])
           (only (chezscheme csv7)
                 record-field-accessor
                 record-field-mutator))
 
   (define none (gensym "none"))
 
+  (include "core-constant.ss")
   (include "core-equal.ss")
   (include "core-hash-code.ss")
   (include "core-struct.ss")
@@ -165,8 +266,13 @@
   (include "core-error.ss")
   (include "core-bytes.ss")
   (include "core-string.ss")
+  (include "core-vector.ss")
+  (include "core-box.ss")
   (include "core-keyword.ss")
+  (include "core-mpair.ss")
+  (include "core-integer.ss")
   (include "core-time.ss")
+  (include "core-unsafe.ss")
   
   (set-base-exception-handler!)
   (set-primitive-applicables!))

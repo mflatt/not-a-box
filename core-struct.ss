@@ -247,11 +247,6 @@
 
 ;; ----------------------------------------
 
-(define (exact-nonnegative-integer? v)
-  (and (integer? v)
-       (exact? v)
-       (not (negative? v))))
-
 (define (prefab-key? k)
   (or (symbol? k)
       (and (pair? k)
@@ -315,24 +310,26 @@
 
 ;; ----------------------------------------
 
+(define (procedure-arity-includes? v n) #t)
+
 (define-values (prop:procedure procedure-struct? procedure-struct-ref)
   (make-struct-type-property 'procedure))
 
-(define (procedure-or-applicable-struct? v)
-  (or (procedure? v)
+(define (procedure? v)
+  (or (chez:procedure? v)
       (and (record? v)
            (hashtable-ref (struct-type-prop-table prop:procedure) (record-rtd v) #f))))
 
-(define apply/extract
+(define apply
   (case-lambda
     [(proc args)
-     (if (procedure? proc)
-         (apply proc args)
-         (apply (extract-procedure proc) args))]
+     (if (chez:procedure? proc)
+         (chez:apply proc args)
+         (chez:apply (extract-procedure proc) args))]
     [(proc . argss)
-     (if (procedure? proc)
-         (apply apply proc argss)
-         (apply apply (extract-procedure proc) argss))]))
+     (if (chez:procedure? proc)
+         (chez:apply chez:apply proc argss)
+         (chez:apply chez:apply (extract-procedure proc) argss))]))
 
 (define-syntax |#%app|
   (syntax-rules ()
@@ -341,7 +338,7 @@
 
 (define (extract-procedure f)
   (cond
-   [(procedure? f) f]
+   [(chez:procedure? f) f]
    [else (try-extract-procedure f)]))
 
 (define (try-extract-procedure f)
@@ -364,7 +361,7 @@
       (cond
        [(fixnum? v)
         (let ([v (unsafe-struct-ref f v)])
-          (and (procedure? v) v))]
+          (and (chez:procedure? v) v))]
        [else #f]))]
    [else #f]))
 
@@ -406,7 +403,7 @@
       [(_ name parent (field ...))
        (let ([make-id (lambda (id fmt . args)
                         (datum->syntax id
-                                       (string->symbol (apply format fmt args))))])
+                                       (string->symbol (chez:apply format fmt args))))])
          (with-syntax ([struct:name (make-id #'name "struct:~a" (syntax->datum #'name))]
                        [name? (make-id #'name "~a?" (syntax->datum #'name))]
                        [(name-field ...) (map (lambda (field)

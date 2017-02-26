@@ -22,6 +22,7 @@
                   (1/byte-pregexp byte-pregexp)
                   (1/byte-pregexp? byte-pregexp?)))
   (import (rename (except (chezscheme)
+                          apply procedure?
                           read-char
                           close-input-port close-output-port
                           make-input-port make-output-port
@@ -32,13 +33,12 @@
                           open-input-string open-output-string get-output-string
                           format printf fprintf
                           write display newline port-name
-                          equal? string-copy!
+                          equal? string-copy! substring
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [void chez:void])
           (core)
           (port))
-  (include "compat.scm")
   (define (char-graphic? x) #f)
   (define (make-continuation-prompt-tag s) (gensym))
   (define (call-with-continuation-prompt proc . args) (proc))
