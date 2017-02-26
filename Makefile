@@ -32,7 +32,7 @@ primitive-procs.sls: make-primitive-procs.rkt
 	racket make-primitive-procs.rkt
 
 
-regexp-demo: regexp.so
+regexp-demo: regexp.so regexp-demo.scm
 	scheme core.so port.so regexp.so regexp-demo.ss
 
 regexp.so: regexp.scm regexp.sls core.so port.so
@@ -79,3 +79,6 @@ core.so: core.sls $(CORE_SRCS)
 	$(COMP) '(compile-file "core.sls")' | scheme -q
 
 
+clean:
+	rm -f core.so regexp.so port.so immutable-hash.so linklet.so primitive-procs.so linklet.so expander.so schemify.so
+	rm -f expander.scm port.scm regexp.scm schemify.scm
