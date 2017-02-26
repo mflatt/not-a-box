@@ -217,6 +217,42 @@
 (define (raise-result-error who what arg)
   (do-raise-argument-error 'raise-result-error "result" who what #f arg #f))
 
+(define (do-raise-type-error e-who tag who what pos arg args)
+  (unless (symbol? who)
+    (raise-argument-error e-who "symbol?" who))
+  (unless (string? what)
+    (raise-argument-error e-who "string?" what))
+  (when pos
+    (unless (and (integer? pos)
+                 (exact? pos)
+                 (not (negative? pos)))
+      (raise-argument-error e-who "exact-nonnegative-integer?" pos)))
+  (raise
+   (exn:fail:contract
+    (string-append (symbol->string who)
+                   ": expected argument ot type <" what ">"
+                   "; given: "
+                   (error-value->string
+                    (if pos (list-ref (cons arg args) pos) arg))
+                   (if (and pos (pair? args))
+                       (apply
+                        string-append
+                        "; other arguments:"
+                        (let loop ([pos pos] [args (cons arg args)])
+                          (cond
+                           [(null? args) '()]
+                           [(zero? pos) (loop (sub1 pos) (cdr args))]
+                           [else (cons (string-append " " (error-value->string (car args)))
+                                       (loop (sub1 pos) (cdr args)))])))))
+    (current-continuation-marks))))
+
+(define raise-type-error
+  (case-lambda
+    [(who what arg)
+     (do-raise-type-error 'raise-argument-error "given" who what #f arg #f)]
+    [(who what pos arg . args)
+     (do-raise-type-error 'raise-argument-error "given" who what pos arg args)]))
+
 (define (raise-mismatch-error who what . more)
   (unless (symbol? who)
     (raise-argument-error 'raise-mismatch-error "symbol?" who))

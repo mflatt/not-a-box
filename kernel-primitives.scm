@@ -40,6 +40,7 @@
    bytes
    bytes->path
    bytes->path-element
+   bytes->string/latin-1
    bytes->string/locale
    bytes->string/utf-8
    bytes-append
@@ -55,6 +56,8 @@
    call-with-continuation-prompt
    call-with-current-continuation
    call-with-escape-continuation
+   call-with-input-file
+   call-with-output-file
    call-with-semaphore
    call-with-values
    ceiling
@@ -78,6 +81,7 @@
    checked-procedure-check-and-extract
    cleanse-path
    close-input-port
+   close-output-port
    compile-enforce-module-constants
    complete-path?
    continuation-mark-set-first
@@ -117,6 +121,7 @@
    eq-hash-code
    eq?
    equal-hash-code
+   equal-secondary-hash-code
    equal?
    eqv?
    error
@@ -414,6 +419,7 @@
    void?
    weak-box-value
    with-input-from-file
+   with-output-to-file
    wrap-evt
    write
    write-bytes
@@ -448,6 +454,7 @@
    raise-mismatch-error
    raise-range-error
    raise-arity-error
+   raise-type-error
 
    struct:exn exn exn? exn-message exn-continuation-marks
    struct:exn:break exn:break exn:break? exn:break-continuation

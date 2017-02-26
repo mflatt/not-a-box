@@ -57,6 +57,7 @@
           raise-mismatch-error
           raise-range-error
           raise-arity-error
+          raise-type-error
           raise-result-arity-error
 
           make-struct-type-property

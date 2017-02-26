@@ -412,8 +412,8 @@
        (not (hash-ref mutated id #f))]
       [`(#%variable-reference)
        'instance-variable-reference]
-      [`(#%variable-reference id)
-       (define e (hash-ref exports v #f))
+      [`(#%variable-reference ,id)
+       (define e (hash-ref exports id #f))
        (if e
            `(make-instance-variable-reference 
              instance-variable-reference

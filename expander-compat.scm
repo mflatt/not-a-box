@@ -50,6 +50,8 @@
          
 (define (immutable? v) (immutable-hash? v))
 
+(define (equal-secondary-hash-code v) (equal-hash-code v))
+
 (define (flvector? v) #f)
 (define (flvector-length v) 0)
 (define (flvector-ref v i) 0)

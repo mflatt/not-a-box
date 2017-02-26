@@ -3876,6 +3876,22 @@
   (lambda (s_3) (path1.1 (1/string->bytes/locale s_3 (char->integer '#\?)) (system-path-convention-type))))
  (define-values (->path) (lambda (p_11) (if (string? p_11) (string->path$1 p_11) p_11)))
  (define-values
+  (1/close-input-port)
+  (lambda (p_0)
+    (begin
+      (if (1/input-port? p_0) (void) (let-values () (raise-argument-error 'close-input-port "input-port?" p_0)))
+      (if (input-port-closed? p_0)
+        (void)
+        (let-values () (begin (set-input-port-closed?! p_0 #t) ((input-port-close p_0))))))))
+ (define-values
+  (1/close-output-port)
+  (lambda (p_12)
+    (begin
+      (if (1/output-port? p_12) (void) (let-values () (raise-argument-error 'close-output-port "output-port?" p_12)))
+      (if (output-port-closed? p_12)
+        (void)
+        (let-values () (begin (set-output-port-closed?! p_12 #t) ((output-port-close p_12))))))))
+ (define-values
   (1/open-input-file)
   (let-values (((open-input-file6_0)
                 (lambda (path5_1 mode11_0 mode22_0 mode13_0 mode24_0)
@@ -3888,8 +3904,8 @@
                               (void)
                               (let-values () (raise-argument-error 'open-input-file "path-string?" path_1)))
                             (open-input-host
-                             (let-values (((temp8_2) (path->string (path->complete-path path_1))))
-                               (open-input-file6.1 #f #f #f #f temp8_2))
+                             (let-values (((temp37_0) (path->string (path->complete-path path_1))))
+                               (open-input-file6.1 #f #f #f #f temp37_0))
                              path_1)))))))))
     (case-lambda
      ((path_2) (open-input-file6_0 path_2 #f #f #f #f))
@@ -4021,10 +4037,10 @@
                                      ((temp34_0) (output-port-close o_0))
                                      ((temp35_0) (output-port-get-write-evt o_0))
                                      ((temp36_0) (output-port-get-location o_0))
-                                     ((temp37_0) (output-port-count-lines! o_0)))
+                                     ((temp37_1) (output-port-count-lines! o_0)))
                           (make-output-port22.1
                            temp34_0
-                           temp37_0
+                           temp37_1
                            #t
                            temp31_0
                            #t
@@ -4077,12 +4093,12 @@
      ((o_5 reset?12_1) (get-output-bytes19_0 o_5 reset?12_1 #f #f #t #f #f)))))
  (define-values
   (1/string-port?)
-  (lambda (p_12)
-    (if (1/input-port? p_12)
-      (let-values () (input-bytes-data? (input-port-data p_12)))
-      (if (1/output-port? p_12)
-        (let-values () (output-bytes-data? (output-port-data p_12)))
-        (let-values () (raise-argument-error 'string-port? "port?" p_12))))))
+  (lambda (p_13)
+    (if (1/input-port? p_13)
+      (let-values () (input-bytes-data? (input-port-data p_13)))
+      (if (1/output-port? p_13)
+        (let-values () (output-bytes-data? (output-port-data p_13)))
+        (let-values () (raise-argument-error 'string-port? "port?" p_13))))))
  (define-values
   (1/open-input-string)
   (let-values (((open-input-string4_0)
@@ -4584,22 +4600,6 @@
        #f
        #f)))))
  (define-values
-  (1/close-input-port)
-  (lambda (p_0)
-    (begin
-      (if (1/input-port? p_0) (void) (let-values () (raise-argument-error 'close-input-port "input-port?" p_0)))
-      (if (input-port-closed? p_0)
-        (void)
-        (let-values () (begin (set-input-port-closed?! p_0 #t) ((input-port-close p_0))))))))
- (define-values
-  (1/close-output-port)
-  (lambda (p_13)
-    (begin
-      (if (1/output-port? p_13) (void) (let-values () (raise-argument-error 'close-output-port "output-port?" p_13)))
-      (if (output-port-closed? p_13)
-        (void)
-        (let-values () (begin (set-output-port-closed?! p_13 #t) ((output-port-close p_13))))))))
- (define-values
   (port-name)
   (lambda (p_0)
     (if (1/input-port? p_0)
@@ -4805,23 +4805,23 @@
  (define-values (strip-trailing-spaces) (lambda (prev_1) prev_1))
  (define-values
   (check-path-argument)
-  (lambda (who_0 p_13)
+  (lambda (who_0 p_12)
     (if ((lambda (p_16)
            (let-values (((or-part_21) (path-string? p_16))) (if or-part_21 or-part_21 (1/path-for-some-system? p_16))))
-         p_13)
+         p_12)
       (void)
-      (let-values () (raise-argument-error who_0 "(or/c path-string? path-for-some-system?)" p_13)))))
+      (let-values () (raise-argument-error who_0 "(or/c path-string? path-for-some-system?)" p_12)))))
  (define-values (drive-letter?) (lambda (c_5) (if (< c_5 128) (char-alphabetic? (integer->char c_5)) #f)))
  (define-values
   (1/cleanse-path)
   (lambda (p-in_0)
     (let-values ((() (begin (check-path-argument 'cleanse-path p-in_0) (values))))
-      (let-values (((p_13) (->path p-in_0)))
-        (let-values (((tmp_0) (path-convention p_13)))
+      (let-values (((p_12) (->path p-in_0)))
+        (let-values (((tmp_0) (path-convention p_12)))
           (if (equal? tmp_0 'unix)
             (let-values ()
-              (let-values (((bstr_87) (clean-double-slashes (path-bytes p_13) 'unix 0)))
-                (if (eq? bstr_87 (path-bytes p_13)) p_13 (path1.1 bstr_87 'unix))))
+              (let-values (((bstr_87) (clean-double-slashes (path-bytes p_12) 'unix 0)))
+                (if (eq? bstr_87 (path-bytes p_12)) p_12 (path1.1 bstr_87 'unix))))
             (if (equal? tmp_0 'windows) (let-values () (abort "Windows path cleanse")) (let-values () (void)))))))))
  (define-values
   (clean-double-slashes)
@@ -5199,13 +5199,13 @@
   (1/path->directory-path)
   (lambda (p-in_0)
     (let-values ((() (begin (check-path-argument 'path->directory-path p-in_0) (values))))
-      (let-values (((p_13) (->path p-in_0)))
-        (if (directory-path? p_13)
-          (let-values () p_13)
+      (let-values (((p_12) (->path p-in_0)))
+        (if (directory-path? p_12)
+          (let-values () p_12)
           (let-values ()
-            (let-values (((tmp_0) (path-convention p_13)))
+            (let-values (((tmp_0) (path-convention p_12)))
               (if (equal? tmp_0 'unix)
-                (let-values () (path1.1 (bytes-append (path-bytes p_13) #"/") 'unix))
+                (let-values () (path1.1 (bytes-append (path-bytes p_12) #"/") 'unix))
                 (let-values () (abort "path->dir-path for Windows"))))))))))
  (define-values
   (directory-path?)
@@ -5401,10 +5401,10 @@
       (string->path$1 s_0))))
  (define-values
   (1/path->string)
-  (lambda (p_13)
+  (lambda (p_12)
     (begin
-      (if (is-path? p_13) (void) (let-values () (raise-argument-error 'path->string "path?" p_13)))
-      (1/bytes->string/locale (path-bytes p_13) '#\?))))
+      (if (is-path? p_12) (void) (let-values () (raise-argument-error 'path->string "path?" p_12)))
+      (1/bytes->string/locale (path-bytes p_12) '#\?))))
  (define-values
   (1/bytes->path)
   (let-values (((bytes->path4_0)
