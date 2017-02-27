@@ -2540,7 +2540,14 @@
                                                                                           src-bstr_0
                                                                                           src-start_0
                                                                                           (+ src-start_0 amt_21))
-                                                                                         (set! end_8 (+ end_8 amt_21))
+                                                                                         (let-values (((new-end_0)
+                                                                                                       (+
+                                                                                                        end_8
+                                                                                                        amt_21)))
+                                                                                           (set! end_8
+                                                                                             (if (= new-end_0 len_2)
+                                                                                               0
+                                                                                               new-end_0)))
                                                                                          amt_21)))
                                                                                    (if (= end_8 top-pos_0)
                                                                                      (let-values ()
