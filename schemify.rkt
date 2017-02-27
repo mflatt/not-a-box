@@ -35,7 +35,7 @@
 ;;   - simplify `define-values` and `let-values` to `define` and
 ;;     `let`, when possible.
 
-(struct import (grp id))
+(struct import (grp id ext-id))
 (struct import-group ([knowns/thunk #:mutable])) ; starts as a procedure to get table
 
 (define (import-group-knowns grp)
@@ -56,7 +56,8 @@
       (define grp (import-group (lambda () (get-import-knowns index))))
       (for/fold ([imports imports]) ([im (in-list ims)])
         (define id (if (pair? im) (cadr im) im))
-        (hash-set imports id (import grp (gensym (symbol->string id)))))))
+        (define ext-id (if (pair? im) (cdr im) im))
+        (hash-set imports id (import grp (gensym (symbol->string id)) ext-id)))))
   ;; Ditto for exports:
   (define exports
     (for/fold ([exports (hasheq)]) ([ex (in-list (caddr lk))])
@@ -74,7 +75,15 @@
         ,@(for/list ([ex (in-list (caddr lk))])
             (hash-ref exports (if (pair? ex) (car ex) ex))))
      ,@new-body)
-   defn-info))
+   ;; Convert internal to external identifiers
+   (for/fold ([knowns (hasheq)]) ([ex (in-list (caddr lk))])
+     (define id (if (pair? ex) (car ex) ex))
+     (define v (hash-ref defn-info id #f))
+     (cond
+      [v
+       (define ext-id (if (pair? ex) (cadr ex) ex))
+       (hash-set knowns ext-id v)]
+      [else knowns]))))
 
 (define (schemify-body l prim-knowns imports exports)
   (define-values (new-body defn-info)
@@ -194,7 +203,7 @@
   (or (hash-ref knowns key #f)
       (let ([im (hash-ref imports key #f)])
         (and im
-             (hash-ref (import-group-knowns (import-grp im)) key #f)))))
+             (hash-ref (import-group-knowns (import-grp im)) (import-ext-id im) #f)))))
 
 ;; Parse `make-struct-type` forms, returning a `struct-type-info`
 ;; if the parse succeed:
@@ -494,7 +503,10 @@
              `(variable-set! ,ex-id ,(schemify rhs))
              `(set! ,id ,(schemify rhs))))]
       [`(variable-reference-constant? (#%variable-reference ,id))
-       (not (hash-ref mutated id #f))]
+       (and (not (hash-ref mutated id #f))
+            (let ([im (hash-ref imports id #f)])
+              (or (not im)
+                  (known-constant? (hash-ref (import-group-knowns (import-grp im)) (import-ext-id im) #f)))))]
       [`(#%variable-reference)
        'instance-variable-reference]
       [`(#%variable-reference ,id)
