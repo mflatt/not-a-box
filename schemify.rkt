@@ -85,7 +85,7 @@
   ;; Various conversion steps need information about mutated variables,
   ;; where "mutated" here includes visible implicit mutation, such as
   ;; a variable that might be used before it is defined:
-  (define mutated (mutated-in-body l exports))
+  (define mutated (mutated-in-body l exports prim-knowns (hasheq) imports))
   ;; While schemifying, recognize definition sequences, and keep them
   ;; together to help the optimizer. Also, add calls to install exported
   ;; values in to the corresponding exported `variable` records.
@@ -103,7 +103,7 @@
        knowns)]
      [else
       (define-values (v new-knowns side-effects? defn?)
-        (find-definitions (car l) knowns imports (null? (cdr l))))
+        (find-definitions (car l) prim-knowns knowns imports mutated (null? (cdr l))))
       (cond
        [(not side-effects?) (loop (cdr l)
                                   new-knowns
@@ -135,44 +135,60 @@
 ;; Check whether an expression is simple in the sense that its order
 ;; of evaluation isn't detectable. This function receives both
 ;; schemified and non-schemified expressions.
-(define (simple? e mutated)
-  (match e
-    [`(lambda . ,_) #t]
-    [`(case-lambda . ,_) #t]
-    [`(quote . ,_) #t]
-    [`(#%variable-reference . ,_) #t]
-    [`(let-values ([,_ ,rhss] ...) ,body)
-     (and (for/and ([rhs (in-list rhss)])
-            (simple? rhss mutated))
-          (simple? body mutated))]
-    [`(let ([,_ ,rhss] ...) ,body)
-     (and (for/and ([rhs (in-list rhss)])
-            (simple? rhss mutated))
-          (simple? body mutated))]
-    [`(letrec-values ([(,idss ...) ,rhss] ...) ,body)
-     (define mutated+idss (for*/fold ([mutated mutated]) ([ids (in-list idss)]
-                                                         [id (in-list ids)])
-                            (hash-set mutated id #t)))
-     (and (for/and ([rhs (in-list rhss)])
-            (simple? rhs mutated+idss))
-          (simple? body mutated))]
-    [`(letrec* ([,ids ,rhss] ...) ,body)
-     (define mutated+ids (for/fold ([mutated mutated]) ([id (in-list ids)])
-                           (hash-set mutated id #t)))
-     (and (for/and ([rhs (in-list rhss)])
-            (simple? rhs mutated+ids))
-          (simple? body mutated))]
-    [`,_
-     (or (and (symbol? e)
-              (not (hash-ref mutated e #f)))
-         (integer? e)
-         (boolean? e)
-         (string? e)
-         (bytes? e)
-         (regexp? e))]))
+(define (simple? e prim-knowns knowns imports mutated)
+  (let simple? ([e e] [mutated mutated])
+    (match e
+      [`(lambda . ,_) #t]
+      [`(case-lambda . ,_) #t]
+      [`(quote . ,_) #t]
+      [`(#%variable-reference . ,_) #t]
+      [`(let-values ([,_ ,rhss] ...) ,body)
+       (and (for/and ([rhs (in-list rhss)])
+              (simple? rhss mutated))
+            (simple? body mutated))]
+      [`(let ([,_ ,rhss] ...) ,body)
+       (and (for/and ([rhs (in-list rhss)])
+              (simple? rhss mutated))
+            (simple? body mutated))]
+      [`(letrec-values ([(,idss ...) ,rhss] ...) ,body)
+       (define mutated+idss (for*/fold ([mutated mutated]) ([ids (in-list idss)]
+                                                            [id (in-list ids)])
+                              (hash-set mutated id #t)))
+       (and (for/and ([rhs (in-list rhss)])
+              (simple? rhs mutated+idss))
+            (simple? body mutated))]
+      [`(letrec* ([,ids ,rhss] ...) ,body)
+       (define mutated+ids (for/fold ([mutated mutated]) ([id (in-list ids)])
+                             (hash-set mutated id #t)))
+       (and (for/and ([rhs (in-list rhss)])
+              (simple? rhs mutated+ids))
+            (simple? body mutated))]
+      [`(,proc ,arg)
+       (and (symbol? proc)
+            (let ([v (hash-ref-either knowns imports proc)])
+              (and v
+                   (or (known-predicate? v)
+                       (and (known-constructor? v)
+                            (= 1 (known-constructor-field-count v))))))
+            (simple? arg mutated))]
+      [`(,proc  . ,args)
+       (and (symbol? proc)
+            (let ([v (hash-ref-either knowns imports proc)])
+              (and (known-constructor? v)
+                   (= (length args) (known-constructor-field-count v))))
+            (for/and ([arg (in-list args)])
+              (simple? arg mutated)))]
+      [`,_
+       (or (and (symbol? e)
+                (not (hash-ref mutated e #f)))
+           (integer? e)
+           (boolean? e)
+           (string? e)
+           (bytes? e)
+           (regexp? e))])))
 
 ;; Also recognize and keep track of structure-type bindings
-(struct struct-type-info (name parent immediate-field-count field-count rest))
+(struct struct-type-info (name parent immediate-field-count field-count pure-constructor? rest))
 
 (define (hash-ref-either knowns imports key)
   (or (hash-ref knowns key #f)
@@ -196,18 +212,25 @@
                                           (known-struct-type-field-count
                                            (hash-ref-either knowns imports parent))
                                           0))
+                            ;; no guard => pur constructor
+                            (or ((length rest) . < . 4)
+                                (not (list-ref rest 3)))
                             rest))]
     [`(let-values () ,body)
      (make-struct-type-info body knowns imports)]
     [`,_ #f]))
 
 ;; Record top-level functions and structure types:
-(define (find-definitions v knowns imports last?)
+(define (find-definitions v prim-knowns knowns imports mutated last?)
   (match v
     [`(define-values (,id) ,rhs)
-     (if (lambda? rhs)
-         (values v (hash-set knowns id a-known-procedure) #f #t)
-         (values v knowns #t #t))]
+     (cond
+      [(lambda? rhs)
+       (values v (hash-set knowns id a-known-procedure) #f #t)]
+      [(simple? rhs prim-knowns knowns imports mutated)
+       (values v (hash-set knowns id a-known-unknown) #f #t)]
+      [else
+       (values v knowns #t #t)])]
     [`(define-values (,struct:s ,make-s ,s? ,acc/muts ...)
        (let-values (((,struct: ,make ,? ,-ref ,-set!) ,rhs))
          (values ,struct:2
@@ -224,7 +247,9 @@
        (values v
                (let* ([knowns (hash-set knowns
                                         make-s
-                                        (known-constructor type (struct-type-info-field-count info)))]
+                                        (if (struct-type-info-pure-constructor? info)
+                                            (known-constructor type (struct-type-info-field-count info))
+                                            a-known-procedure))]
                       [knowns (hash-set knowns
                                         s?
                                         (known-predicate type))]
@@ -256,7 +281,7 @@
 ;; rely on the fact that the Racket expander generates
 ;; expressions that have no shadowing (and inroduce
 ;; shadowing here)
-(define (left-to-right/let v mutated)
+(define (left-to-right/let v prim-knowns knowns imports mutated)
   (match v
     [`(let (,_) . ,_) v]
     [`(let ([,ids ,rhss] ...) . ,bodys)
@@ -269,7 +294,7 @@
              `(let ([,(car ids) ,(car rhss)])
                (let ,binds
                     . ,bodys)))]
-        [(simple? (car rhss) mutated)
+        [(simple? (car rhss) prim-knowns knowns imports mutated)
          `(let ([,(car ids) ,(car rhss)])
            ,(loop (cdr ids) (cdr rhss) binds))]
         [else
@@ -316,13 +341,13 @@
 
 ;; Convert an application to enforce left-to-right
 ;; evaluation order
-(define (left-to-right/app v mutated)
+(define (left-to-right/app v prim-knowns knowns imports mutated)
   (let loop ([l v] [accum null])
     (cond
      [(null? l) (reverse accum)]
-     [(simple? (car l) mutated)
+     [(simple? (car l) prim-knowns knowns imports mutated)
       (loop (cdr l) (cons (car l) accum))]
-     [(andmap (lambda (v) (simple? v mutated)) (cdr l))
+     [(andmap (lambda (v) (simple? v prim-knowns knowns imports mutated)) (cdr l))
       (append (reverse accum) l)]
      [else
       (define g (gensym "app_"))
@@ -407,7 +432,7 @@
                           [rhs (in-list rhss)])
                  `[,id ,(schemify rhs)])
           ,@(map body-schemify bodys))
-        mutated)]
+        prim-knowns knowns imports mutated)]
       [`(let-values ([() (begin ,rhss ... (values))]) ,bodys ...)
        `(begin ,@(map schemify rhss) ,@(map schemify bodys))]
       [`(let-values ([(,idss ...) ,rhss] ...) ,bodys ...)
@@ -491,7 +516,7 @@
                   (lambda? rator))
               `(,(schemify rator) . ,args)
               `(#%app ,(schemify rator) . ,args))
-          mutated))]
+          prim-knowns knowns imports mutated))]
       [`,_
        (cond
         [(and (symbol? v)
@@ -503,7 +528,7 @@
          => (lambda (im) `(variable-ref ,(import-id im)))]
         [else v])])))
 
-(define (mutated-in-body l exports)
+(define (mutated-in-body l exports prim-knowns knowns imports)
   ;; Find all defined variables; start with `exports`, because
   ;; anything exports but not defined is implicitly in an undefined
   ;; state
@@ -523,7 +548,7 @@
     (cond
      [(null? l)
       (for/fold ([mutated mutated]) ([v (in-list delay-l)])
-        (find-mutated v mutated pending))]
+        (find-mutated v prim-knowns knowns imports mutated pending))]
      [else
       (define form (car l))
       (match form
@@ -533,72 +558,72 @@
          (if (lambda? rhs)
              (loop mutated (cdr l) (cons rhs delay-l) next-pending)
              (let ([mutated (for/fold ([mutated mutated]) ([v (in-list delay-l)])
-                              (find-mutated v mutated pending))])
-               (loop (find-mutated rhs mutated pending)
+                              (find-mutated v prim-knowns knowns imports mutated pending))])
+               (loop (find-mutated rhs prim-knowns knowns imports mutated pending)
                      (cdr l)
                      null
                      next-pending)))]
         [`,_
          (let ([mutated (for/fold ([mutated mutated]) ([v (in-list delay-l)])
-                          (find-mutated v mutated pending))])
-           (loop (find-mutated form mutated pending)
+                          (find-mutated v prim-knowns knowns imports mutated pending))])
+           (loop (find-mutated form prim-knowns knowns imports mutated pending)
                  (cdr l)
                  null
                  pending))])])))
 
 ;; Schemify `let-values` to `let`, etc., and
 ;; reorganize struct bindings.
-(define (find-mutated v mutated pending)
-  (match v
-    [`(lambda ,formals ,body ...)
-     (find-mutated* body mutated pending)]
-    [`(case-lambda [,formalss ,bodys ...] ...)
-     (for/fold ([mutated mutated]) ([body (in-list bodys)])
-       (find-mutated* body mutated pending))]
-    [`(define-values ,ids ,rhs)
-     (find-mutated rhs mutated pending)]
-    [`(quote ,_) mutated]
-    [`(let-values ([(,ids) ,rhss] ...) ,bodys ...)
-     (find-mutated* bodys (find-mutated* rhss mutated pending) pending)]
-    [`(letrec-values ([(,idss ...) ,rhss] ...) ,bodys ...)
-     (define-values (new-mutated simple-so-far?)
-       ;; Count a binding as implicitly mutated if it might be referenced
-       ;; too early or if a continuation can be captured
-       (for/fold ([mutated mutated] [simple-so-far? #t]) ([ids (in-list idss)]
-                                                          [rhs (in-list rhss)])
-         (define still-simple? (and simple-so-far? (simple? rhs mutated)))
-         (if still-simple?
-             (values (find-mutated rhs mutated pending) #t)
-             (values (find-mutated rhs
-                                   (for/fold ([mutated mutated]) ([id (in-list ids)])
-                                     (hash-set mutated id #t))
-                                   pending)
-                     #f))))
-     (find-mutated* bodys new-mutated pending)]
-    [`(if ,tst ,thn ,els)
-     (find-mutated els (find-mutated thn (find-mutated tst mutated pending) pending) pending)]
-    [`(with-continuation-mark ,key ,val ,body)
-     (find-mutated body (find-mutated val (find-mutated key mutated pending) pending) pending)]
-    [`(begin ,exps ...)
-     (find-mutated* exps mutated pending)]
-    [`(begin0 ,exps ...)
-     (find-mutated* exps mutated pending)]
-    [`(set! ,id ,rhs)
-     (find-mutated rhs (hash-set mutated id #t) pending)]
-    [`(#%variable-reference . ,_) mutated]
-    [`(,rator ,exps ...)
-     (find-mutated* exps (find-mutated rator mutated pending) pending)]
-    [`,_
-     (if (and (symbol? v)
-              (hash-ref pending v #f))
-         ;; Early use of a defined variable:
-         (hash-set mutated v #t)
-         ;; Not an early use:
-         mutated)]))
-
-(define (find-mutated* l mutated pending)
-  (for/fold ([mutated mutated]) ([v (in-list l)])
-    (find-mutated v mutated pending)))
+(define (find-mutated v prim-knowns knowns imports mutated pending)
+  (let find-mutated ([v v] [mutated mutated] [pending pending])
+    (define (find-mutated* l mutated pending)
+      (for/fold ([mutated mutated]) ([v (in-list l)])
+        (find-mutated v mutated pending)))
+    (match v
+      [`(lambda ,formals ,body ...)
+       (find-mutated* body mutated pending)]
+      [`(case-lambda [,formalss ,bodys ...] ...)
+       (for/fold ([mutated mutated]) ([body (in-list bodys)])
+         (find-mutated* body mutated pending))]
+      [`(define-values ,ids ,rhs)
+       (find-mutated rhs mutated pending)]
+      [`(quote ,_) mutated]
+      [`(let-values ([(,ids) ,rhss] ...) ,bodys ...)
+       (find-mutated* bodys (find-mutated* rhss mutated pending) pending)]
+      [`(letrec-values ([(,idss ...) ,rhss] ...) ,bodys ...)
+       (define-values (new-mutated simple-so-far?)
+         ;; Count a binding as implicitly mutated if it might be referenced
+         ;; too early or if a continuation can be captured
+         (for/fold ([mutated mutated] [simple-so-far? #t]) ([ids (in-list idss)]
+                                                            [rhs (in-list rhss)])
+           (define still-simple? (and simple-so-far? (simple? rhs prim-knowns knowns imports mutated)))
+           (if still-simple?
+               (values (find-mutated rhs mutated pending) #t)
+               (values (find-mutated rhs
+                                     (for/fold ([mutated mutated]) ([id (in-list ids)])
+                                       (hash-set mutated id #t))
+                                     pending)
+                       #f))))
+       (find-mutated* bodys new-mutated pending)]
+      [`(if ,tst ,thn ,els)
+       (find-mutated els (find-mutated thn (find-mutated tst mutated pending) pending) pending)]
+      [`(with-continuation-mark ,key ,val ,body)
+       (find-mutated body (find-mutated val (find-mutated key mutated pending) pending) pending)]
+      [`(begin ,exps ...)
+       (find-mutated* exps mutated pending)]
+      [`(begin0 ,exps ...)
+       (find-mutated* exps mutated pending)]
+      [`(set! ,id ,rhs)
+       (find-mutated rhs (hash-set mutated id #t) pending)]
+      [`(#%variable-reference . ,_) mutated]
+      [`(,rator ,exps ...)
+       (find-mutated* exps (find-mutated rator mutated pending) pending)]
+      [`,_
+       (if (and (symbol? v)
+                (hash-ref pending v #f))
+           ;; Early use of a defined variable:
+           (hash-set mutated v #t)
+           ;; Not an early use:
+           mutated)])))
 
 (define (make-set-variables accum exports)
   (for/fold ([assigns null]) ([v (in-list accum)])
