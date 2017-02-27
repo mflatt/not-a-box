@@ -17,7 +17,7 @@
          a-known-procedure)
 
 (struct known-constant () #:prefab #:omit-define-syntaxes)
-(struct known-unknown () #:prefab #:omit-define-syntaxes)
+(struct known-unknown () #:prefab #:omit-define-syntaxes #:super struct:known-constant)
 (struct known-procedure () #:prefab #:omit-define-syntaxes #:super struct:known-constant)
 (struct known-struct-type (type field-count) #:prefab #:omit-define-syntaxes)
 (struct known-constructor (type field-count) #:prefab #:omit-define-syntaxes #:super struct:known-procedure)
