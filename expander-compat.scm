@@ -10,9 +10,10 @@
 
 (define (checked-procedure-check-and-extract st v alt-proc v1 v2)
   (if (and (record? v st)
-           (checked-procedure? v))
-      ((checked-procedure-ref v) v1 v2)
-      (|#%app| alt-proc v1 v2)))
+           (checked-procedure? v)
+           (|#%app| (unsafe-struct-ref v 0) v1 v2))
+      (unsafe-struct-ref v 1)
+      (|#%app| alt-proc v v1 v2)))
 
 (define (unsafe-chaperone-procedure . args) (error "unsafe-chaperone-procedure not ready"))
 (define (unsafe-impersonate-procedure . args) (error "unsafe-impersonate-procedure not ready"))

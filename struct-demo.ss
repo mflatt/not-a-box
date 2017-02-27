@@ -46,6 +46,14 @@
 
 (check (|#%app| (make-p (lambda (x) (cons x x)) 'whatever) 10) '(10 . 10))
 
+(define-values (struct:p0 make-p0 p0? p0-ref p0-set!)
+  (make-struct-type 'p #f 2 0 #f))
+(define-values (struct:p1 make-p1 p1? p1-ref p1-set!)
+  (make-struct-type 'p struct:p0 2 0 #f (list (cons prop:procedure 0))))
+
+(check (|#%app| (make-p (lambda (x) (cons x x)) 'whatever) 10) '(10 . 10))
+(check (|#%app| (make-p1 'no 'nope (lambda (x) (list x x)) 'whatever) 11) '(11 11))
+
 ;; ----------------------------------------
 ;; Inspectors and `struct->vector`
 

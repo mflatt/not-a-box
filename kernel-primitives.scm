@@ -24,7 +24,9 @@
    assoc
    assq
    assv
+   bitwise-and
    bitwise-ior
+   bitwise-xor
    boolean?
    box
    box-cas!
@@ -38,14 +40,18 @@
    byte-regexp?
    byte?
    bytes
+   bytes->immutable-bytes
+   bytes->list
    bytes->path
    bytes->path-element
    bytes->string/latin-1
    bytes->string/locale
    bytes->string/utf-8
    bytes-append
+   bytes-copy!
    bytes-length
    bytes-ref
+   bytes-set!
    bytes-utf-8-length
    bytes<?
    bytes=?
@@ -69,7 +75,12 @@
    chaperone-struct
    char->integer
    char-alphabetic?
+   char-downcase
+   char-foldcase
+   char-general-category
+   char-graphic?
    char-numeric?
+   char-upcase
    char-whitespace?
    char<=?
    char<?
@@ -130,6 +141,8 @@
    eqv?
    error
    error-print-source-location
+   error-print-width
+   error-value->string-handler
    eval-jit-enabled
    exact-integer?
    exact-nonnegative-integer?
@@ -206,6 +219,7 @@
    length
    list
    list*
+   list->bytes
    list->string
    list->vector
    list-ref
@@ -285,6 +299,8 @@
    path<?
    peek-byte
    peek-bytes
+   peek-bytes-avail!
+   peek-bytes-avail!*
    peek-char-or-special
    placeholder-set!
    port-count-lines!
@@ -323,6 +339,7 @@
    read-accept-bar-quote
    read-byte
    read-bytes
+   read-bytes!
    read-bytes-avail!
    read-bytes-avail!*
    read-bytes-line
@@ -332,6 +349,8 @@
    read-decimal-as-inexact
    read-line
    read-on-demand-source
+   read-string
+   read-string!
    real?
    regexp
    regexp-match
