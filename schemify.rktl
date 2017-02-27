@@ -352,60 +352,112 @@
  (define-values (a-known-constant) (known-constant))
  (define-values (a-known-procedure) (known-procedure))
  (define-values
+  (struct:import import1.1 import? import-grp import-id)
+  (let-values (((struct:_0 make-_0 ?_0 -ref_0 -set!_0)
+                (let-values ()
+                  (let-values () (make-struct-type 'import #f 2 0 #f null (current-inspector) #f '(0 1) #f 'import)))))
+    (values
+     struct:_0
+     make-_0
+     ?_0
+     (make-struct-field-accessor -ref_0 0 'grp)
+     (make-struct-field-accessor -ref_0 1 'id))))
+ (define-values
+  (struct:import-group import-group2.1 import-group? import-group-knowns/thunk set-import-group-knowns/thunk!)
+  (let-values (((struct:_7 make-_7 ?_7 -ref_7 -set!_7)
+                (let-values ()
+                  (let-values ()
+                    (make-struct-type 'import-group #f 1 0 #f null (current-inspector) #f '() #f 'import-group)))))
+    (values
+     struct:_7
+     make-_7
+     ?_7
+     (make-struct-field-accessor -ref_7 0 'knowns/thunk)
+     (make-struct-field-mutator -set!_7 0 'knowns/thunk))))
+ (define-values
+  (import-group-knowns)
+  (lambda (grp_0)
+    (let-values (((knowns/thunk_0) (import-group-knowns/thunk grp_0)))
+      (if (procedure? knowns/thunk_0)
+        (let-values ()
+          (let-values (((knowns_0) (let-values (((or-part_0) (knowns/thunk_0))) (if or-part_0 or-part_0 (hasheq)))))
+            (begin (set-import-group-knowns/thunk! grp_0 knowns_0) knowns_0)))
+        (let-values () knowns/thunk_0)))))
+ (define-values
   (schemify-linklet)
-  (lambda (lk_0 prim-knowns_0)
+  (lambda (lk_0 prim-knowns_0 get-import-knowns_0)
     (let-values (((imports_0)
-                  (let-values (((lst_0) (cadr lk_0)))
+                  (let-values (((lst_0) (cadr lk_0)) ((start_0) 0))
                     (begin
                       (check-list lst_0)
+                      (check-naturals start_0)
                       ((letrec-values (((for-loop_0)
-                                        (lambda (imports_1 lst_1)
-                                          (if (pair? lst_1)
-                                            (let-values (((ims_0) (unsafe-car lst_1)) ((rest_0) (unsafe-cdr lst_1)))
+                                        (lambda (imports_1 lst_1 pos_0)
+                                          (if (if (pair? lst_1) #t #f)
+                                            (let-values (((ims_0) (unsafe-car lst_1))
+                                                         ((rest_0) (unsafe-cdr lst_1))
+                                                         ((index_0) pos_0))
                                               (let-values (((imports_2)
-                                                            (let-values (((lst_2) ims_0))
-                                                              (begin
-                                                                (check-list lst_2)
-                                                                ((letrec-values (((for-loop_1)
-                                                                                  (lambda (imports_3 lst_3)
-                                                                                    (if (pair? lst_3)
-                                                                                      (let-values (((im_0)
-                                                                                                    (unsafe-car lst_3))
-                                                                                                   ((rest_1)
-                                                                                                    (unsafe-cdr lst_3)))
-                                                                                        (let-values (((imports_4)
-                                                                                                      (let-values (((imports_5)
-                                                                                                                    imports_3))
-                                                                                                        (let-values (((imports_6)
-                                                                                                                      (let-values ()
-                                                                                                                        (let-values (((id_0)
-                                                                                                                                      (if (pair?
-                                                                                                                                           im_0)
-                                                                                                                                        (cadr
-                                                                                                                                         im_0)
-                                                                                                                                        im_0)))
-                                                                                                                          (hash-set
-                                                                                                                           imports_5
-                                                                                                                           id_0
-                                                                                                                           (gensym
-                                                                                                                            (symbol->string
-                                                                                                                             id_0)))))))
-                                                                                                          (values
-                                                                                                           imports_6)))))
-                                                                                          (if (not #f)
-                                                                                            (for-loop_1
-                                                                                             imports_4
-                                                                                             rest_1)
-                                                                                            imports_4)))
-                                                                                      imports_3))))
-                                                                   for-loop_1)
-                                                                 imports_1
-                                                                 lst_2)))))
-                                                (if (not #f) (for-loop_0 imports_2 rest_0) imports_2)))
+                                                            (let-values (((imports_3) imports_1))
+                                                              (let-values (((imports_4)
+                                                                            (let-values ()
+                                                                              (let-values (((grp_1)
+                                                                                            (import-group2.1
+                                                                                             (lambda ()
+                                                                                               (get-import-knowns_0
+                                                                                                index_0)))))
+                                                                                (let-values (((lst_2) ims_0))
+                                                                                  (begin
+                                                                                    (check-list lst_2)
+                                                                                    ((letrec-values (((for-loop_1)
+                                                                                                      (lambda (imports_5
+                                                                                                               lst_3)
+                                                                                                        (if (pair?
+                                                                                                             lst_3)
+                                                                                                          (let-values (((im_0)
+                                                                                                                        (unsafe-car
+                                                                                                                         lst_3))
+                                                                                                                       ((rest_1)
+                                                                                                                        (unsafe-cdr
+                                                                                                                         lst_3)))
+                                                                                                            (let-values (((imports_6)
+                                                                                                                          (let-values (((imports_7)
+                                                                                                                                        imports_5))
+                                                                                                                            (let-values (((imports_8)
+                                                                                                                                          (let-values ()
+                                                                                                                                            (let-values (((id_0)
+                                                                                                                                                          (if (pair?
+                                                                                                                                                               im_0)
+                                                                                                                                                            (cadr
+                                                                                                                                                             im_0)
+                                                                                                                                                            im_0)))
+                                                                                                                                              (hash-set
+                                                                                                                                               imports_7
+                                                                                                                                               id_0
+                                                                                                                                               (import1.1
+                                                                                                                                                grp_1
+                                                                                                                                                (gensym
+                                                                                                                                                 (symbol->string
+                                                                                                                                                  id_0))))))))
+                                                                                                                              (values
+                                                                                                                               imports_8)))))
+                                                                                                              (if (not
+                                                                                                                   #f)
+                                                                                                                (for-loop_1
+                                                                                                                 imports_6
+                                                                                                                 rest_1)
+                                                                                                                imports_6)))
+                                                                                                          imports_5))))
+                                                                                       for-loop_1)
+                                                                                     imports_3
+                                                                                     lst_2)))))))
+                                                                (values imports_4)))))
+                                                (if (not #f) (for-loop_0 imports_2 rest_0 (+ pos_0 1)) imports_2)))
                                             imports_1))))
                          for-loop_0)
                        (hasheq)
-                       lst_0)))))
+                       lst_0
+                       start_0)))))
       (let-values (((exports_0)
                     (let-values (((lst_4) (caddr lk_0)))
                       (begin
@@ -461,11 +513,12 @@
                                                                             (let-values (((elem_0)
                                                                                           (let-values ()
                                                                                             (let-values ()
-                                                                                              (hash-ref
-                                                                                               imports_0
-                                                                                               (if (pair? im_1)
-                                                                                                 (cadr im_1)
-                                                                                                 im_1))))))
+                                                                                              (import-id
+                                                                                               (hash-ref
+                                                                                                imports_0
+                                                                                                (if (pair? im_1)
+                                                                                                  (cadr im_1)
+                                                                                                  im_1)))))))
                                                                               (let-values (((result_0)
                                                                                             (if (post-guard-var_1)
                                                                                               (for-loop_4 rest_4)
@@ -506,27 +559,27 @@
            defn-info_0))))))
  (define-values
   (schemify-body)
-  (lambda (l_9 prim-knowns_1 imports_7 exports_5)
-    (let-values (((new-body_1 defn-info_1) (schemify-body* l_9 prim-knowns_1 imports_7 exports_5))) new-body_1)))
+  (lambda (l_9 prim-knowns_1 imports_9 exports_5)
+    (let-values (((new-body_1 defn-info_1) (schemify-body* l_9 prim-knowns_1 imports_9 exports_5))) new-body_1)))
  (define-values
   (schemify-body*)
-  (lambda (l_10 prim-knowns_2 imports_8 exports_6)
+  (lambda (l_10 prim-knowns_2 imports_10 exports_6)
     (let-values (((mutated_0) (mutated-in-body l_10 exports_6)))
       ((letrec-values (((loop_5)
-                        (lambda (l_11 knowns_0 accum_0 need-expr?_0)
+                        (lambda (l_11 knowns_1 accum_0 need-expr?_0)
                           (if (null? l_11)
                             (let-values ()
                               (values
                                (append
                                 (map2
-                                 (make-schemify prim-knowns_2 knowns_0 mutated_0 imports_8 exports_6)
+                                 (make-schemify prim-knowns_2 knowns_1 mutated_0 imports_10 exports_6)
                                  (reverse$1 accum_0))
                                 (make-set-variables accum_0 exports_6)
                                 (if need-expr?_0 '((void)) null))
-                               knowns_0))
+                               knowns_1))
                             (let-values ()
                               (let-values (((v_14 new-knowns_0 side-effects?_0 defn?_0)
-                                            (find-definitions (car l_11) knowns_0 (null? (cdr l_11)))))
+                                            (find-definitions (car l_11) knowns_1 imports_10 (null? (cdr l_11)))))
                                 (if (not side-effects?_0)
                                   (let-values () (loop_5 (cdr l_11) new-knowns_0 (cons v_14 accum_0) #t))
                                   (let-values ()
@@ -535,7 +588,7 @@
                                                    prim-knowns_2
                                                    new-knowns_0
                                                    mutated_0
-                                                   imports_8
+                                                   imports_10
                                                    exports_6)))
                                       (let-values (((schemified-accum_0) (map2 schemify_0 (reverse$1 accum_0))))
                                         (let-values (((schemified-v_0) (list (schemify_0 v_14))))
@@ -816,7 +869,7 @@
                                                                                                                       rhss_3))
                                                                                                           (let-values (((rhss_6)
                                                                                                                         (let-values ()
-                                                                                                                          (let-values (((rhss2_0)
+                                                                                                                          (let-values (((rhss6_0)
                                                                                                                                         (let-values ()
                                                                                                                                           (let-values (((d_42)
                                                                                                                                                         (cdr
@@ -826,7 +879,7 @@
                                                                                                                                                            d_42)))
                                                                                                                                               a_49)))))
                                                                                                                             (cons
-                                                                                                                             rhss2_0
+                                                                                                                             rhss6_0
                                                                                                                              rhss_5)))))
                                                                                                             (values
                                                                                                              rhss_6)))))
@@ -951,7 +1004,7 @@
                                                                                                                         rhss_10))
                                                                                                             (let-values (((rhss_13)
                                                                                                                           (let-values ()
-                                                                                                                            (let-values (((rhss3_0)
+                                                                                                                            (let-values (((rhss7_0)
                                                                                                                                           (let-values ()
                                                                                                                                             (let-values (((d_50)
                                                                                                                                                           (cdr
@@ -961,7 +1014,7 @@
                                                                                                                                                              d_50)))
                                                                                                                                                 a_57)))))
                                                                                                                               (cons
-                                                                                                                               rhss3_0
+                                                                                                                               rhss7_0
                                                                                                                                rhss_12)))))
                                                                                                               (values
                                                                                                                rhss_13)))))
@@ -1094,8 +1147,8 @@
                                                                                                               (let-values (((idss_6
                                                                                                                              rhss_20)
                                                                                                                             (let-values ()
-                                                                                                                              (let-values (((idss4_0
-                                                                                                                                             rhss5_0)
+                                                                                                                              (let-values (((idss8_0
+                                                                                                                                             rhss9_0)
                                                                                                                                             (let-values ()
                                                                                                                                               (let-values (((idss_7)
                                                                                                                                                             (let-values (((a_65)
@@ -1115,10 +1168,10 @@
                                                                                                                                                  rhss_21)))))
                                                                                                                                 (values
                                                                                                                                  (cons
-                                                                                                                                  idss4_0
+                                                                                                                                  idss8_0
                                                                                                                                   idss_5)
                                                                                                                                  (cons
-                                                                                                                                  rhss5_0
+                                                                                                                                  rhss9_0
                                                                                                                                   rhss_19))))))
                                                                                                                 (values
                                                                                                                  idss_6
@@ -1309,8 +1362,8 @@
                                                                                                                 (let-values (((ids_7
                                                                                                                                rhss_28)
                                                                                                                               (let-values ()
-                                                                                                                                (let-values (((ids6_0
-                                                                                                                                               rhss7_0)
+                                                                                                                                (let-values (((ids10_0
+                                                                                                                                               rhss11_0)
                                                                                                                                               (let-values ()
                                                                                                                                                 (let-values (((ids_8)
                                                                                                                                                               (let-values (((a_74)
@@ -1330,10 +1383,10 @@
                                                                                                                                                    rhss_29)))))
                                                                                                                                   (values
                                                                                                                                    (cons
-                                                                                                                                    ids6_0
+                                                                                                                                    ids10_0
                                                                                                                                     ids_6)
                                                                                                                                    (cons
-                                                                                                                                    rhss7_0
+                                                                                                                                    rhss11_0
                                                                                                                                     rhss_27))))))
                                                                                                                   (values
                                                                                                                    ids_7
@@ -1410,30 +1463,30 @@
                             (simple? body_8 mutated_1)
                             #f)))
                       (let-values ()
-                        (let-values (((or-part_0) (if (symbol? e_0) (not (hash-ref mutated_1 e_0 #f)) #f)))
-                          (if or-part_0
-                            or-part_0
-                            (let-values (((or-part_1) (integer? e_0)))
-                              (if or-part_1
-                                or-part_1
-                                (let-values (((or-part_2) (boolean? e_0)))
-                                  (if or-part_2
-                                    or-part_2
-                                    (let-values (((or-part_3) (string? e_0)))
-                                      (if or-part_3
-                                        or-part_3
-                                        (let-values (((or-part_4) (bytes? e_0)))
-                                          (if or-part_4 or-part_4 (regexp? e_0)))))))))))))))))))))))
+                        (let-values (((or-part_1) (if (symbol? e_0) (not (hash-ref mutated_1 e_0 #f)) #f)))
+                          (if or-part_1
+                            or-part_1
+                            (let-values (((or-part_2) (integer? e_0)))
+                              (if or-part_2
+                                or-part_2
+                                (let-values (((or-part_3) (boolean? e_0)))
+                                  (if or-part_3
+                                    or-part_3
+                                    (let-values (((or-part_4) (string? e_0)))
+                                      (if or-part_4
+                                        or-part_4
+                                        (let-values (((or-part_5) (bytes? e_0)))
+                                          (if or-part_5 or-part_5 (regexp? e_0)))))))))))))))))))))))
  (define-values
   (struct:struct-type-info
-   struct-type-info1.1
+   struct-type-info3.1
    struct-type-info?
    struct-type-info-name
    struct-type-info-parent
    struct-type-info-immediate-field-count
    struct-type-info-field-count
    struct-type-info-rest)
-  (let-values (((struct:_7 make-_7 ?_7 -ref_7 -set!_7)
+  (let-values (((struct:_8 make-_8 ?_8 -ref_8 -set!_8)
                 (let-values ()
                   (let-values ()
                     (make-struct-type
@@ -1449,17 +1502,25 @@
                      #f
                      'struct-type-info)))))
     (values
-     struct:_7
-     make-_7
-     ?_7
-     (make-struct-field-accessor -ref_7 0 'name)
-     (make-struct-field-accessor -ref_7 1 'parent)
-     (make-struct-field-accessor -ref_7 2 'immediate-field-count)
-     (make-struct-field-accessor -ref_7 3 'field-count)
-     (make-struct-field-accessor -ref_7 4 'rest))))
+     struct:_8
+     make-_8
+     ?_8
+     (make-struct-field-accessor -ref_8 0 'name)
+     (make-struct-field-accessor -ref_8 1 'parent)
+     (make-struct-field-accessor -ref_8 2 'immediate-field-count)
+     (make-struct-field-accessor -ref_8 3 'field-count)
+     (make-struct-field-accessor -ref_8 4 'rest))))
+ (define-values
+  (hash-ref-either)
+  (lambda (knowns_2 imports_11 key_0)
+    (let-values (((or-part_6) (hash-ref knowns_2 key_0 #f)))
+      (if or-part_6
+        or-part_6
+        (let-values (((im_2) (hash-ref imports_11 key_0 #f)))
+          (if im_2 (hash-ref (import-group-knowns (import-grp im_2)) key_0 #f) #f))))))
  (define-values
   (make-struct-type-info)
-  (lambda (v_26 knowns_1)
+  (lambda (v_26 knowns_3 imports_12)
     (let-values (((v_27) v_26))
       (if (if (pair? v_27)
             (if (let-values (((a_77) (car v_27))) (equal? 'make-struct-type a_77))
@@ -1521,14 +1582,16 @@
                                           (values parent_2 fields_2 rest_23)))))
                           (values name_2 parent_1 fields_1 rest_22)))))
           (if (symbol? name_1)
-            (if (let-values (((or-part_5) (not parent_0)))
-                  (if or-part_5 or-part_5 (known-struct-type? (hash-ref knowns_1 parent_0 #f))))
+            (if (let-values (((or-part_7) (not parent_0)))
+                  (if or-part_7 or-part_7 (known-struct-type? (hash-ref-either knowns_3 imports_12 parent_0))))
               (if (exact-nonnegative-integer? fields_0)
-                (struct-type-info1.1
+                (struct-type-info3.1
                  name_1
                  parent_0
                  fields_0
-                 (+ fields_0 (if parent_0 (known-struct-type-field-count (hash-ref knowns_1 parent_0 #f)) 0))
+                 (+
+                  fields_0
+                  (if parent_0 (known-struct-type-field-count (hash-ref-either knowns_3 imports_12 parent_0)) 0))
                  rest_21)
                 #f)
               #f)
@@ -1551,11 +1614,11 @@
           (let-values (((body_10)
                         (let-values (((d_86) (cdr v_27)))
                           (let-values (((d_87) (cdr d_86))) (let-values (((a_92) (car d_87))) a_92)))))
-            (make-struct-type-info body_10 knowns_1))
+            (make-struct-type-info body_10 knowns_3 imports_12))
           (let-values () #f))))))
  (define-values
   (find-definitions)
-  (lambda (v_28 knowns_2 last?_0)
+  (lambda (v_28 knowns_4 imports_13 last?_0)
     (let-values (((v_29) v_28))
       (if (if (pair? v_29)
             (if (let-values (((a_93) (car v_29))) (equal? 'define-values a_93))
@@ -1584,8 +1647,8 @@
                                       (let-values (((d_93) (cdr d_92))) (let-values (((a_99) (car d_93))) a_99))))
                           (values id_5 rhs_11)))))
           (if (lambda? rhs_10)
-            (values v_28 (hash-set knowns_2 id_4 a-known-procedure) #f #t)
-            (values v_28 knowns_2 #t #t)))
+            (values v_28 (hash-set knowns_4 id_4 a-known-procedure) #f #t)
+            (values v_28 knowns_4 #t #t)))
         (if (if (pair? v_29)
               (if (let-values (((a_100) (car v_29))) (equal? 'define-values a_100))
                 (let-values (((d_94) (cdr v_29)))
@@ -1702,11 +1765,11 @@
                          make-s_0
                          s?_0
                          acc/muts_0
-                         struct:_8
+                         struct:_9
                          make_0
-                         ?_8
-                         -ref_8
-                         -set!_8
+                         ?_9
+                         -ref_9
+                         -set!_9
                          rhs_12
                          struct:2_0
                          make2_0
@@ -1733,11 +1796,11 @@
                                                                             (values s?_4 acc/muts_4)))))
                                                             (values make-s_3 s?_3 acc/muts_3)))))
                                             (values struct:s_2 make-s_2 s?_2 acc/muts_2))))
-                                       ((struct:_9
+                                       ((struct:_10
                                          make_1
-                                         ?_9
-                                         -ref_9
-                                         -set!_9
+                                         ?_10
+                                         -ref_10
+                                         -set!_10
                                          rhs_13
                                          struct:2_1
                                          make2_1
@@ -1746,20 +1809,20 @@
                                         (let-values (((d_119) (cdr d_115)))
                                           (let-values (((a_125) (car d_119)))
                                             (let-values (((d_120) (cdr a_125)))
-                                              (let-values (((struct:_10 make_2 ?_10 -ref_10 -set!_10 rhs_14)
+                                              (let-values (((struct:_11 make_2 ?_11 -ref_11 -set!_11 rhs_14)
                                                             (let-values (((a_126) (car d_120)))
                                                               (let-values (((a_127) (car a_126)))
-                                                                (let-values (((struct:_11 make_3 ?_11 -ref_11 -set!_11)
+                                                                (let-values (((struct:_12 make_3 ?_12 -ref_12 -set!_12)
                                                                               (let-values (((a_128) (car a_127)))
-                                                                                (let-values (((struct:_12)
+                                                                                (let-values (((struct:_13)
                                                                                               (let-values (((a_129)
                                                                                                             (car
                                                                                                              a_128)))
                                                                                                 a_129))
                                                                                              ((make_4
-                                                                                               ?_12
-                                                                                               -ref_12
-                                                                                               -set!_12)
+                                                                                               ?_13
+                                                                                               -ref_13
+                                                                                               -set!_13)
                                                                                               (let-values (((d_121)
                                                                                                             (cdr
                                                                                                              a_128)))
@@ -1768,28 +1831,28 @@
                                                                                                                             (car
                                                                                                                              d_121)))
                                                                                                                 a_130))
-                                                                                                             ((?_13
-                                                                                                               -ref_13
-                                                                                                               -set!_13)
+                                                                                                             ((?_14
+                                                                                                               -ref_14
+                                                                                                               -set!_14)
                                                                                                               (let-values (((d_122)
                                                                                                                             (cdr
                                                                                                                              d_121)))
-                                                                                                                (let-values (((?_14)
+                                                                                                                (let-values (((?_15)
                                                                                                                               (let-values (((a_131)
                                                                                                                                             (car
                                                                                                                                              d_122)))
                                                                                                                                 a_131))
-                                                                                                                             ((-ref_14
-                                                                                                                               -set!_14)
+                                                                                                                             ((-ref_15
+                                                                                                                               -set!_15)
                                                                                                                               (let-values (((d_123)
                                                                                                                                             (cdr
                                                                                                                                              d_122)))
-                                                                                                                                (let-values (((-ref_15)
+                                                                                                                                (let-values (((-ref_16)
                                                                                                                                               (let-values (((a_132)
                                                                                                                                                             (car
                                                                                                                                                              d_123)))
                                                                                                                                                 a_132))
-                                                                                                                                             ((-set!_15)
+                                                                                                                                             ((-set!_16)
                                                                                                                                               (let-values (((d_124)
                                                                                                                                                             (cdr
                                                                                                                                                              d_123)))
@@ -1798,33 +1861,33 @@
                                                                                                                                                                d_124)))
                                                                                                                                                   a_133))))
                                                                                                                                   (values
-                                                                                                                                   -ref_15
-                                                                                                                                   -set!_15)))))
+                                                                                                                                   -ref_16
+                                                                                                                                   -set!_16)))))
                                                                                                                   (values
-                                                                                                                   ?_14
-                                                                                                                   -ref_14
-                                                                                                                   -set!_14)))))
+                                                                                                                   ?_15
+                                                                                                                   -ref_15
+                                                                                                                   -set!_15)))))
                                                                                                   (values
                                                                                                    make_5
-                                                                                                   ?_13
-                                                                                                   -ref_13
-                                                                                                   -set!_13)))))
+                                                                                                   ?_14
+                                                                                                   -ref_14
+                                                                                                   -set!_14)))))
                                                                                   (values
-                                                                                   struct:_12
+                                                                                   struct:_13
                                                                                    make_4
-                                                                                   ?_12
-                                                                                   -ref_12
-                                                                                   -set!_12))))
+                                                                                   ?_13
+                                                                                   -ref_13
+                                                                                   -set!_13))))
                                                                              ((rhs_15)
                                                                               (let-values (((d_125) (cdr a_127)))
                                                                                 (let-values (((a_134) (car d_125)))
                                                                                   a_134))))
                                                                   (values
-                                                                   struct:_11
+                                                                   struct:_12
                                                                    make_3
-                                                                   ?_11
-                                                                   -ref_11
-                                                                   -set!_11
+                                                                   ?_12
+                                                                   -ref_12
+                                                                   -set!_12
                                                                    rhs_15)))))
                                                            ((struct:2_2 make2_2 ?2_2 make-acc/muts_2)
                                                             (let-values (((d_126) (cdr d_120)))
@@ -1867,11 +1930,11 @@
                                                                      ?2_3
                                                                      make-acc/muts_3)))))))
                                                 (values
-                                                 struct:_10
+                                                 struct:_11
                                                  make_2
-                                                 ?_10
-                                                 -ref_10
-                                                 -set!_10
+                                                 ?_11
+                                                 -ref_11
+                                                 -set!_11
                                                  rhs_14
                                                  struct:2_2
                                                  make2_2
@@ -1882,88 +1945,90 @@
                              make-s_1
                              s?_1
                              acc/muts_1
-                             struct:_9
+                             struct:_10
                              make_1
-                             ?_9
-                             -ref_9
-                             -set!_9
+                             ?_10
+                             -ref_10
+                             -set!_10
                              rhs_13
                              struct:2_1
                              make2_1
                              ?2_1
                              make-acc/muts_1)))))
             (let-values (((info_0)
-                          (if (eq? struct:_8 struct:2_0)
-                            (if (eq? make_0 make2_0) (if (eq? ?_8 ?2_0) (make-struct-type-info rhs_12 knowns_2) #f) #f)
+                          (if (eq? struct:_9 struct:2_0)
+                            (if (eq? make_0 make2_0)
+                              (if (eq? ?_9 ?2_0) (make-struct-type-info rhs_12 knowns_4 imports_13) #f)
+                              #f)
                             #f)))
               (if info_0
                 (let-values ()
                   (let-values (((type_0) (gensym (symbol->string make-s_0))))
                     (values
                      v_28
-                     (let-values (((knowns_3)
+                     (let-values (((knowns_5)
                                    (hash-set
-                                    knowns_2
+                                    knowns_4
                                     make-s_0
                                     (known-constructor type_0 (struct-type-info-field-count info_0)))))
-                       (let-values (((knowns_4) (hash-set knowns_3 s?_0 (known-predicate type_0))))
-                         (let-values (((knowns_5)
+                       (let-values (((knowns_6) (hash-set knowns_5 s?_0 (known-predicate type_0))))
+                         (let-values (((knowns_7)
                                        (let-values (((lst_42) acc/muts_0) ((lst_43) make-acc/muts_0))
                                          (begin
                                            (check-list lst_42)
                                            (check-list lst_43)
                                            ((letrec-values (((for-loop_21)
-                                                             (lambda (knowns_6 lst_44 lst_45)
+                                                             (lambda (knowns_8 lst_44 lst_45)
                                                                (if (if (pair? lst_44) (pair? lst_45) #f)
                                                                  (let-values (((id_6) (unsafe-car lst_44))
                                                                               ((rest_25) (unsafe-cdr lst_44))
                                                                               ((maker_0) (unsafe-car lst_45))
                                                                               ((rest_26) (unsafe-cdr lst_45)))
-                                                                   (let-values (((knowns_7)
-                                                                                 (let-values (((knowns_8) knowns_6))
-                                                                                   (let-values (((knowns_9)
+                                                                   (let-values (((knowns_9)
+                                                                                 (let-values (((knowns_10) knowns_8))
+                                                                                   (let-values (((knowns_11)
                                                                                                  (let-values ()
                                                                                                    (if (eq?
                                                                                                         (car maker_0)
-                                                                                                        -ref_8)
+                                                                                                        -ref_9)
                                                                                                      (let-values ()
                                                                                                        (hash-set
-                                                                                                        knowns_8
+                                                                                                        knowns_10
                                                                                                         id_6
                                                                                                         (known-accessor
                                                                                                          type_0)))
                                                                                                      (let-values ()
                                                                                                        (hash-set
-                                                                                                        knowns_8
+                                                                                                        knowns_10
                                                                                                         id_6
                                                                                                         (known-mutator
                                                                                                          type_0)))))))
-                                                                                     (values knowns_9)))))
+                                                                                     (values knowns_11)))))
                                                                      (if (not #f)
-                                                                       (for-loop_21 knowns_7 rest_25 rest_26)
-                                                                       knowns_7)))
-                                                                 knowns_6))))
+                                                                       (for-loop_21 knowns_9 rest_25 rest_26)
+                                                                       knowns_9)))
+                                                                 knowns_8))))
                                               for-loop_21)
-                                            knowns_4
+                                            knowns_6
                                             lst_42
                                             lst_43)))))
                            (hash-set
-                            knowns_5
+                            knowns_7
                             struct:s_0
                             (known-struct-type type_0 (struct-type-info-field-count info_0))))))
                      #f
                      #t)))
-                (let-values () (values v_28 knowns_2 #t #t)))))
+                (let-values () (values v_28 knowns_4 #t #t)))))
           (if (if (pair? v_29)
                 (if (let-values (((a_139) (car v_29))) (equal? 'define-values a_139))
                   (let-values (((d_131) (cdr v_29))) #t)
                   #f)
                 #f)
-            (let-values () (values v_28 knowns_2 #t #t))
+            (let-values () (values v_28 knowns_4 #t #t))
             (let-values ()
               (values
                (if last?_0 v_28 (list 'define-values (list (gensym)) (list* 'begin v_28 '((void)))))
-               knowns_2
+               knowns_4
                #t
                #f))))))))
  (define-values
@@ -2064,8 +2129,8 @@
                                                                                                     (let-values (((ids_15
                                                                                                                    rhss_36)
                                                                                                                   (let-values ()
-                                                                                                                    (let-values (((ids9_0
-                                                                                                                                   rhss10_0)
+                                                                                                                    (let-values (((ids13_0
+                                                                                                                                   rhss14_0)
                                                                                                                                   (let-values ()
                                                                                                                                     (let-values (((ids_16)
                                                                                                                                                   (let-values (((a_148)
@@ -2085,10 +2150,10 @@
                                                                                                                                        rhss_37)))))
                                                                                                                       (values
                                                                                                                        (cons
-                                                                                                                        ids9_0
+                                                                                                                        ids13_0
                                                                                                                         ids_14)
                                                                                                                        (cons
-                                                                                                                        rhss10_0
+                                                                                                                        rhss14_0
                                                                                                                         rhss_35))))))
                                                                                                       (values
                                                                                                        ids_15
@@ -2301,8 +2366,8 @@
                                                                                                       (let-values (((idss_14
                                                                                                                      rhss_45)
                                                                                                                     (let-values ()
-                                                                                                                      (let-values (((idss11_0
-                                                                                                                                     rhss12_0)
+                                                                                                                      (let-values (((idss15_0
+                                                                                                                                     rhss16_0)
                                                                                                                                     (let-values ()
                                                                                                                                       (let-values (((idss_15)
                                                                                                                                                     (let-values (((a_175)
@@ -2322,10 +2387,10 @@
                                                                                                                                          rhss_46)))))
                                                                                                                         (values
                                                                                                                          (cons
-                                                                                                                          idss11_0
+                                                                                                                          idss15_0
                                                                                                                           idss_13)
                                                                                                                          (cons
-                                                                                                                          rhss12_0
+                                                                                                                          rhss16_0
                                                                                                                           rhss_44))))))
                                                                                                         (values
                                                                                                          idss_14
@@ -2422,7 +2487,7 @@
      null)))
  (define-values
   (make-schemify)
-  (lambda (prim-knowns_3 knowns_10 mutated_15 imports_9 exports_7)
+  (lambda (prim-knowns_3 knowns_12 mutated_15 imports_14 exports_7)
     (lambda (v_41)
       ((letrec-values (((schemify_1)
                         (lambda (v_42)
@@ -2510,8 +2575,8 @@
                                                                                                           (let-values (((formalss_5
                                                                                                                          bodys_11)
                                                                                                                         (let-values ()
-                                                                                                                          (let-values (((formalss13_0
-                                                                                                                                         bodys14_0)
+                                                                                                                          (let-values (((formalss17_0
+                                                                                                                                         bodys18_0)
                                                                                                                                         (let-values ()
                                                                                                                                           (let-values (((formalss_6)
                                                                                                                                                         (let-values (((a_187)
@@ -2528,10 +2593,10 @@
                                                                                                                                              bodys_12)))))
                                                                                                                             (values
                                                                                                                              (cons
-                                                                                                                              formalss13_0
+                                                                                                                              formalss17_0
                                                                                                                               formalss_4)
                                                                                                                              (cons
-                                                                                                                              bodys14_0
+                                                                                                                              bodys18_0
                                                                                                                               bodys_10))))))
                                                                                                             (values
                                                                                                              formalss_5
@@ -2738,11 +2803,11 @@
                                                  make-s_4
                                                  s?_5
                                                  acc/muts_5
-                                                 struct:_13
+                                                 struct:_14
                                                  make_6
                                                  ?1_0
-                                                 -ref_16
-                                                 -set!_16
+                                                 -ref_17
+                                                 -set!_17
                                                  mk_0
                                                  struct:2_4
                                                  make2_5
@@ -2783,11 +2848,11 @@
                                                                                      s?_8
                                                                                      acc/muts_8)))))
                                                                     (values struct:s_5 make-s_6 s?_7 acc/muts_7))))
-                                                               ((struct:_14
+                                                               ((struct:_15
                                                                  make_7
                                                                  ?1_1
-                                                                 -ref_17
-                                                                 -set!_17
+                                                                 -ref_18
+                                                                 -set!_18
                                                                  mk_1
                                                                  struct:2_5
                                                                  make2_6
@@ -2796,32 +2861,32 @@
                                                                 (let-values (((d_204) (cdr d_200)))
                                                                   (let-values (((a_213) (car d_204)))
                                                                     (let-values (((d_205) (cdr a_213)))
-                                                                      (let-values (((struct:_15
+                                                                      (let-values (((struct:_16
                                                                                      make_8
                                                                                      ?1_2
-                                                                                     -ref_18
-                                                                                     -set!_18
+                                                                                     -ref_19
+                                                                                     -set!_19
                                                                                      mk_2)
                                                                                     (let-values (((a_214) (car d_205)))
                                                                                       (let-values (((a_215)
                                                                                                     (car a_214)))
-                                                                                        (let-values (((struct:_16
+                                                                                        (let-values (((struct:_17
                                                                                                        make_9
                                                                                                        ?1_3
-                                                                                                       -ref_19
-                                                                                                       -set!_19)
+                                                                                                       -ref_20
+                                                                                                       -set!_20)
                                                                                                       (let-values (((a_216)
                                                                                                                     (car
                                                                                                                      a_215)))
-                                                                                                        (let-values (((struct:_17)
+                                                                                                        (let-values (((struct:_18)
                                                                                                                       (let-values (((a_217)
                                                                                                                                     (car
                                                                                                                                      a_216)))
                                                                                                                         a_217))
                                                                                                                      ((make_10
                                                                                                                        ?1_4
-                                                                                                                       -ref_20
-                                                                                                                       -set!_20)
+                                                                                                                       -ref_21
+                                                                                                                       -set!_21)
                                                                                                                       (let-values (((d_206)
                                                                                                                                     (cdr
                                                                                                                                      a_216)))
@@ -2831,8 +2896,8 @@
                                                                                                                                                      d_206)))
                                                                                                                                         a_218))
                                                                                                                                      ((?1_5
-                                                                                                                                       -ref_21
-                                                                                                                                       -set!_21)
+                                                                                                                                       -ref_22
+                                                                                                                                       -set!_22)
                                                                                                                                       (let-values (((d_207)
                                                                                                                                                     (cdr
                                                                                                                                                      d_206)))
@@ -2841,17 +2906,17 @@
                                                                                                                                                                     (car
                                                                                                                                                                      d_207)))
                                                                                                                                                         a_219))
-                                                                                                                                                     ((-ref_22
-                                                                                                                                                       -set!_22)
+                                                                                                                                                     ((-ref_23
+                                                                                                                                                       -set!_23)
                                                                                                                                                       (let-values (((d_208)
                                                                                                                                                                     (cdr
                                                                                                                                                                      d_207)))
-                                                                                                                                                        (let-values (((-ref_23)
+                                                                                                                                                        (let-values (((-ref_24)
                                                                                                                                                                       (let-values (((a_220)
                                                                                                                                                                                     (car
                                                                                                                                                                                      d_208)))
                                                                                                                                                                         a_220))
-                                                                                                                                                                     ((-set!_23)
+                                                                                                                                                                     ((-set!_24)
                                                                                                                                                                       (let-values (((d_209)
                                                                                                                                                                                     (cdr
                                                                                                                                                                                      d_208)))
@@ -2860,23 +2925,23 @@
                                                                                                                                                                                        d_209)))
                                                                                                                                                                           a_221))))
                                                                                                                                                           (values
-                                                                                                                                                           -ref_23
-                                                                                                                                                           -set!_23)))))
+                                                                                                                                                           -ref_24
+                                                                                                                                                           -set!_24)))))
                                                                                                                                           (values
                                                                                                                                            ?1_6
-                                                                                                                                           -ref_22
-                                                                                                                                           -set!_22)))))
+                                                                                                                                           -ref_23
+                                                                                                                                           -set!_23)))))
                                                                                                                           (values
                                                                                                                            make_11
                                                                                                                            ?1_5
-                                                                                                                           -ref_21
-                                                                                                                           -set!_21)))))
+                                                                                                                           -ref_22
+                                                                                                                           -set!_22)))))
                                                                                                           (values
-                                                                                                           struct:_17
+                                                                                                           struct:_18
                                                                                                            make_10
                                                                                                            ?1_4
-                                                                                                           -ref_20
-                                                                                                           -set!_20))))
+                                                                                                           -ref_21
+                                                                                                           -set!_21))))
                                                                                                      ((mk_3)
                                                                                                       (let-values (((d_210)
                                                                                                                     (cdr
@@ -2886,11 +2951,11 @@
                                                                                                                        d_210)))
                                                                                                           a_222))))
                                                                                           (values
-                                                                                           struct:_16
+                                                                                           struct:_17
                                                                                            make_9
                                                                                            ?1_3
-                                                                                           -ref_19
-                                                                                           -set!_19
+                                                                                           -ref_20
+                                                                                           -set!_20
                                                                                            mk_3)))))
                                                                                    ((struct:2_6
                                                                                      make2_7
@@ -2945,11 +3010,11 @@
                                                                                              ?2_9
                                                                                              make-acc/muts_9)))))))
                                                                         (values
-                                                                         struct:_15
+                                                                         struct:_16
                                                                          make_8
                                                                          ?1_2
-                                                                         -ref_18
-                                                                         -set!_18
+                                                                         -ref_19
+                                                                         -set!_19
                                                                          mk_2
                                                                          struct:2_6
                                                                          make2_7
@@ -2960,20 +3025,22 @@
                                                      make-s_5
                                                      s?_6
                                                      acc/muts_6
-                                                     struct:_14
+                                                     struct:_15
                                                      make_7
                                                      ?1_1
-                                                     -ref_17
-                                                     -set!_17
+                                                     -ref_18
+                                                     -set!_18
                                                      mk_1
                                                      struct:2_5
                                                      make2_6
                                                      ?2_7
                                                      make-acc/muts_7)))))
                                     (let-values (((sti_0)
-                                                  (if (eq? struct:_13 struct:2_4)
+                                                  (if (eq? struct:_14 struct:2_4)
                                                     (if (eq? make_6 make2_5)
-                                                      (if (eq? ?1_0 ?2_6) (make-struct-type-info mk_0 knowns_10) #f)
+                                                      (if (eq? ?1_0 ?2_6)
+                                                        (make-struct-type-info mk_0 knowns_12 imports_14)
+                                                        #f)
                                                       #f)
                                                     #f)))
                                       (if sti_0
@@ -2993,17 +3060,17 @@
                                              (list
                                               'quote
                                               (let-values (((vec_2 i_1)
-                                                            (let-values (((start_0) 0)
+                                                            (let-values (((start_1) 0)
                                                                          ((end_0)
                                                                           (struct-type-info-immediate-field-count
                                                                            sti_0))
                                                                          ((inc_0) 1))
                                                               (begin
-                                                                (check-range start_0 end_0 inc_0)
+                                                                (check-range start_1 end_0 inc_0)
                                                                 ((letrec-values (((for-loop_29)
-                                                                                  (lambda (vec_3 i_2 pos_0)
-                                                                                    (if (< pos_0 end_0)
-                                                                                      (let-values (((i_3) pos_0))
+                                                                                  (lambda (vec_3 i_2 pos_1)
+                                                                                    (if (< pos_1 end_0)
+                                                                                      (let-values (((i_3) pos_1))
                                                                                         (let-values (((vec_4 i_4)
                                                                                                       (let-values (((vec_5)
                                                                                                                     vec_3)
@@ -3043,13 +3110,13 @@
                                                                                             (for-loop_29
                                                                                              vec_4
                                                                                              i_4
-                                                                                             (+ pos_0 inc_0))
+                                                                                             (+ pos_1 inc_0))
                                                                                             (values vec_4 i_4))))
                                                                                       (values vec_3 i_2)))))
                                                                    for-loop_29)
                                                                  (make-vector 16)
                                                                  0
-                                                                 start_0)))))
+                                                                 start_1)))))
                                                 (shrink-vector vec_2 i_1)))))
                                            (list
                                             'define
@@ -3100,7 +3167,7 @@
                                                                                                                    ((lambda (v_47)
                                                                                                                       (eq?
                                                                                                                        v_47
-                                                                                                                       -ref_16))
+                                                                                                                       -ref_17))
                                                                                                                     a_228))
                                                                                                                (let-values (((d_217)
                                                                                                                              (cdr
@@ -3134,7 +3201,7 @@
                                                                                                              #f))
                                                                                                          #f)
                                                                                                        #f)
-                                                                                                   (let-values (((pos_1)
+                                                                                                   (let-values (((pos_2)
                                                                                                                  (let-values (((d_220)
                                                                                                                                (cdr
                                                                                                                                 v_46)))
@@ -3148,7 +3215,7 @@
                                                                                                      (list
                                                                                                       'record-accessor
                                                                                                       struct:s_3
-                                                                                                      pos_1))
+                                                                                                      pos_2))
                                                                                                    (if (if (pair? v_46)
                                                                                                          (if (let-values (((a_232)
                                                                                                                            (car
@@ -3167,7 +3234,7 @@
                                                                                                                      ((lambda (v_48)
                                                                                                                         (eq?
                                                                                                                          v_48
-                                                                                                                         -set!_16))
+                                                                                                                         -set!_17))
                                                                                                                       a_233))
                                                                                                                  (let-values (((d_223)
                                                                                                                                (cdr
@@ -3201,7 +3268,7 @@
                                                                                                                #f))
                                                                                                            #f)
                                                                                                          #f)
-                                                                                                     (let-values (((pos_2)
+                                                                                                     (let-values (((pos_3)
                                                                                                                    (let-values (((d_226)
                                                                                                                                  (cdr
                                                                                                                                   v_46)))
@@ -3215,7 +3282,7 @@
                                                                                                        (list
                                                                                                         'record-mutator
                                                                                                         struct:s_3
-                                                                                                        pos_2))
+                                                                                                        pos_3))
                                                                                                      (let-values ()
                                                                                                        (error
                                                                                                         "oops"))))))))))
@@ -3457,8 +3524,8 @@
                                                                                                                                         (let-values (((ids_34
                                                                                                                                                        rhss_54)
                                                                                                                                                       (let-values ()
-                                                                                                                                                        (let-values (((ids15_0
-                                                                                                                                                                       rhss16_0)
+                                                                                                                                                        (let-values (((ids19_0
+                                                                                                                                                                       rhss20_0)
                                                                                                                                                                       (let-values ()
                                                                                                                                                                         (let-values (((ids_35)
                                                                                                                                                                                       (let-values (((a_263)
@@ -3481,10 +3548,10 @@
                                                                                                                                                                            rhss_55)))))
                                                                                                                                                           (values
                                                                                                                                                            (cons
-                                                                                                                                                            ids15_0
+                                                                                                                                                            ids19_0
                                                                                                                                                             ids_33)
                                                                                                                                                            (cons
-                                                                                                                                                            rhss16_0
+                                                                                                                                                            rhss20_0
                                                                                                                                                             rhss_53))))))
                                                                                                                                           (values
                                                                                                                                            ids_34
@@ -3517,7 +3584,7 @@
                                                                   (check-list lst_70)
                                                                   (check-list lst_71)
                                                                   ((letrec-values (((for-loop_33)
-                                                                                    (lambda (knowns_11 lst_72 lst_73)
+                                                                                    (lambda (knowns_13 lst_72 lst_73)
                                                                                       (if (if (pair? lst_72)
                                                                                             (pair? lst_73)
                                                                                             #f)
@@ -3533,29 +3600,29 @@
                                                                                                      ((rest_40)
                                                                                                       (unsafe-cdr
                                                                                                        lst_73)))
-                                                                                          (let-values (((knowns_12)
-                                                                                                        (let-values (((knowns_13)
-                                                                                                                      knowns_11))
-                                                                                                          (let-values (((knowns_14)
+                                                                                          (let-values (((knowns_14)
+                                                                                                        (let-values (((knowns_15)
+                                                                                                                      knowns_13))
+                                                                                                          (let-values (((knowns_16)
                                                                                                                         (let-values ()
                                                                                                                           (if (lambda?
                                                                                                                                rhs_28)
                                                                                                                             (hash-set
-                                                                                                                             knowns_13
+                                                                                                                             knowns_15
                                                                                                                              id_11
                                                                                                                              a-known-procedure)
-                                                                                                                            knowns_13))))
+                                                                                                                            knowns_15))))
                                                                                                             (values
-                                                                                                             knowns_14)))))
+                                                                                                             knowns_16)))))
                                                                                             (if (not #f)
                                                                                               (for-loop_33
-                                                                                               knowns_12
+                                                                                               knowns_14
                                                                                                rest_39
                                                                                                rest_40)
-                                                                                              knowns_12)))
-                                                                                        knowns_11))))
+                                                                                              knowns_14)))
+                                                                                        knowns_13))))
                                                                      for-loop_33)
-                                                                   knowns_10
+                                                                   knowns_12
                                                                    lst_70
                                                                    lst_71)))))
                                                   (let-values (((body-schemify_0)
@@ -3563,7 +3630,7 @@
                                                                  prim-knowns_3
                                                                  new-knowns_1
                                                                  mutated_15
-                                                                 imports_9
+                                                                 imports_14
                                                                  exports_7)))
                                                     (left-to-right/let
                                                      (list*
@@ -3814,8 +3881,8 @@
                                                                                                                                             (let-values (((idss_23
                                                                                                                                                            rhss_64)
                                                                                                                                                           (let-values ()
-                                                                                                                                                            (let-values (((idss17_0
-                                                                                                                                                                           rhss18_0)
+                                                                                                                                                            (let-values (((idss21_0
+                                                                                                                                                                           rhss22_0)
                                                                                                                                                                           (let-values ()
                                                                                                                                                                             (let-values (((idss_24)
                                                                                                                                                                                           (let-values (((a_285)
@@ -3835,10 +3902,10 @@
                                                                                                                                                                                rhss_65)))))
                                                                                                                                                               (values
                                                                                                                                                                (cons
-                                                                                                                                                                idss17_0
+                                                                                                                                                                idss21_0
                                                                                                                                                                 idss_22)
                                                                                                                                                                (cons
-                                                                                                                                                                rhss18_0
+                                                                                                                                                                rhss22_0
                                                                                                                                                                 rhss_63))))))
                                                                                                                                               (values
                                                                                                                                                idss_23
@@ -4023,8 +4090,8 @@
                                                                                                                                               (let-values (((ids_43
                                                                                                                                                              rhss_72)
                                                                                                                                                             (let-values ()
-                                                                                                                                                              (let-values (((ids19_0
-                                                                                                                                                                             rhss20_0)
+                                                                                                                                                              (let-values (((ids23_0
+                                                                                                                                                                             rhss24_0)
                                                                                                                                                                             (let-values ()
                                                                                                                                                                               (let-values (((ids_44)
                                                                                                                                                                                             (let-values (((a_293)
@@ -4047,10 +4114,10 @@
                                                                                                                                                                                  rhss_73)))))
                                                                                                                                                                 (values
                                                                                                                                                                  (cons
-                                                                                                                                                                  ids19_0
+                                                                                                                                                                  ids23_0
                                                                                                                                                                   ids_42)
                                                                                                                                                                  (cons
-                                                                                                                                                                  rhss20_0
+                                                                                                                                                                  rhss24_0
                                                                                                                                                                   rhss_71))))))
                                                                                                                                                 (values
                                                                                                                                                  ids_43
@@ -4084,7 +4151,7 @@
                                                                         (check-list lst_90)
                                                                         (check-list lst_91)
                                                                         ((letrec-values (((for-loop_40)
-                                                                                          (lambda (knowns_15
+                                                                                          (lambda (knowns_17
                                                                                                    lst_92
                                                                                                    lst_93)
                                                                                             (if (if (pair? lst_92)
@@ -4102,29 +4169,29 @@
                                                                                                            ((rest_50)
                                                                                                             (unsafe-cdr
                                                                                                              lst_93)))
-                                                                                                (let-values (((knowns_16)
-                                                                                                              (let-values (((knowns_17)
-                                                                                                                            knowns_15))
-                                                                                                                (let-values (((knowns_18)
+                                                                                                (let-values (((knowns_18)
+                                                                                                              (let-values (((knowns_19)
+                                                                                                                            knowns_17))
+                                                                                                                (let-values (((knowns_20)
                                                                                                                               (let-values ()
                                                                                                                                 (if (lambda?
                                                                                                                                      rhs_31)
                                                                                                                                   (hash-set
-                                                                                                                                   knowns_17
+                                                                                                                                   knowns_19
                                                                                                                                    id_13
                                                                                                                                    a-known-procedure)
-                                                                                                                                  knowns_17))))
+                                                                                                                                  knowns_19))))
                                                                                                                   (values
-                                                                                                                   knowns_18)))))
+                                                                                                                   knowns_20)))))
                                                                                                   (if (not #f)
                                                                                                     (for-loop_40
-                                                                                                     knowns_16
+                                                                                                     knowns_18
                                                                                                      rest_49
                                                                                                      rest_50)
-                                                                                                    knowns_16)))
-                                                                                              knowns_15))))
+                                                                                                    knowns_18)))
+                                                                                              knowns_17))))
                                                                            for-loop_40)
-                                                                         knowns_10
+                                                                         knowns_12
                                                                          lst_90
                                                                          lst_91)))))
                                                         (let-values (((schemify_2)
@@ -4132,7 +4199,7 @@
                                                                        prim-knowns_3
                                                                        new-knowns_2
                                                                        mutated_15
-                                                                       imports_9
+                                                                       imports_14
                                                                        exports_7)))
                                                           (list*
                                                            'letrec*
@@ -4281,8 +4348,8 @@
                                                                                                                                                 (let-values (((idss_31
                                                                                                                                                                rhss_80)
                                                                                                                                                               (let-values ()
-                                                                                                                                                                (let-values (((idss21_0
-                                                                                                                                                                               rhss22_0)
+                                                                                                                                                                (let-values (((idss25_0
+                                                                                                                                                                               rhss26_0)
                                                                                                                                                                               (let-values ()
                                                                                                                                                                                 (let-values (((idss_32)
                                                                                                                                                                                               (let-values (((a_301)
@@ -4302,10 +4369,10 @@
                                                                                                                                                                                    rhss_81)))))
                                                                                                                                                                   (values
                                                                                                                                                                    (cons
-                                                                                                                                                                    idss21_0
+                                                                                                                                                                    idss25_0
                                                                                                                                                                     idss_30)
                                                                                                                                                                    (cons
-                                                                                                                                                                    rhss22_0
+                                                                                                                                                                    rhss26_0
                                                                                                                                                                     rhss_79))))))
                                                                                                                                                   (values
                                                                                                                                                    idss_31
@@ -4400,16 +4467,16 @@
                                                                                                                           ids_45)))
                                                                                                                        (let-values (((lst_106)
                                                                                                                                      ids_45)
-                                                                                                                                    ((start_1)
+                                                                                                                                    ((start_2)
                                                                                                                                      0))
                                                                                                                          (begin
                                                                                                                            (check-list
                                                                                                                             lst_106)
                                                                                                                            (check-naturals
-                                                                                                                            start_1)
+                                                                                                                            start_2)
                                                                                                                            ((letrec-values (((for-loop_45)
                                                                                                                                              (lambda (lst_107
-                                                                                                                                                      pos_3)
+                                                                                                                                                      pos_4)
                                                                                                                                                (if (if (pair?
                                                                                                                                                         lst_107)
                                                                                                                                                      #t
@@ -4420,8 +4487,8 @@
                                                                                                                                                               ((rest_57)
                                                                                                                                                                (unsafe-cdr
                                                                                                                                                                 lst_107))
-                                                                                                                                                              ((pos_4)
-                                                                                                                                                               pos_3))
+                                                                                                                                                              ((pos_5)
+                                                                                                                                                               pos_4))
                                                                                                                                                    (let-values (((post-guard-var_9)
                                                                                                                                                                  (lambda ()
                                                                                                                                                                    #t)))
@@ -4434,13 +4501,13 @@
                                                                                                                                                                           (list
                                                                                                                                                                            'vector-ref
                                                                                                                                                                            lr_0
-                                                                                                                                                                           pos_4))))))
+                                                                                                                                                                           pos_5))))))
                                                                                                                                                          (let-values (((result_52)
                                                                                                                                                                        (if (post-guard-var_9)
                                                                                                                                                                          (for-loop_45
                                                                                                                                                                           rest_57
                                                                                                                                                                           (+
-                                                                                                                                                                           pos_3
+                                                                                                                                                                           pos_4
                                                                                                                                                                            1))
                                                                                                                                                                          null)))
                                                                                                                                                            (cons
@@ -4449,7 +4516,7 @@
                                                                                                                                                  null))))
                                                                                                                               for-loop_45)
                                                                                                                             lst_106
-                                                                                                                            start_1)))))))))))))
+                                                                                                                            start_2)))))))))))))
                                                                                             (let-values (((result_53)
                                                                                                           (if (post-guard-var_8)
                                                                                                             (for-loop_44
@@ -4538,9 +4605,9 @@
                                                                     #f))
                                                                 #f)
                                                               #f)
-                                                          (let-values (((key_0 val_0 body_18)
+                                                          (let-values (((key_1 val_0 body_18)
                                                                         (let-values (((d_305) (cdr v_43)))
-                                                                          (let-values (((key_1)
+                                                                          (let-values (((key_2)
                                                                                         (let-values (((a_314)
                                                                                                       (car d_305)))
                                                                                           a_314))
@@ -4561,10 +4628,10 @@
                                                                                                                          d_307)))
                                                                                                             a_316))))
                                                                                             (values val_2 body_20)))))
-                                                                            (values key_1 val_1 body_19)))))
+                                                                            (values key_2 val_1 body_19)))))
                                                             (list
                                                              'with-continuation-mark
-                                                             (schemify_1 key_0)
+                                                             (schemify_1 key_1)
                                                              (schemify_1 val_0)
                                                              (schemify_1 body_18)))
                                                           (if (if (pair? v_43)
@@ -4726,22 +4793,22 @@
                                                                           (let-values (((args_2)
                                                                                         (map2 schemify_1 exps_2)))
                                                                             (left-to-right/app
-                                                                             (if (let-values (((or-part_6)
+                                                                             (if (let-values (((or-part_8)
                                                                                                (known-procedure?
-                                                                                                (hash-ref
-                                                                                                 knowns_10
-                                                                                                 rator_0
-                                                                                                 #f))))
-                                                                                   (if or-part_6
-                                                                                     or-part_6
-                                                                                     (let-values (((or-part_7)
+                                                                                                (hash-ref-either
+                                                                                                 knowns_12
+                                                                                                 imports_14
+                                                                                                 rator_0))))
+                                                                                   (if or-part_8
+                                                                                     or-part_8
+                                                                                     (let-values (((or-part_9)
                                                                                                    (known-procedure?
                                                                                                     (hash-ref
                                                                                                      prim-knowns_3
                                                                                                      rator_0
                                                                                                      #f))))
-                                                                                       (if or-part_7
-                                                                                         or-part_7
+                                                                                       (if or-part_9
+                                                                                         or-part_9
                                                                                          (lambda? rator_0)))))
                                                                                (list* (schemify_1 rator_0) args_2)
                                                                                (list*
@@ -4766,13 +4833,15 @@
                                                                               (let-values (((c2_0)
                                                                                             (if (symbol? v_42)
                                                                                               (hash-ref
-                                                                                               imports_9
+                                                                                               imports_14
                                                                                                v_42
                                                                                                #f)
                                                                                               #f)))
                                                                                 (if c2_0
-                                                                                  ((lambda (im-id_0)
-                                                                                     (list 'variable-ref im-id_0))
+                                                                                  ((lambda (im_3)
+                                                                                     (list
+                                                                                      'variable-ref
+                                                                                      (import-id im_3)))
                                                                                    c2_0)
                                                                                   (let-values ()
                                                                                     v_42))))))))))))))))))))))))))))))))
@@ -5119,8 +5188,8 @@
                                                                                                ((bodys_28) bodys_26))
                                                                                     (let-values (((formalss_12 bodys_29)
                                                                                                   (let-values ()
-                                                                                                    (let-values (((formalss23_0
-                                                                                                                   bodys24_0)
+                                                                                                    (let-values (((formalss27_0
+                                                                                                                   bodys28_0)
                                                                                                                   (let-values ()
                                                                                                                     (let-values (((formalss_13)
                                                                                                                                   (let-values (((a_351)
@@ -5137,10 +5206,10 @@
                                                                                                                        bodys_30)))))
                                                                                                       (values
                                                                                                        (cons
-                                                                                                        formalss23_0
+                                                                                                        formalss27_0
                                                                                                         formalss_11)
                                                                                                        (cons
-                                                                                                        bodys24_0
+                                                                                                        bodys28_0
                                                                                                         bodys_28))))))
                                                                                       (values formalss_12 bodys_29)))))
                                                                       (if (not #f)
@@ -5300,8 +5369,8 @@
                                                                                                           (let-values (((ids_58
                                                                                                                          rhss_88)
                                                                                                                         (let-values ()
-                                                                                                                          (let-values (((ids25_0
-                                                                                                                                         rhss26_0)
+                                                                                                                          (let-values (((ids29_0
+                                                                                                                                         rhss30_0)
                                                                                                                                         (let-values ()
                                                                                                                                           (let-values (((ids_59)
                                                                                                                                                         (let-values (((a_365)
@@ -5324,10 +5393,10 @@
                                                                                                                                              rhss_89)))))
                                                                                                                             (values
                                                                                                                              (cons
-                                                                                                                              ids25_0
+                                                                                                                              ids29_0
                                                                                                                               ids_57)
                                                                                                                              (cons
-                                                                                                                              rhss26_0
+                                                                                                                              rhss30_0
                                                                                                                               rhss_87))))))
                                                                                                             (values
                                                                                                              ids_58
@@ -5432,8 +5501,8 @@
                                                                                                             (let-values (((idss_39
                                                                                                                            rhss_96)
                                                                                                                           (let-values ()
-                                                                                                                            (let-values (((idss27_0
-                                                                                                                                           rhss28_0)
+                                                                                                                            (let-values (((idss31_0
+                                                                                                                                           rhss32_0)
                                                                                                                                           (let-values ()
                                                                                                                                             (let-values (((idss_40)
                                                                                                                                                           (let-values (((a_373)
@@ -5453,10 +5522,10 @@
                                                                                                                                                rhss_97)))))
                                                                                                                               (values
                                                                                                                                (cons
-                                                                                                                                idss27_0
+                                                                                                                                idss31_0
                                                                                                                                 idss_38)
                                                                                                                                (cons
-                                                                                                                                rhss28_0
+                                                                                                                                rhss32_0
                                                                                                                                 rhss_95))))))
                                                                                                               (values
                                                                                                                idss_39
@@ -5621,9 +5690,9 @@
                                 #f))
                             #f)
                           #f)
-                      (let-values (((key_2 val_3 body_24)
+                      (let-values (((key_3 val_3 body_24)
                                     (let-values (((d_380) (cdr v_64)))
-                                      (let-values (((key_3) (let-values (((a_386) (car d_380))) a_386))
+                                      (let-values (((key_4) (let-values (((a_386) (car d_380))) a_386))
                                                    ((val_4 body_25)
                                                     (let-values (((d_381) (cdr d_380)))
                                                       (let-values (((val_5) (let-values (((a_387) (car d_381))) a_387))
@@ -5631,10 +5700,10 @@
                                                                     (let-values (((d_382) (cdr d_381)))
                                                                       (let-values (((a_388) (car d_382))) a_388))))
                                                         (values val_5 body_26)))))
-                                        (values key_3 val_4 body_25)))))
+                                        (values key_4 val_4 body_25)))))
                         (find-mutated
                          body_24
-                         (find-mutated val_3 (find-mutated key_2 mutated_31 pending_14) pending_14)
+                         (find-mutated val_3 (find-mutated key_3 mutated_31 pending_14) pending_14)
                          pending_14))
                       (if (if (pair? v_64)
                             (if (let-values (((a_389) (car v_64))) (equal? 'begin a_389))

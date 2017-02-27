@@ -50,7 +50,10 @@
      [(c name) (compile-linklet c name #f (lambda (key) (values #f #f)))]
      [(c name import-keys) (compile-linklet c name import-keys (lambda (key) (values #f #f)))]
      [(c name import-keys get-import)
-      (define-values (impl-lam defn-info) (schemify-linklet c prim-knowns))
+      (define-values (impl-lam defn-info)
+        (schemify-linklet c prim-knowns
+                          (lambda (index)
+                            (lookup-linklet get-import import-keys index))))
       (let ([lk (make-linklet (expand impl-lam)
                               defn-info
                               #f
@@ -64,6 +67,17 @@
         (if import-keys
             (values lk import-keys)
             lk))]))
+
+  (define (lookup-linklet get-import import-keys index)
+    ;; Use the provided callback to get an linklet for the
+    ;; import at `index`
+    (and get-import
+         import-keys
+         (let ([key (vector-ref import-keys index)])
+           (and key
+                (let-values ([(lnk/inst more-import-keys) (get-import key)])
+                  (and (linklet? lnk/inst)
+                       (linklet-defn-info lnk/inst)))))))
 
   (define (recompile-linklet . args)
     (raise (exn:fail "recompile-linklet: no" (current-continuation-marks))))

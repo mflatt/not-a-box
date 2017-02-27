@@ -35,13 +35,28 @@
 ;;   - simplify `define-values` and `let-values` to `define` and
 ;;     `let`, when possible.
 
-(define (schemify-linklet lk prim-knowns)
+(struct import (grp id))
+(struct import-group ([knowns/thunk #:mutable])) ; starts as a procedure to get table
+
+(define (import-group-knowns grp)
+  (define knowns/thunk (import-group-knowns/thunk grp))
+  (cond
+   [(procedure? knowns/thunk)
+    (define knowns (or (knowns/thunk)
+                       (hasheq)))
+    (set-import-group-knowns/thunk! grp knowns)
+    knowns]
+   [else knowns/thunk]))
+
+(define (schemify-linklet lk prim-knowns get-import-knowns)
   ;; For imports, map symbols to gensymed `variable` argument names:
   (define imports
-    (for*/fold ([imports (hasheq)]) ([ims (in-list (cadr lk))]
-                                     [im (in-list ims)])
-      (define id (if (pair? im) (cadr im) im))
-      (hash-set imports id (gensym (symbol->string id)))))
+    (for/fold ([imports (hasheq)]) ([ims (in-list (cadr lk))]
+                                    [index (in-naturals)])
+      (define grp (import-group (lambda () (get-import-knowns index))))
+      (for/fold ([imports imports]) ([im (in-list ims)])
+        (define id (if (pair? im) (cadr im) im))
+        (hash-set imports id (import grp (gensym (symbol->string id)))))))
   ;; Ditto for exports:
   (define exports
     (for/fold ([exports (hasheq)]) ([ex (in-list (caddr lk))])
@@ -55,7 +70,7 @@
    `(lambda (instance-variable-reference
         ,@(for*/list ([ims (in-list (cadr lk))]
                       [im (in-list ims)])
-            (hash-ref imports (if (pair? im) (cadr im) im)))
+            (import-id (hash-ref imports (if (pair? im) (cadr im) im))))
         ,@(for/list ([ex (in-list (caddr lk))])
             (hash-ref exports (if (pair? ex) (car ex) ex))))
      ,@new-body)
@@ -88,7 +103,7 @@
        knowns)]
      [else
       (define-values (v new-knowns side-effects? defn?)
-        (find-definitions (car l) knowns (null? (cdr l))))
+        (find-definitions (car l) knowns imports (null? (cdr l))))
       (cond
        [(not side-effects?) (loop (cdr l)
                                   new-knowns
@@ -159,29 +174,35 @@
 ;; Also recognize and keep track of structure-type bindings
 (struct struct-type-info (name parent immediate-field-count field-count rest))
 
+(define (hash-ref-either knowns imports key)
+  (or (hash-ref knowns key #f)
+      (let ([im (hash-ref imports key #f)])
+        (and im
+             (hash-ref (import-group-knowns (import-grp im)) key #f)))))
+
 ;; Parse `make-struct-type` forms, returning a `struct-type-info`
 ;; if the parse succeed:
-(define (make-struct-type-info v knowns)
+(define (make-struct-type-info v knowns imports)
   (match v
     [`(make-struct-type (quote ,name) ,parent ,fields 0 #f . ,rest)
      (and (symbol? name)
           (or (not parent)
-              (known-struct-type? (hash-ref knowns parent #f)))
+              (known-struct-type? (hash-ref-either knowns imports parent)))
           (exact-nonnegative-integer? fields)
           (struct-type-info name
                             parent
                             fields
                             (+ fields (if parent
                                           (known-struct-type-field-count
-                                           (hash-ref knowns parent #f))
+                                           (hash-ref-either knowns imports parent))
                                           0))
                             rest))]
     [`(let-values () ,body)
-     (make-struct-type-info body knowns)]
+     (make-struct-type-info body knowns imports)]
     [`,_ #f]))
 
 ;; Record top-level functions and structure types:
-(define (find-definitions v knowns last?)
+(define (find-definitions v knowns imports last?)
   (match v
     [`(define-values (,id) ,rhs)
      (if (lambda? rhs)
@@ -196,7 +217,7 @@
      (define info (and (eq? struct: struct:2)
                        (eq? make make2)
                        (eq? ? ?2)
-                       (make-struct-type-info rhs knowns)))
+                       (make-struct-type-info rhs knowns imports)))
      (cond
       [info
        (define type (gensym (symbol->string make-s)))
@@ -332,7 +353,7 @@
        (define sti (and (eq? struct: struct:2)
                         (eq? make make2)
                         (eq? ?1 ?2)
-                        (make-struct-type-info mk knowns)))
+                        (make-struct-type-info mk knowns imports)))
        (cond
         [sti
          `(begin
@@ -465,7 +486,7 @@
       [`(,rator ,exps ...)
        (let ([args (map schemify exps)])
          (left-to-right/app
-          (if (or (known-procedure? (hash-ref knowns rator #f))
+          (if (or (known-procedure? (hash-ref-either knowns imports rator))
                   (known-procedure? (hash-ref prim-knowns rator #f))
                   (lambda? rator))
               `(,(schemify rator) . ,args)
@@ -479,7 +500,7 @@
          => (lambda (ex-id) `(variable-ref ,ex-id))]
         [(and (symbol? v)
               (hash-ref imports v #f))
-         => (lambda (im-id) `(variable-ref ,im-id))]
+         => (lambda (im) `(variable-ref ,(import-id im)))]
         [else v])])))
 
 (define (mutated-in-body l exports)
