@@ -27,5 +27,4 @@
  (find-library-collection-links))
 (current-library-collection-paths
  (find-library-collection-paths))
-(time (eval '(|#%require| (file "/Users/mflatt/linklet/pkgs/regexp/demo.rkt"))))
-;(time (eval '(|#%require| racket/base)))
+(time (eval '(|#%require| racket/base)))

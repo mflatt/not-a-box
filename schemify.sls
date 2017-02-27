@@ -1,7 +1,7 @@
 (library (schemify)
   (export schemify-linklet
           schemify-body
-          primitive-procs)
+          prim-knowns)
   (import (rename (except (chezscheme)
                           apply procedure?
                           equal? read-char
@@ -22,11 +22,11 @@
           (port)
           (primitive-procs))
 
-  (define primitive-procs
+  (include "schemify.scm")
+
+  (define prim-knowns
     (let loop ([ht (hasheq)] [l primitive-proc-list])
       (cond
        [(null? l) ht]
-       [else (loop (hash-set ht (car l) #t)
-                   (cdr l))])))
-
-  (include "schemify.scm"))
+       [else (loop (hash-set ht (car l) a-known-procedure)
+                   (cdr l))]))))

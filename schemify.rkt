@@ -1,8 +1,10 @@
 #lang racket/base
-(require "match.rkt")
+(require "match.rkt"
+         "known.rkt")
 
 (provide schemify-linklet
-         schemify-body)
+         schemify-body
+         (all-from-out "known.rkt"))
 
 ;; Convert a linklet to a Scheme `lambda`, dealing with several
 ;; issues:
@@ -33,7 +35,7 @@
 ;;   - simplify `define-values` and `let-values` to `define` and
 ;;     `let`, when possible.
 
-(define (schemify-linklet lk init-procs)
+(define (schemify-linklet lk prim-knowns)
   ;; For imports, map symbols to gensymed `variable` argument names:
   (define imports
     (for*/fold ([imports (hasheq)]) ([ims (in-list (cadr lk))]
@@ -45,16 +47,26 @@
     (for/fold ([exports (hasheq)]) ([ex (in-list (caddr lk))])
       (define id (if (pair? ex) (car ex) ex))
       (hash-set exports id (gensym (symbol->string id)))))
+  ;; Schemify the body, collecting information about defined names:
+  (define-values (new-body defn-info)
+    (schemify-body* (cdddr lk) prim-knowns imports exports))
   ;; Build `lambda` with schemified body:
-  `(lambda (instance-variable-reference
-       ,@(for*/list ([ims (in-list (cadr lk))]
-                     [im (in-list ims)])
-           (hash-ref imports (if (pair? im) (cadr im) im)))
-       ,@(for/list ([ex (in-list (caddr lk))])
-           (hash-ref exports (if (pair? ex) (car ex) ex))))
-    ,@(schemify-body (cdddr lk) init-procs imports exports)))
+  (values
+   `(lambda (instance-variable-reference
+        ,@(for*/list ([ims (in-list (cadr lk))]
+                      [im (in-list ims)])
+            (hash-ref imports (if (pair? im) (cadr im) im)))
+        ,@(for/list ([ex (in-list (caddr lk))])
+            (hash-ref exports (if (pair? ex) (car ex) ex))))
+     ,@new-body)
+   defn-info))
 
-(define (schemify-body l init-procs imports exports)
+(define (schemify-body l prim-knowns imports exports)
+  (define-values (new-body defn-info)
+    (schemify-body* l prim-knowns imports exports))
+  new-body)
+
+(define (schemify-body* l prim-knowns imports exports)
   ;; Various conversion steps need information about mutated variables,
   ;; where "mutated" here includes visible implicit mutation, such as
   ;; a variable that might be used before it is defined:
@@ -62,32 +74,37 @@
   ;; While schemifying, recognize definition sequences, and keep them
   ;; together to help the optimizer. Also, add calls to install exported
   ;; values in to the corresponding exported `variable` records.
-  (let loop ([l l] [procs init-procs] [structs (hasheq)] [accum null] [need-expr? #f])
+  (let loop ([l l] [knowns (hasheq)] [accum null] [need-expr? #f])
     (cond
      [(null? l)
-      (append
-       (map (make-schemify procs structs mutated imports exports)
-            (reverse accum))
-       (make-set-variables accum exports)
-       (if need-expr?
-           '((void))
-           null))]
+      (values
+       (append
+        (map (make-schemify prim-knowns knowns mutated imports exports)
+             (reverse accum))
+        (make-set-variables accum exports)
+        (if need-expr?
+            '((void))
+            null))
+       knowns)]
      [else
-      (define-values (v new-procs new-structs side-effects? defn?)
-        (find-definitions (car l) procs structs (null? (cdr l))))
+      (define-values (v new-knowns side-effects? defn?)
+        (find-definitions (car l) knowns (null? (cdr l))))
       (cond
        [(not side-effects?) (loop (cdr l)
-                                  new-procs
-                                  new-structs
+                                  new-knowns
                                   (cons v accum)
                                   #t)]
        [else
-        (define schemify (make-schemify new-procs new-structs mutated imports exports))
-        (append (map schemify (reverse accum))
-                (make-set-variables accum exports)
-                (list (schemify v))
-                (make-set-variables (list v) exports)
-                (loop (cdr l) new-procs new-structs null defn?))])])))
+        (define schemify (make-schemify prim-knowns new-knowns mutated imports exports))
+        (define schemified-accum (map schemify (reverse accum)))
+        (define schemified-v (list (schemify v)))
+        (define-values (schemified-rest defn-info)(loop (cdr l) new-knowns null defn?))
+        (values (append schemified-accum
+                        (make-set-variables accum exports)
+                        schemified-v
+                        (make-set-variables (list v) exports)
+                        schemified-rest)
+                defn-info)])])))
 
 ;; Recognize forms that produce plain procedures
 (define (lambda? v)
@@ -140,32 +157,36 @@
          (regexp? e))]))
 
 ;; Also recognize and keep track of structure-type bindings
-(struct struct-type-info (name parent field-count rest))
+(struct struct-type-info (name parent immediate-field-count field-count rest))
 
 ;; Parse `make-struct-type` forms, returning a `struct-type-info`
 ;; if the parse succeed:
-(define (make-struct-type-info v structs)
+(define (make-struct-type-info v knowns)
   (match v
     [`(make-struct-type (quote ,name) ,parent ,fields 0 #f . ,rest)
      (and (symbol? name)
           (or (not parent)
-              (hash-ref structs parent #f))
+              (known-struct-type? (hash-ref knowns parent #f)))
           (exact-nonnegative-integer? fields)
           (struct-type-info name
                             parent
                             fields
+                            (+ fields (if parent
+                                          (known-struct-type-field-count
+                                           (hash-ref knowns parent #f))
+                                          0))
                             rest))]
     [`(let-values () ,body)
-     (make-struct-type-info body structs)]
+     (make-struct-type-info body knowns)]
     [`,_ #f]))
 
 ;; Record top-level functions and structure types:
-(define (find-definitions v procs structs last?)
+(define (find-definitions v knowns last?)
   (match v
     [`(define-values (,id) ,rhs)
      (if (lambda? rhs)
-         (values v (hash-set procs id #t) structs #f #t)
-         (values v procs structs #t #t))]
+         (values v (hash-set knowns id a-known-procedure) #f #t)
+         (values v knowns #t #t))]
     [`(define-values (,struct:s ,make-s ,s? ,acc/muts ...)
        (let-values (((,struct: ,make ,? ,-ref ,-set!) ,rhs))
          (values ,struct:2
@@ -175,26 +196,38 @@
      (define info (and (eq? struct: struct:2)
                        (eq? make make2)
                        (eq? ? ?2)
-                       (make-struct-type-info rhs structs)))
+                       (make-struct-type-info rhs knowns)))
      (cond
       [info
+       (define type (gensym (symbol->string make-s)))
        (values v
-               (for/fold ([procs procs]) ([id (in-list (list* make-s s? acc/muts))])
-                 (hash-set procs id #t))
-               (hash-set structs struct:s #t)
+               (let* ([knowns (hash-set knowns
+                                        make-s
+                                        (known-constructor type (struct-type-info-field-count info)))]
+                      [knowns (hash-set knowns
+                                        s?
+                                        (known-predicate type))]
+                      [knowns
+                       (for/fold ([knowns knowns]) ([id (in-list acc/muts)]
+                                                    [maker (in-list make-acc/muts)])
+                         (cond
+                          [(eq? (car maker) -ref)
+                           (hash-set knowns id (known-accessor type))]
+                          [else
+                           (hash-set knowns id (known-mutator type))]))])
+                 (hash-set knowns struct:s (known-struct-type type (struct-type-info-field-count info))))
                #f
                #t)]
       [else
-       (values v procs structs #t #t)])]
+       (values v knowns #t #t)])]
     [`(define-values . ,_)
-     (values v procs structs #t #t)]
+     (values v knowns #t #t)]
     [`,_
      (values (if last?
                  v
                  ;; Wrap any top-level expression as a definition
                  `(define-values (,(gensym)) (begin ,v (void))))
-             procs
-             structs
+             knowns
              #t
              #f)]))
 
@@ -277,7 +310,7 @@
 
 ;; Schemify `let-values` to `let`, etc., and
 ;; reorganize struct bindings.
-(define ((make-schemify procs structs mutated imports exports) v)
+(define ((make-schemify prim-knowns knowns mutated imports exports) v)
   (let schemify ([v v])
     (match v
       [`(lambda ,formals ,body ...)
@@ -299,14 +332,14 @@
        (define sti (and (eq? struct: struct:2)
                         (eq? make make2)
                         (eq? ?1 ?2)
-                        (make-struct-type-info mk structs)))
+                        (make-struct-type-info mk knowns)))
        (cond
         [sti
          `(begin
            (define ,struct:s (make-record-type-descriptor ',(struct-type-info-name sti)
                                                           ,(struct-type-info-parent sti)
                                                            #f #f #f
-                                                          ',(for/vector ([i (in-range (struct-type-info-field-count sti))])
+                                                          ',(for/vector ([i (in-range (struct-type-info-immediate-field-count sti))])
                                                               `(mutable ,(string->symbol (format "f~a" i))))))
            (define ,make-s (record-constructor
                             (make-record-constructor-descriptor ,struct:s #f #f)))
@@ -325,7 +358,7 @@
                  `((define ,(gensym)
                      (struct-type-install-properties! ,struct:s
                                                       ',(struct-type-info-name sti)
-                                                      ,(struct-type-info-field-count sti)
+                                                      ,(struct-type-info-immediate-field-count sti)
                                                       0
                                                       ,(struct-type-info-parent sti)
                                                       ,@(map schemify (struct-type-info-rest sti)))))))]
@@ -341,13 +374,13 @@
       [`(let-values () ,bodys ...)
        `(begin ,@(map schemify bodys))]
       [`(let-values ([(,ids) ,rhss] ...) ,bodys ...)
-       (define new-procs
-         (for/fold ([proc procs]) ([id (in-list ids)]
-                                   [rhs (in-list rhss)])
+       (define new-knowns
+         (for/fold ([knowns knowns]) ([id (in-list ids)]
+                                      [rhs (in-list rhss)])
            (if (lambda? rhs)
-               (hash-set procs id #t)
-               procs)))
-       (define body-schemify (make-schemify new-procs structs mutated imports exports))
+               (hash-set knowns id a-known-procedure)
+               knowns)))
+       (define body-schemify (make-schemify prim-knowns new-knowns mutated imports exports))
        (left-to-right/let
         `(let ,(for/list ([id (in-list ids)]
                           [rhs (in-list rhss)])
@@ -364,13 +397,13 @@
           ,@(map schemify bodys))
         mutated)]
       [`(letrec-values ([(,ids) ,rhss] ...) ,bodys ...)
-       (define new-procs
-         (for/fold ([proc procs]) ([id (in-list ids)]
-                                   [rhs (in-list rhss)])
+       (define new-knowns
+         (for/fold ([knowns knowns]) ([id (in-list ids)]
+                                      [rhs (in-list rhss)])
            (if (lambda? rhs)
-               (hash-set procs id #t)
-               procs)))
-       (define schemify (make-schemify new-procs structs mutated imports exports))
+               (hash-set knowns id a-known-procedure)
+               knowns)))
+       (define schemify (make-schemify prim-knowns new-knowns mutated imports exports))
        `(letrec* ,(for/list ([id (in-list ids)]
                              [rhs (in-list rhss)])
                     `[,id ,(schemify rhs)])
@@ -432,7 +465,8 @@
       [`(,rator ,exps ...)
        (let ([args (map schemify exps)])
          (left-to-right/app
-          (if (or (hash-ref procs rator #f)
+          (if (or (known-procedure? (hash-ref knowns rator #f))
+                  (known-procedure? (hash-ref prim-knowns rator #f))
                   (lambda? rator))
               `(,(schemify rator) . ,args)
               `(#%app ,(schemify rator) . ,args))

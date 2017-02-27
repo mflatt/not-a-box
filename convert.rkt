@@ -1,7 +1,8 @@
 #lang racket/base
 (require racket/pretty
          racket/match
-         "schemify.rkt")
+         "schemify.rkt"
+         "known.rkt")
 
 (define l (cdddr (read)))
 
@@ -138,25 +139,23 @@
          [(null? k) ''()]
          [else k])))))
 
-;; Keep track of symbols that are known to be plain
-;; functions. This information is used to limit
-;; insersion of `#%app` forms that deal with applicable
-;; structs.
-(define procs (hasheq))
-
-;; Register primitives:
-(let ([ns (make-base-namespace)])
-  (parameterize ([current-namespace ns])
-    (namespace-require 'racket/unsafe/ops)
-    (namespace-require 'racket/flonum)
-    (namespace-require 'racket/fixnum))
-  (for ([s (in-list (namespace-mapped-symbols ns))])
-    (with-handlers ([exn:fail? void])
-      (when (procedure? (eval s ns))
-        (set! procs (hash-set procs s #t))))))
+(define prim-knowns
+  ;; Register primitives:
+  (let ([ns (make-base-namespace)])
+    (parameterize ([current-namespace ns])
+      (namespace-require 'racket/unsafe/ops)
+      (namespace-require 'racket/flonum)
+      (namespace-require 'racket/fixnum))
+    (for/fold ([prim-knowns (hasheq)]) ([s (in-list (namespace-mapped-symbols ns))])
+      (with-handlers ([exn:fail? (lambda (exn) prim-knowns)])
+        (cond
+         [(procedure? (eval s ns))
+          (hash-set prim-knowns s a-known-procedure)]
+         [else
+          (hash-set prim-knowns s a-known-constant)])))))
 
 ;; Write out converted forms
-(for ([v (in-list (schemify-body l procs #hasheq() #hasheq()))])
+(for ([v (in-list (schemify-body l prim-knowns #hasheq() #hasheq()))])
   (unless (equal? v '(void))
     (let loop ([v v])
       (match v

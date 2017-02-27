@@ -42,7 +42,7 @@
   (define (primitive->compiled-position prim) #f)
   (define (compiled-position->primitive pos) #f)
 
-  (define-record-type linklet (fields code compiled? name importss exports))
+  (define-record-type linklet (fields code defn-info compiled? name importss exports))
 
   (define compile-linklet
     (case-lambda
@@ -50,7 +50,9 @@
      [(c name) (compile-linklet c name #f (lambda (key) (values #f #f)))]
      [(c name import-keys) (compile-linklet c name import-keys (lambda (key) (values #f #f)))]
      [(c name import-keys get-import)
-      (let ([lk (make-linklet (expand (schemify-linklet c primitive-procs))
+      (define-values (impl-lam defn-info) (schemify-linklet c prim-knowns))
+      (let ([lk (make-linklet (expand impl-lam)
+                              defn-info
                               #f
                               name
                               (map (lambda (ps)
@@ -70,6 +72,7 @@
     (if (linklet-compiled? linklet)
         linklet
         (make-linklet (eval (linklet-code linklet))
+                      (linklet-defn-info linklet)
                       #t
                       (linklet-name linklet)
                       (linklet-importss linklet)
