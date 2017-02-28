@@ -72,3 +72,34 @@
 
 (define unsafe-fxvector-ref #3%fxvector-ref)
 (define unsafe-fxvector-set! #3%fxvector-set!)
+
+(define unsafe-undefined (let* ([p (make-record-type "undefined" '())])
+                           ((record-constructor p))))
+(define (check-not-unsafe-undefined v sym)
+  (if (eq? v unsafe-undefined)
+      (raise-arguments-error
+       sym "undefined;\n cannot use before initialization")
+      (void)))
+(define (check-not-unsafe-undefined/assign v sym)
+  (if (eq? v unsafe-undefined)
+      (raise-arguments-error
+       sym "assignment disallowed;\n cannot assign before initialization")
+      (void)))
+
+
+(define-syntax (deffl stx)
+  (syntax-case stx ()
+    [(_ ids ...)
+     (with-syntax ([((flids extflids) ...) (map (lambda (i)
+                                                  (list (datum->syntax i (string->symbol (format "fl~s" (syntax->datum i))))
+                                                        (datum->syntax i (string->symbol (format "extfl~s" (syntax->datum i))))))
+                                                (syntax->list #'(ids ...)))])
+       #'(begin (define (extflids v)
+                  (error 'extflids "extflonums are unsupported"))
+                ...))]))
+
+(deffl
+  sin cos tan
+  asin acos atan
+  truncate round floor ceiling
+  exp log expt)

@@ -43,21 +43,23 @@
    unsafe-flmin
    unsafe-flmax
 
-   unsafe-flround
-   unsafe-flfloor
-   unsafe-flceiling
-   unsafe-fltruncate
+   ;; Currently omitted since regular Racket's #%unsafe does not provide them
 
-   unsafe-flsin
-   unsafe-flcos
-   unsafe-fltan
-   unsafe-flasin
-   unsafe-flacos
-   unsafe-flatan
-   unsafe-fllog
-   unsafe-flexp
-   unsafe-flsqrt
-   unsafe-flexpt
+   ;; unsafe-flround
+   ;; unsafe-flfloor
+   ;; unsafe-flceiling
+   ;; unsafe-fltruncate
+
+   ;; unsafe-flsin
+   ;; unsafe-flcos
+   ;; unsafe-fltan
+   ;; unsafe-flasin
+   ;; unsafe-flacos
+   ;; unsafe-flatan
+   ;; unsafe-fllog
+   ;; unsafe-flexp
+   ;; unsafe-flsqrt
+   ;; unsafe-flexpt
 
    unsafe-vector-ref
    unsafe-vector-set!
@@ -101,4 +103,10 @@
    unsafe-weak-hash-iterate-next
 
    unsafe-chaperone-procedure
-   unsafe-impersonate-procedure))
+   unsafe-impersonate-procedure
+
+   unsafe-undefined
+   check-not-unsafe-undefined
+   check-not-unsafe-undefined/assign
+   prop:chaperone-unsafe-undefined
+   chaperone-struct-unsafe-undefined))
