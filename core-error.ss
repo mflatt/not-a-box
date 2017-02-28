@@ -203,7 +203,8 @@
                            [(null? args) '()]
                            [(zero? pos) (loop (sub1 pos) (cdr args))]
                            [else (cons (string-append "\n   " (error-value->string (car args)))
-                                       (loop (sub1 pos) (cdr args)))])))))
+                                       (loop (sub1 pos) (cdr args)))])))
+                       ""))
     (current-continuation-marks))))
     
 
@@ -248,7 +249,8 @@
                            [(null? args) '()]
                            [(zero? pos) (loop (sub1 pos) (cdr args))]
                            [else (cons (string-append " " (error-value->string (car args)))
-                                       (loop (sub1 pos) (cdr args)))])))))
+                                       (loop (sub1 pos) (cdr args)))])))
+                       ""))
     (current-continuation-marks))))
 
 (define raise-type-error
