@@ -87,18 +87,18 @@
       (void)))
 
 
-(define-syntax (deffl stx)
+(define-syntax (define-extfl-ids stx)
   (syntax-case stx ()
     [(_ ids ...)
-     (with-syntax ([((flids extflids) ...) (map (lambda (i)
-                                                  (list (datum->syntax i (string->symbol (format "fl~s" (syntax->datum i))))
-                                                        (datum->syntax i (string->symbol (format "extfl~s" (syntax->datum i))))))
-                                                (syntax->list #'(ids ...)))])
-       #'(begin (define (extflids v)
-                  (error 'extflids "extflonums are unsupported"))
-                ...))]))
+     (with-syntax ([(extflids ...) (map (lambda (i)
+                                          (datum->syntax i (string->symbol (format "extfl~s" (syntax->datum i)))))
+                                        (syntax->list #'(ids ...)))])
+       #'(begin
+           (define (extflids v)
+             (error 'extflids "extflonums are unsupported"))
+           ...))]))
 
-(deffl
+(define-extfl-ids
   sin cos tan
   asin acos atan
   truncate round floor ceiling
