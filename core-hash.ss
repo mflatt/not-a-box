@@ -169,7 +169,8 @@
              (and (hash-eqv? ht1)
                   (hash-eqv? ht2))
              (and (hash-equal? ht1)
-                  (hash-equal? ht2))))
+                  (hash-equal? ht2)))
+         (eq? (hash-weak? ht1) (hash-weak? ht2)))
     (and (<= (hash-count ht1) (hash-count ht2))
          (let ([ok? #t])
            (hash-table-for-each
@@ -185,6 +186,64 @@
                            "given hash tables do not use the same key comparison"
                            "first table" ht1
                            "first table" ht2)]))
+
+;; Use `eql?` for recursive comparisons; it consumes `k`
+;; and returns a new `k`; stop if `k` becomes #f
+(define (hash=? ht1 ht2 eql? k)
+  (cond
+   [(and (hamt? ht1)
+         (hamt? ht2)
+         (or (and (hamt-eq? ht1)
+                  (hamt-eq? ht2))
+             (and (hamt-eqv? ht1)
+                  (hamt-eqv? ht2))
+             (and (hamt-equal? ht1)
+                  (hamt-equal? ht2))))
+    (hamt=? ht1 ht2 eql? k)]
+   [(and (hash? ht1)
+         (hash? ht2)
+         (or (and (hash-eq? ht1)
+                  (hash-eq? ht2))
+             (and (hash-eqv? ht1)
+                  (hash-eqv? ht2))
+             (and (hash-equal? ht1)
+                  (hash-equal? ht2)))
+         (eq? (hash-weak? ht1) (hash-weak? ht2)))
+    (and (= (hash-count ht1) (hash-count ht2))
+         (let loop ([k k] [i (hash-iterate-first ht1)])
+           (cond
+            [(not i) k]
+            [else
+             (let-values ([(key val) (hash-iterate-key+value ht1 i)])
+               (let ([val2 (hash-ref ht2 key none)])
+                 (cond
+                  [(eq? val2 none) #f]
+                  [else (loop (eql? val val2 k)
+                              (hash-iterate-next ht1 i))])))])))]
+   [else #f]))
+
+
+;; Use `hash-code` for recursive hashing, passing
+;; a value and hc and k, where the result will be two
+;; values as an update hc and k; if k goes to 0,
+;; then stop
+(define (hash-hash-code ht f hc k)
+  (cond
+   [(hamt? ht) (hamt-hash-code ht f hc k)]
+   [else
+    (let loop ([hc hc] [k k] [i (hash-iterate-first ht)])
+      (cond
+       [(not i) (values hc k)]
+       [(fx= 0 k) (values hc 0)]
+       [else
+        (let-values ([(key val) (hash-iterate-key+value ht i)])
+          (let-values ([(hc k) (f key hc k)])
+            (cond
+             [(fx<= k 0) (values hc 0)]
+             [else
+              (let-values ([(hc k) (f val hc k)])
+                (loop hc k (hash-iterate-next ht i)))])))]))]))
+    
 
 ;; A `hash-iterate-first` operation triggers an O(n)
 ;; gathering of the keys of a mutable hash table. That's

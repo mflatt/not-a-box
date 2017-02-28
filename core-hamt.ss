@@ -184,6 +184,19 @@
         [else
          (node-keys-subset? a b eqv? eqv-hash-code 0)])))
 
+(define (hamt=? a b eql? k)
+  (and (= (bnode-count a) (bnode-count b))
+       (cond
+        [(bnode/eq? a)
+         (node=? a b eql? k eq? eq-hash-code 0)]
+        [(bnode/equal? a)
+         (node=? a b eql? k equal? equal-hash-code 0)]
+        [else
+         (node=? a b eql? k eqv? eqv-hash-code 0)])))
+
+(define (hamt-hash-code a f hc k)
+  (node-hash-code a f hc k 0))
+
 ;; generic iteration works by counting
 
 (define (hamt-iterate-first h)
@@ -357,6 +370,97 @@
         (loop ai (fx+ 1 bi) (fx+ abit 1) (fx+ bbit 1))]
        [else
         (loop ai bi (fx+ abit 1) (fx+ bbit 1))]))))
+
+(define (node=? na nb eql? k key= key-num shift)
+  (cond
+   [(eq? na nb) k]
+   [(bnode? na)
+    (cond
+     [(bnode? nb)
+      (let ([abm (bnode-bitmap na)]
+            [bbm (bnode-bitmap nb)])
+        (and (= abm bbm)
+             (array=? (bnode-array na) abm
+                      (bnode-array nb)
+                      eql? k
+                      key= key-num shift)))]
+     [else #f])]
+   [(cnode? na)
+    (cond
+     [(cnode? nb)
+      (and (= (cnode-hashcode na)
+              (cnode-hashcode nb))
+           (let ([aa (cnode-array na)]
+                 [ab (cnode-array nb)])
+             (and (= (array-length aa) (array-length ab))
+                  (let loop ([i (array-length aa)] [k k])
+                    (cond
+                     [(fx= i 0) k]
+                     [else
+                      (let ([e (array-ref aa (fx1- i))])
+                        (let ([v2 (cnode-ref nb (entry*-key e) (key-num (entry*-key e)) key= *nothing*)])
+                          (and (not (eq? v2 *nothing*))
+                               (loop (fx1- i)
+                                     (eql? (entry*-value e) v2 k)))))])))))]
+     [else #f])]))
+
+(define (array=? aa abm ba eql? k key= key-num shift)
+  ;; This function is called only when `bbm` equals `abm`
+  (let ([alen (array-length aa)])
+    (let loop ([ai 0] [abit 0] [k k])
+      (cond
+       [(fx= ai alen) k]
+       [(bit-set? abm abit)
+        (let ([ae (array-ref aa ai)]
+              [be (array-ref ba ai)])
+          (let ([k (cond
+                    [(entry*? ae)
+                     (cond
+                      [(entry*? be)
+                       (and (key= (entry*-key ae) (entry*-key be))
+                            (eql? (entry*-value ae) (entry*-value be) k))]
+                      [else #f])]
+                    [(entry*? be) #f]
+                    [else
+                     (node=? ae be eql? k key= key-num (down shift))])])
+            (and k
+                 (loop (fx+ ai 1) (fx+ abit 1) k))))]
+       [else
+        (loop ai (fx+ abit 1) k)]))))
+
+(define (node-hash-code na f hc k shift)
+  (cond
+   [(bnode? na)
+    (let-values ([(hc k) (f (bnode-bitmap na) hc k)])
+      (if (fx<= k 0)
+          (values hc 0)
+          (array-hash-code (bnode-array na)
+                           f hc k
+                           shift)))]
+   [else
+    ;; Hash code needs to be order-independent, so
+    ;; collision nodes are a problem; simplify by just
+    ;; using the hash code and hope that collisions are
+    ;; rare
+    (f (cnode-hashcode na) k)]))
+
+(define (array-hash-code aa f hc k shift)
+  ;; Only look at values in the array, since using
+  ;; hamt bitmaps covers the keys
+  (let ([alen (array-length aa)])
+    (let loop ([ai 0] [hc hc] [k k])
+      (cond
+       [(fx= ai alen) (values hc k)]
+       [(fx<= k 0) (values hc 0)]
+       [else
+        (let ([ae (array-ref aa ai)])
+          (cond
+           [(entry*? ae)
+            (let-values ([(hc k) (f (entry*-value ae) hc k)])
+              (loop (fx1+ ai) hc k))]
+           [else
+            (let-values ([(hc k) (node-hash-code ae f hc k (down shift))])
+              (loop (fx1+ ai) hc k))]))]))))
 
 (define (node-fold n acc proc)
   (cond

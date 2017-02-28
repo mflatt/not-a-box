@@ -179,8 +179,9 @@
          (caddr v))))
 
 (define (struct-type-transparent? rtd)
-  (let ([insp (hashtable-ref rtd-inspectors rtd #f)])
-    (and (or (not insp)
+  (let ([insp (hashtable-ref rtd-inspectors rtd none)])
+    (and (not (eq? insp none))
+         (or (not insp)
              (inspector-superior? (current-inspector) insp))
          (let ([p-rtd (record-type-parent rtd)])
            (or (not p-rtd)
@@ -428,7 +429,7 @@
                (define name (record-constructor (make-record-constructor-descriptor struct:name #f #f)))
                (define name-field (record-accessor struct:name field-index))
                ...
-               (define dummy (hashtable-set! rtd-inspectors struct:name #t)))))])))
+               (define dummy (hashtable-set! rtd-inspectors struct:name #f)))))])))
 
 (define-syntax define-struct
   (lambda (stx)

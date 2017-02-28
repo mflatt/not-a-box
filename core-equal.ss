@@ -102,6 +102,9 @@
                (if (union-find ht x y)
                    0
                    (e? (unbox x) (unbox y) (fx- k 1))))]
+         [(hash? x)
+          (and (hash? y)
+               (hash=? x y (lambda (x1 y2 k) (e? x1 y2 k)) k))]
          [(struct? x)
           (and (struct? y)
                (if (union-find ht x y)
@@ -161,6 +164,8 @@
                        (and (fx= (fxvector-ref x i) (fxvector-ref y i))
                             (f (fx1- i))))))]
            [(box? x) (and (box? y) (e? (unbox x) (unbox y) k))]
+           [(hash? x) (and (hash? y)
+                           (hash=? x y (lambda (x1 y2 k) (e? x1 y2 k)) k))]
            [(struct? x)
             (and (struct? y)
                  (let ([x-type (struct-type x)]
@@ -228,6 +233,9 @@
            (if (fx<= k 0)
                k
                (precheck? (unbox x) (unbox y) (fx- k 1))))]
+     [(hash? x)
+      (and (hash? y)
+           (hash=? x y (lambda (x1 y2 k) (precheck? x1 y2 k)) k))]
      [(struct? x)
       (and (struct? y)
            (let ([x-type (struct-type x)]

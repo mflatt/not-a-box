@@ -38,6 +38,10 @@
 (check (hash-ref (hash-set (hash) (trans 1 2) 'ok) (trans 1 2) #f) 'ok)
 (check (hash-ref (hash-set (hash) (trans 1 2) 'ok) (trans 1 3) #f) #f)
 
+
+(check (equal? (hash 1 'x 2 'y) (hash 2 'y 1 'x)) #t)
+(check (hash-ref (hash (hash 1 'x 2 'y) 7) (hash 2 'y 1 'x) #f) 7)
+
 (define (shuffle l)
   (define a (make-vector (length l)))
   (let loop ([l l] [i 0])

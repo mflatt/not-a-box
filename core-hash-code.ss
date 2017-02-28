@@ -90,6 +90,7 @@
                             (g (fx+ j 0) hc (fx+ (fx- i i/2) i^))))))))]
            [(null? x) (values (update hc 496904691) i)]
            [(box? x) (f (unbox x) (update hc 410225874) i)]
+           [(hash? x) (hash-hash-code x f (update hc 587441022) i)]
            [(symbol? x) (values (update hc (symbol-hash x)) i)]
            [(string? x) (values (update hc (string-hash x)) i)]
            [(number? x) (values (update hc (number-hash x)) i)]
@@ -100,11 +101,16 @@
                  (struct-equal-hashity x))
             => (lambda (h)
                  (let ([i i])
-                   (let ([hc (update hc (h x (lambda (v)
-                                               (let-values ([(hc new-i) (f v 0 i)])
-                                                 (set! i new-i)
-                                                 hc))))])
-                     (values hc i))))]
+                   (let ([sub-hc (h x (lambda (v)
+                                        (if (fx<= i 0)
+                                            0
+                                            (let-values ([(sub-hc new-i) (f v 0 i)])
+                                              (set! i new-i)
+                                              sub-hc))))])
+                   (let ([hc (update hc (if (fixnum? sub-hc)
+                                            sub-hc
+                                            (modulo (abs sub-hc) (greatest-fixnum))))])
+                     (values hc i)))))]
            [(and (struct? x)
                  (struct-transparent-type x))
             => (lambda (x-type)
@@ -117,6 +123,7 @@
                                (values hc i)
                                (let ([i/2 (fxsrl (fx+ i 1) 1)])
                                  (let-values ([(hc i^) (f (unsafe-struct-ref x j) hc i/2)])
+                                   (when (< i^ 0) (error 'code "struct neg"))
                                    (g (fx+ j 0) hc (fx+ (fx- i i/2) i^))))))))))]
            [else (values (update hc (eq-hash-code x)) i)])))
       (let-values ([(hc i) (f x 523658599 64)])
