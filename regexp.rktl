@@ -5954,8 +5954,8 @@
                                                                                             (chytes-ref
                                                                                              insert_7
                                                                                              pos_28)))
-                                                                                (if (if (eq? c_17 (char->integer '#\0))
-                                                                                      (eq? c_17 (char->integer '#\9))
+                                                                                (if (if (>= c_17 (char->integer '#\0))
+                                                                                      (<= c_17 (char->integer '#\9))
                                                                                       #f)
                                                                                   (d-loop_0
                                                                                    (add1 pos_28)
