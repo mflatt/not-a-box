@@ -95,56 +95,58 @@
   ;; where "mutated" here includes visible implicit mutation, such as
   ;; a variable that might be used before it is defined:
   (define mutated (mutated-in-body l exports prim-knowns (hasheq) imports))
+  ;; Make another pass to gather known-binding information:
+  (define knowns
+    (for/fold ([knowns (hasheq)]) ([form (in-list l)])
+      (find-definitions form prim-knowns knowns imports mutated)))
   ;; While schemifying, add calls to install exported values in to the
   ;; corresponding exported `variable` records, but delay those
   ;; installs to the end, if possible
-  (let loop ([l l] [knowns (hasheq)] [accum-exprs null] [accum-ids null])
-    (cond
-     [(null? l)
-      (define set-vars
-        (for/list ([id (in-list accum-ids)]
-                   #:when (hash-ref exports id #f))
-          (make-set-variable id exports)))
-      (values
-       (cond
-        [(null? set-vars)
-         (cond
-          [(null? accum-exprs) '((void))]
-          [else (reverse accum-exprs)])]
-        [else (append
-               (make-expr-defns accum-exprs)
-               set-vars)])
-       knowns)]
-     [else
-      (define form (car l))
-      (define new-knowns
-        (find-definitions form prim-knowns knowns imports mutated))
-      (define schemified ((make-schemify prim-knowns new-knowns mutated imports exports) form))
-      (match form
-        [`(define-values ,ids ,_)
-         (define-values (rest-schemified defn-info)
-           (let id-loop ([ids ids] [accum-exprs null] [accum-ids accum-ids])
-             (cond
-              [(null? ids) (loop (cdr l) new-knowns accum-exprs accum-ids)]
-              [(hash-ref mutated (car ids) #f)
-               (define id (car ids))
+  (define schemified
+    (let loop ([l l] [accum-exprs null] [accum-ids null])
+      (cond
+       [(null? l)
+        (define set-vars
+          (for/list ([id (in-list accum-ids)]
+                     #:when (hash-ref exports id #f))
+            (make-set-variable id exports)))
+        (cond
+         [(null? set-vars)
+          (cond
+           [(null? accum-exprs) '((void))]
+           [else (reverse accum-exprs)])]
+         [else (append
+                (make-expr-defns accum-exprs)
+                set-vars)])]
+       [else
+        (define form (car l))
+        (define schemified ((make-schemify prim-knowns knowns mutated imports exports) form))
+        (match form
+          [`(define-values ,ids ,_)
+           (append
+            (make-expr-defns accum-exprs)
+            (cons
+             schemified 
+             (let id-loop ([ids ids] [accum-exprs null] [accum-ids accum-ids])
                (cond
-                [(hash-ref exports id #f)
-                 (id-loop (cdr ids)
-                          (cons (make-set-variable id exports)
-                                accum-exprs)
-                          accum-ids)]
+                [(null? ids) (loop (cdr l) accum-exprs accum-ids)]
+                [(hash-ref mutated (car ids) #f)
+                 (define id (car ids))
+                 (cond
+                  [(hash-ref exports id #f)
+                   (id-loop (cdr ids)
+                            (cons (make-set-variable id exports)
+                                  accum-exprs)
+                            accum-ids)]
+                  [else
+                   (id-loop (cdr ids) accum-exprs accum-ids)])]
                 [else
-                 (id-loop (cdr ids) accum-exprs accum-ids)])]
-              [else
-               (id-loop (cdr ids) accum-exprs (cons (car ids) accum-ids))])))
-         (values
-          (append
-           (make-expr-defns accum-exprs)
-           (cons schemified rest-schemified))
-          defn-info)]
-        [`,_
-         (loop (cdr l) knowns (cons schemified accum-exprs) accum-ids)])])))
+                 (id-loop (cdr ids) accum-exprs (cons (car ids) accum-ids))]))))]
+          [`,_
+           (loop (cdr l) (cons schemified accum-exprs) accum-ids)])])))
+  ;; Return both schemified and known-binding information, where
+  ;; the later is used for cross-linklet optimization
+  (values schemified knowns))
 
 (define (make-set-variable id exports)
   (define ex-var (hash-ref exports id))

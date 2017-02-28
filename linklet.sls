@@ -42,6 +42,13 @@
   (define (primitive->compiled-position prim) #f)
   (define (compiled-position->primitive pos) #f)
 
+  (define show-on? (getenv "PLT_LINKLET_SHOW"))
+  (define (show what v)
+    (when show-on?
+      (printf ";; ~a ---------------------\n" what)
+      (pretty-print v))
+    v)
+
   (define-record-type linklet (fields code defn-info compiled? name importss exports))
 
   (define compile-linklet
@@ -51,10 +58,10 @@
      [(c name import-keys) (compile-linklet c name import-keys (lambda (key) (values #f #f)))]
      [(c name import-keys get-import)
       (define-values (impl-lam defn-info)
-        (schemify-linklet c prim-knowns
+        (schemify-linklet (show "linklet" c) prim-knowns
                           (lambda (index)
                             (lookup-linklet get-import import-keys index))))
-      (let ([lk (make-linklet (expand impl-lam)
+      (let ([lk (make-linklet (expand (show "schemified" impl-lam))
                               defn-info
                               #f
                               name
