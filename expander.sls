@@ -61,7 +61,7 @@
                           open-input-string open-output-string get-output-string
                           format printf
                           write display newline
-                          input-port? output-port? port-name
+                          list? input-port? output-port? port-name
                           procedure? apply
                           string-copy! substring
                           date? make-date date-second date-minute date-hour date-day date-month date-year

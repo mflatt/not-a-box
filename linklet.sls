@@ -31,7 +31,7 @@
           variable-reference-constant?)
   (import (except (chezscheme)
                   apply procedure?
-                  error make-parameter equal? string-copy! substring
+                  error make-parameter list? equal? string-copy! substring
                   date? make-date date-second date-minute date-hour date-day date-month date-year
                   date-week-day date-year-day
                   void)

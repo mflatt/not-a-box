@@ -147,6 +147,8 @@
           string->immutable-string
           substring
 
+          list?
+
           vector-copy!
           vector-immutable
           vector->immutable-vector
@@ -266,7 +268,8 @@
           unsafe-string-length)
   (import (rename (except (chezscheme)
                           equal?
-                          date? make-date)
+                          date? make-date
+                          list?)
                   [date-second chez:date-second]
                   [date-minute chez:date-minute]
                   [date-hour chez:date-hour]
@@ -296,6 +299,7 @@
   (include "core-error.ss")
   (include "core-bytes.ss")
   (include "core-string.ss")
+  (include "core-list.ss")
   (include "core-vector.ss")
   (include "core-box.ss")
   (include "core-keyword.ss")

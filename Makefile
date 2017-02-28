@@ -67,6 +67,7 @@ CORE_SRCS = core-constant.ss \
             core-error.ss \
             core-bytes.ss \
             core-string.ss \
+            core-list.ss \
             core-vector.ss \
             core-box.ss \
             core-keyword.ss \
