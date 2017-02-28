@@ -7,6 +7,11 @@
           continuation-mark-set-first
           current-continuation-marks
 
+          make-thread-cell
+          thread-cell?
+          thread-cell-ref
+          thread-cell-set!
+
           parameterization-key
           make-parameter
           extend-parameterization
@@ -296,6 +301,9 @@
   (include "core-struct.ss")
   (include "core-hamt.ss")
   (include "core-hash.ss")
+  (include "core-thread-cell.ss")
+  (include "core-control.ss")
+  (include "core-parameter.ss")
   (include "core-error.ss")
   (include "core-bytes.ss")
   (include "core-string.ss")

@@ -25,7 +25,6 @@
 
 (define (check-for-break) (void))
 (define break-enabled-key 'break-enabled-key)
-(define make-thread-cell box)
 
 (define exception-handler-key 'exception-handler-key)
 
