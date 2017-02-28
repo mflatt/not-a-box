@@ -25,6 +25,8 @@
    assq
    assv
    bitwise-and
+   bitwise-bit-set?
+   bitwise-bit-field
    bitwise-ior
    bitwise-xor
    boolean?
@@ -144,6 +146,7 @@
    error-print-width
    error-value->string-handler
    eval-jit-enabled
+   even?
    exact-integer?
    exact-nonnegative-integer?
    exact-positive-integer?
@@ -278,6 +281,7 @@
    number->string
    number?
    object-name
+   odd?
    open-input-bytes
    open-input-file
    open-input-output-file
@@ -454,6 +458,17 @@
    write-bytes-avail/enable-break
    write-string
    zero?
+
+   flsin flcos fltan
+   flasin flacos flatan
+   fltruncate flround flfloor flceiling
+   flexp fllog flexpt
+
+   extflsin extflcos extfltan
+   extflasin extflacos extflatan
+   extfltruncate extflround extflfloor extflceiling
+   extflexp extfllog extflexpt
+
    
    keyword<?
    string->keyword

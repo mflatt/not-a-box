@@ -162,6 +162,8 @@
 
           symbol<?
 
+          even? odd?
+
           exact-integer?
           exact-nonnegative-integer?
           exact-positive-integer?
@@ -227,6 +229,22 @@
           unsafe-flsqrt
           unsafe-flexpt
 
+          flsin
+          flcos
+          fltan
+          flasin
+          flacos
+          flatan
+          fllog
+          flexp
+          flsqrt
+          flexpt
+
+          extflsin extflcos extfltan
+          extflasin extflacos extflatan
+          extfltruncate extflround extflfloor extflceiling
+          extflexp extfllog extflexpt
+
           unsafe-vector-ref
           unsafe-vector-set!
           unsafe-vector*-ref
@@ -240,6 +258,10 @@
           unsafe-bytes-length
           unsafe-bytes-ref
           unsafe-bytes-set!
+
+          unsafe-undefined
+          check-not-unsafe-undefined
+          check-not-unsafe-undefined/assign
 
           unsafe-string-length)
   (import (rename (except (chezscheme)

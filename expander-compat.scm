@@ -18,6 +18,11 @@
 (define (unsafe-chaperone-procedure . args) (error "unsafe-chaperone-procedure not ready"))
 (define (unsafe-impersonate-procedure . args) (error "unsafe-impersonate-procedure not ready"))
 
+(define (prop:chaperone-unsafe-undefined chaperone-unsafe-undefined? chaperone-unsafe-undefined-ref)
+  (make-struct-type-property 'chaperone-unsafe-undefined))
+
+(define (chaperone-struct-unsafe-undefined v) v)
+
 (define (check-for-break) (void))
 (define break-enabled-key 'break-enabled-key)
 (define make-thread-cell box)
@@ -669,4 +674,7 @@
    syntax-column
    syntax-position
    syntax-span
-   syntax?))
+   syntax?
+
+   prop:chaperone-unsafe-undefined
+   chaperone-struct-unsafe-undefined))
