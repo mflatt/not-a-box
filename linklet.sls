@@ -28,7 +28,12 @@
           
           variable-reference?
           variable-reference->instance
-          variable-reference-constant?)
+          variable-reference-constant?
+
+          ;; For use in schemified linklets:
+          variable-set!
+          variable-ref
+          make-instance-variable-reference)
   (import (except (chezscheme)
                   apply procedure?
                   error make-parameter list? equal? string-copy! substring
@@ -49,7 +54,7 @@
       (pretty-print v))
     v)
 
-  (define-record-type linklet (fields code defn-info compiled? name importss exports))
+  (define-record-type linklet (fields code import-abi defn-info compiled? name importss exports))
 
   (define compile-linklet
     (case-lambda
@@ -57,11 +62,12 @@
      [(c name) (compile-linklet c name #f (lambda (key) (values #f #f)))]
      [(c name import-keys) (compile-linklet c name import-keys (lambda (key) (values #f #f)))]
      [(c name import-keys get-import)
-      (define-values (impl-lam defn-info)
+      (define-values (impl-lam import-abi defn-info)
         (schemify-linklet (show "linklet" c) prim-knowns
                           (lambda (index)
                             (lookup-linklet get-import import-keys index))))
       (let ([lk (make-linklet (expand (show "schemified" impl-lam))
+                              import-abi
                               defn-info
                               #f
                               name
@@ -93,6 +99,7 @@
     (if (linklet-compiled? linklet)
         linklet
         (make-linklet (eval (linklet-code linklet))
+                      (linklet-import-abi linklet)
                       (linklet-defn-info linklet)
                       #t
                       (linklet-name linklet)
@@ -119,7 +126,8 @@
          (append (apply append
                         (map extract-variables
                              import-instances
-                             (linklet-importss linklet)))
+                             (linklet-importss linklet)
+                             (linklet-import-abi linklet)))
                  (create-variables target-instance
                                    (linklet-exports linklet))))]
        [else
@@ -150,15 +158,19 @@
           (current-continuation-marks)))
         v))
 
-  (define (extract-variables inst syms)
+  (define (extract-variables inst syms abis)
     (define ht (instance-hash inst))
-    (map (lambda (sym)
-           (or (hash-ref ht sym #f)
-               (raise-arguments-error 'instantiate-linklet
-                                      "variable not found in imported instance"
-                                      "instance" inst
-                                      "name" sym)))
-         syms))
+    (map (lambda (sym abi)
+           (let ([var (or (hash-ref ht sym #f)
+                          (raise-arguments-error 'instantiate-linklet
+                                                 "variable not found in imported instance"
+                                                 "instance" inst
+                                                 "name" sym))])
+             (if abi
+                 (variable-val var)
+                 var)))
+         syms
+         abis))
   
   (define (create-variables inst syms)
     (define ht (instance-hash inst))
@@ -249,12 +261,4 @@
     (eq? (variable-reference-var-or-info vr) 'constant))
 
   (define (make-instance-variable-reference vr v)
-    (make-variable-reference (variable-reference-instance vr) v))
-
-  (eval `(library (variable)
-           (export variable-set! variable-ref)
-           (import (chezscheme))
-           (define variable-set! ',variable-set!)
-           (define variable-ref ',variable-ref)))
-  (eval `(import (variable)))
-  (eval `(define make-instance-variable-reference ',make-instance-variable-reference)))
+    (make-variable-reference (variable-reference-instance vr) v)))

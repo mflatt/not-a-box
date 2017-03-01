@@ -48,15 +48,23 @@
     knowns]
    [else knowns/thunk]))
 
+;; Returns (values schemified-linklet import-abi export-info)
+;; An import ABI is a list of list of booleans, parallel to the
+;; linklet imports, where #t to means that a value is expected, and #f
+;; means that a variable (which boxes a value) is expected
 (define (schemify-linklet lk prim-knowns get-import-knowns)
+  (define (im-int-id id) (if (pair? id) (cadr id) id))
+  (define (im-ext-id id) (if (pair? id) (car id) id))
+  (define (ex-int-id id) (if (pair? id) (car id) id))
+  (define (ex-ext-id id) (if (pair? id) (cadr id) id))
   ;; For imports, map symbols to gensymed `variable` argument names:
   (define imports
     (for/fold ([imports (hasheq)]) ([ims (in-list (cadr lk))]
                                     [index (in-naturals)])
       (define grp (import-group (lambda () (get-import-knowns index))))
       (for/fold ([imports imports]) ([im (in-list ims)])
-        (define id (if (pair? im) (cadr im) im))
-        (define ext-id (if (pair? im) (cdr im) im))
+        (define id (im-int-id im))
+        (define ext-id (im-ext-id im))
         (hash-set imports id (import grp (gensym (symbol->string id)) ext-id)))))
   ;; Ditto for exports:
   (define exports
@@ -66,22 +74,32 @@
   ;; Schemify the body, collecting information about defined names:
   (define-values (new-body defn-info)
     (schemify-body* (cdddr lk) prim-knowns imports exports))
-  ;; Build `lambda` with schemified body:
   (values
+   ;; Build `lambda` with schemified body:
    `(lambda (instance-variable-reference
         ,@(for*/list ([ims (in-list (cadr lk))]
                       [im (in-list ims)])
-            (import-id (hash-ref imports (if (pair? im) (cadr im) im))))
+            (import-id (hash-ref imports (im-int-id im))))
         ,@(for/list ([ex (in-list (caddr lk))])
-            (hash-ref exports (if (pair? ex) (car ex) ex))))
+            (hash-ref exports (ex-int-id ex))))
      ,@new-body)
+   ;; Import ABI: request values for constants, 
+   (for/list ([ims (in-list (cadr lk))])
+     (define im-knowns (and (pair? ims)
+                            (let ([k/t (import-group-knowns/thunk
+                                        (import-grp
+                                         (hash-ref imports (im-int-id (car ims)))))])
+                              (if (procedure? k/t) #f k/t))))
+     (for/list ([im (in-list ims)])
+       (and im-knowns
+            (known-constant? (hash-ref im-knowns (im-ext-id im) #f)))))
    ;; Convert internal to external identifiers
    (for/fold ([knowns (hasheq)]) ([ex (in-list (caddr lk))])
-     (define id (if (pair? ex) (car ex) ex))
+     (define id (ex-int-id ex))
      (define v (hash-ref defn-info id #f))
      (cond
       [v
-       (define ext-id (if (pair? ex) (cadr ex) ex))
+       (define ext-id (ex-ext-id id))
        (hash-set knowns ext-id v)]
       [else knowns]))))
 
@@ -228,7 +246,10 @@
   (or (hash-ref knowns key #f)
       (let ([im (hash-ref imports key #f)])
         (and im
-             (hash-ref (import-group-knowns (import-grp im)) (import-ext-id im) #f)))))
+             (import-lookup im)))))
+
+(define (import-lookup im)
+  (hash-ref (import-group-knowns (import-grp im)) (import-ext-id im) #f))
 
 ;; Parse `make-struct-type` forms, returning a `struct-type-info`
 ;; if the parse succeed:
@@ -534,7 +555,7 @@
        (and (not (hash-ref mutated id #f))
             (let ([im (hash-ref imports id #f)])
               (or (not im)
-                  (known-constant? (hash-ref (import-group-knowns (import-grp im)) (import-ext-id im) #f)))))]
+                  (known-constant? (import-lookup im)))))]
       [`(#%variable-reference)
        'instance-variable-reference]
       [`(#%variable-reference ,id)
@@ -565,7 +586,12 @@
          => (lambda (ex-id) `(variable-ref ,ex-id))]
         [(and (symbol? v)
               (hash-ref imports v #f))
-         => (lambda (im) `(variable-ref ,(import-id im)))]
+         => (lambda (im)
+              (if (known-constant? (import-lookup im))
+                  ;; Not boxed:
+                  (import-id im)
+                  ;; Will be boxed:
+                  `(variable-ref ,(import-id im))))]
         [else v])])))
 
 (define (mutated-in-body l exports prim-knowns knowns imports)

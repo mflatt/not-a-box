@@ -33,7 +33,7 @@
   
   (time (eval '(|#%require| racket/base)))
 
-  ;;(time (eval `(|#%require| (file ,(string-append (getenv "LINKLET_RACKET") "/pkgs/regexp/demo.rkt")))))
+  (time (eval `(|#%require| (file ,(string-append (getenv "LINKLET_RACKET") "/pkgs/regexp/demo.rkt")))))
   ;;(time (eval `(|#%require| (file ,(string-append (getenv "LINKLET_RACKET") "/pkgs/expander/main.rkt")))))
   
   )
