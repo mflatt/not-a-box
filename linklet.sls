@@ -28,13 +28,7 @@
           
           variable-reference?
           variable-reference->instance
-          variable-reference-constant?
-
-          ;; For use in schemified linklets:
-          variable-set!
-          variable-ref
-          variable-ref/no-check
-          make-instance-variable-reference)
+          variable-reference-constant?)
   (import (except (chezscheme)
                   apply procedure?
                   error make-parameter list? equal? string-copy! substring
@@ -312,4 +306,16 @@
     (eq? (variable-reference-var-or-info vr) 'constant))
 
   (define (make-instance-variable-reference vr v)
-    (make-variable-reference (variable-reference-instance vr) v)))
+    (make-variable-reference (variable-reference-instance vr) v))
+
+
+  ;; --------------------------------------------------
+
+  ;; Intentionally indirect, so that the compiler doesn't
+  ;; spend effort inlining:
+  (eval `(define variable-set! ',variable-set!))
+  (eval `(define variable-ref ',variable-ref))
+  (eval `(define variable-ref/no-check ',variable-ref/no-check))
+  (eval `(define make-instance-variable-reference ',make-instance-variable-reference))
+
+  (void))
