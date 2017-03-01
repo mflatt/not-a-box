@@ -204,13 +204,26 @@
                           (eq? ?1 ?2)
                           (make-struct-type-info mk prim-knowns knowns imports mutated)))
          (cond
-          [sti
+          [(and sti
+                ;; make sure `struct:` isn't used too early, since we're
+                ;; reordering it's definition with respect to some arguments
+                ;; of `make-struct-type`:
+                (simple-mutated-state? (hash-ref mutated struct: #f)))
            `(begin
              (define ,struct:s (make-record-type-descriptor ',(struct-type-info-name sti)
                                                             ,(schemify (struct-type-info-parent sti))
                                                             #f #f #f
                                                             ',(for/vector ([i (in-range (struct-type-info-immediate-field-count sti))])
                                                                 `(mutable ,(string->symbol (format "f~a" i))))))
+             ,@(if (null? (struct-type-info-rest sti))
+                   null
+                   `((define ,(gensym)
+                       (struct-type-install-properties! ,struct:s
+                                                        ',(struct-type-info-name sti)
+                                                        ,(struct-type-info-immediate-field-count sti)
+                                                        0
+                                                        ,(schemify (struct-type-info-parent sti))
+                                                        ,@(map schemify (struct-type-info-rest sti))))))
              (define ,make-s (record-constructor
                               (make-record-constructor-descriptor ,struct:s #f #f)))
              (define ,s? (record-predicate ,struct:s))
@@ -222,16 +235,7 @@
                        `(record-accessor ,struct:s ,pos)]
                       [`(make-struct-field-mutator ,(? (lambda (v) (eq? v -set!))) ,pos ,_)
                        `(record-mutator ,struct:s ,pos)]
-                      [`,_ (error "oops")])))
-             ,@(if (null? (struct-type-info-rest sti))
-                   null
-                   `((define ,(gensym)
-                       (struct-type-install-properties! ,struct:s
-                                                        ',(struct-type-info-name sti)
-                                                        ,(struct-type-info-immediate-field-count sti)
-                                                        0
-                                                        ,(schemify (struct-type-info-parent sti))
-                                                        ,@(map schemify (struct-type-info-rest sti)))))))]
+                      [`,_ (error "oops")]))))]
           [else
            `(define-values ,(cadr v) ,(schemify (caddr v)))])]
         [`(define-values (,id) ,rhs)

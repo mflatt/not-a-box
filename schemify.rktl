@@ -5324,7 +5324,9 @@
                                                                           #f)
                                                                         #f)
                                                                       #f)))
-                                                        (if sti_0
+                                                        (if (if sti_0
+                                                              (simple-mutated-state? (hash-ref mutated_9 struct:_15 #f))
+                                                              #f)
                                                           (let-values ()
                                                             (list*
                                                              'begin
@@ -5411,202 +5413,7 @@
                                                                                    0
                                                                                    start_2)))))
                                                                   (shrink-vector vec_2 i_2)))))
-                                                             (list
-                                                              'define
-                                                              make-s_8
-                                                              (list
-                                                               'record-constructor
-                                                               (list*
-                                                                'make-record-constructor-descriptor
-                                                                struct:s_6
-                                                                '(#f #f))))
-                                                             (list 'define s?_14 (list 'record-predicate struct:s_6))
                                                              (qq-append
-                                                              (let-values (((lst_111) acc/muts_5)
-                                                                           ((lst_112) make-acc/muts_6))
-                                                                (begin
-                                                                  (check-list lst_111)
-                                                                  (check-list lst_112)
-                                                                  ((letrec-values (((for-loop_58)
-                                                                                    (lambda (lst_113 lst_114)
-                                                                                      (if (if (pair? lst_113)
-                                                                                            (pair? lst_114)
-                                                                                            #f)
-                                                                                        (let-values (((acc/mut_0)
-                                                                                                      (unsafe-car
-                                                                                                       lst_113))
-                                                                                                     ((rest_67)
-                                                                                                      (unsafe-cdr
-                                                                                                       lst_113))
-                                                                                                     ((make-acc/mut_0)
-                                                                                                      (unsafe-car
-                                                                                                       lst_114))
-                                                                                                     ((rest_68)
-                                                                                                      (unsafe-cdr
-                                                                                                       lst_114)))
-                                                                                          (let-values (((post-guard-var_8)
-                                                                                                        (lambda () #t)))
-                                                                                            (let-values ()
-                                                                                              (let-values (((elem_7)
-                                                                                                            (let-values ()
-                                                                                                              (let-values ()
-                                                                                                                (list
-                                                                                                                 'define
-                                                                                                                 acc/mut_0
-                                                                                                                 (let-values (((v_64)
-                                                                                                                               make-acc/mut_0))
-                                                                                                                   (if (if (pair?
-                                                                                                                            v_64)
-                                                                                                                         (if (let-values (((a_242)
-                                                                                                                                           (car
-                                                                                                                                            v_64)))
-                                                                                                                               (equal?
-                                                                                                                                'make-struct-field-accessor
-                                                                                                                                a_242))
-                                                                                                                           (let-values (((d_233)
-                                                                                                                                         (cdr
-                                                                                                                                          v_64)))
-                                                                                                                             (if (pair?
-                                                                                                                                  d_233)
-                                                                                                                               (if (let-values (((a_243)
-                                                                                                                                                 (car
-                                                                                                                                                  d_233)))
-                                                                                                                                     ((lambda (v_65)
-                                                                                                                                        (eq?
-                                                                                                                                         v_65
-                                                                                                                                         -ref_18))
-                                                                                                                                      a_243))
-                                                                                                                                 (let-values (((d_234)
-                                                                                                                                               (cdr
-                                                                                                                                                d_233)))
-                                                                                                                                   (if (pair?
-                                                                                                                                        d_234)
-                                                                                                                                     (if (let-values (((a_244)
-                                                                                                                                                       (car
-                                                                                                                                                        d_234)))
-                                                                                                                                           #t)
-                                                                                                                                       (let-values (((d_235)
-                                                                                                                                                     (cdr
-                                                                                                                                                      d_234)))
-                                                                                                                                         (if (pair?
-                                                                                                                                              d_235)
-                                                                                                                                           (if (let-values (((a_245)
-                                                                                                                                                             (car
-                                                                                                                                                              d_235)))
-                                                                                                                                                 #t)
-                                                                                                                                             (let-values (((d_236)
-                                                                                                                                                           (cdr
-                                                                                                                                                            d_235)))
-                                                                                                                                               (equal?
-                                                                                                                                                '()
-                                                                                                                                                d_236))
-                                                                                                                                             #f)
-                                                                                                                                           #f))
-                                                                                                                                       #f)
-                                                                                                                                     #f))
-                                                                                                                                 #f)
-                                                                                                                               #f))
-                                                                                                                           #f)
-                                                                                                                         #f)
-                                                                                                                     (let-values (((pos_4)
-                                                                                                                                   (let-values (((d_237)
-                                                                                                                                                 (cdr
-                                                                                                                                                  v_64)))
-                                                                                                                                     (let-values (((d_238)
-                                                                                                                                                   (cdr
-                                                                                                                                                    d_237)))
-                                                                                                                                       (let-values (((a_246)
-                                                                                                                                                     (car
-                                                                                                                                                      d_238)))
-                                                                                                                                         a_246)))))
-                                                                                                                       (list
-                                                                                                                        'record-accessor
-                                                                                                                        struct:s_6
-                                                                                                                        pos_4))
-                                                                                                                     (if (if (pair?
-                                                                                                                              v_64)
-                                                                                                                           (if (let-values (((a_247)
-                                                                                                                                             (car
-                                                                                                                                              v_64)))
-                                                                                                                                 (equal?
-                                                                                                                                  'make-struct-field-mutator
-                                                                                                                                  a_247))
-                                                                                                                             (let-values (((d_239)
-                                                                                                                                           (cdr
-                                                                                                                                            v_64)))
-                                                                                                                               (if (pair?
-                                                                                                                                    d_239)
-                                                                                                                                 (if (let-values (((a_248)
-                                                                                                                                                   (car
-                                                                                                                                                    d_239)))
-                                                                                                                                       ((lambda (v_66)
-                                                                                                                                          (eq?
-                                                                                                                                           v_66
-                                                                                                                                           -set!_18))
-                                                                                                                                        a_248))
-                                                                                                                                   (let-values (((d_240)
-                                                                                                                                                 (cdr
-                                                                                                                                                  d_239)))
-                                                                                                                                     (if (pair?
-                                                                                                                                          d_240)
-                                                                                                                                       (if (let-values (((a_249)
-                                                                                                                                                         (car
-                                                                                                                                                          d_240)))
-                                                                                                                                             #t)
-                                                                                                                                         (let-values (((d_241)
-                                                                                                                                                       (cdr
-                                                                                                                                                        d_240)))
-                                                                                                                                           (if (pair?
-                                                                                                                                                d_241)
-                                                                                                                                             (if (let-values (((a_250)
-                                                                                                                                                               (car
-                                                                                                                                                                d_241)))
-                                                                                                                                                   #t)
-                                                                                                                                               (let-values (((d_242)
-                                                                                                                                                             (cdr
-                                                                                                                                                              d_241)))
-                                                                                                                                                 (equal?
-                                                                                                                                                  '()
-                                                                                                                                                  d_242))
-                                                                                                                                               #f)
-                                                                                                                                             #f))
-                                                                                                                                         #f)
-                                                                                                                                       #f))
-                                                                                                                                   #f)
-                                                                                                                                 #f))
-                                                                                                                             #f)
-                                                                                                                           #f)
-                                                                                                                       (let-values (((pos_5)
-                                                                                                                                     (let-values (((d_243)
-                                                                                                                                                   (cdr
-                                                                                                                                                    v_64)))
-                                                                                                                                       (let-values (((d_244)
-                                                                                                                                                     (cdr
-                                                                                                                                                      d_243)))
-                                                                                                                                         (let-values (((a_251)
-                                                                                                                                                       (car
-                                                                                                                                                        d_244)))
-                                                                                                                                           a_251)))))
-                                                                                                                         (list
-                                                                                                                          'record-mutator
-                                                                                                                          struct:s_6
-                                                                                                                          pos_5))
-                                                                                                                       (let-values ()
-                                                                                                                         (error
-                                                                                                                          "oops"))))))))))
-                                                                                                (let-values (((result_55)
-                                                                                                              (if (post-guard-var_8)
-                                                                                                                (for-loop_58
-                                                                                                                 rest_67
-                                                                                                                 rest_68)
-                                                                                                                null)))
-                                                                                                  (cons
-                                                                                                   elem_7
-                                                                                                   result_55))))))
-                                                                                        null))))
-                                                                     for-loop_58)
-                                                                   lst_111
-                                                                   lst_112)))
                                                               (if (null? (struct-type-info-rest sti_0))
                                                                 null
                                                                 (list
@@ -5620,9 +5427,204 @@
                                                                    (struct-type-info-immediate-field-count sti_0)
                                                                    0
                                                                    (schemify_0 (struct-type-info-parent sti_0))
-                                                                   (map2
-                                                                    schemify_0
-                                                                    (struct-type-info-rest sti_0)))))))))
+                                                                   (map2 schemify_0 (struct-type-info-rest sti_0))))))
+                                                              (list*
+                                                               (list
+                                                                'define
+                                                                make-s_8
+                                                                (list
+                                                                 'record-constructor
+                                                                 (list*
+                                                                  'make-record-constructor-descriptor
+                                                                  struct:s_6
+                                                                  '(#f #f))))
+                                                               (list 'define s?_14 (list 'record-predicate struct:s_6))
+                                                               (let-values (((lst_111) acc/muts_5)
+                                                                            ((lst_112) make-acc/muts_6))
+                                                                 (begin
+                                                                   (check-list lst_111)
+                                                                   (check-list lst_112)
+                                                                   ((letrec-values (((for-loop_58)
+                                                                                     (lambda (lst_113 lst_114)
+                                                                                       (if (if (pair? lst_113)
+                                                                                             (pair? lst_114)
+                                                                                             #f)
+                                                                                         (let-values (((acc/mut_0)
+                                                                                                       (unsafe-car
+                                                                                                        lst_113))
+                                                                                                      ((rest_67)
+                                                                                                       (unsafe-cdr
+                                                                                                        lst_113))
+                                                                                                      ((make-acc/mut_0)
+                                                                                                       (unsafe-car
+                                                                                                        lst_114))
+                                                                                                      ((rest_68)
+                                                                                                       (unsafe-cdr
+                                                                                                        lst_114)))
+                                                                                           (let-values (((post-guard-var_8)
+                                                                                                         (lambda ()
+                                                                                                           #t)))
+                                                                                             (let-values ()
+                                                                                               (let-values (((elem_7)
+                                                                                                             (let-values ()
+                                                                                                               (let-values ()
+                                                                                                                 (list
+                                                                                                                  'define
+                                                                                                                  acc/mut_0
+                                                                                                                  (let-values (((v_64)
+                                                                                                                                make-acc/mut_0))
+                                                                                                                    (if (if (pair?
+                                                                                                                             v_64)
+                                                                                                                          (if (let-values (((a_242)
+                                                                                                                                            (car
+                                                                                                                                             v_64)))
+                                                                                                                                (equal?
+                                                                                                                                 'make-struct-field-accessor
+                                                                                                                                 a_242))
+                                                                                                                            (let-values (((d_233)
+                                                                                                                                          (cdr
+                                                                                                                                           v_64)))
+                                                                                                                              (if (pair?
+                                                                                                                                   d_233)
+                                                                                                                                (if (let-values (((a_243)
+                                                                                                                                                  (car
+                                                                                                                                                   d_233)))
+                                                                                                                                      ((lambda (v_65)
+                                                                                                                                         (eq?
+                                                                                                                                          v_65
+                                                                                                                                          -ref_18))
+                                                                                                                                       a_243))
+                                                                                                                                  (let-values (((d_234)
+                                                                                                                                                (cdr
+                                                                                                                                                 d_233)))
+                                                                                                                                    (if (pair?
+                                                                                                                                         d_234)
+                                                                                                                                      (if (let-values (((a_244)
+                                                                                                                                                        (car
+                                                                                                                                                         d_234)))
+                                                                                                                                            #t)
+                                                                                                                                        (let-values (((d_235)
+                                                                                                                                                      (cdr
+                                                                                                                                                       d_234)))
+                                                                                                                                          (if (pair?
+                                                                                                                                               d_235)
+                                                                                                                                            (if (let-values (((a_245)
+                                                                                                                                                              (car
+                                                                                                                                                               d_235)))
+                                                                                                                                                  #t)
+                                                                                                                                              (let-values (((d_236)
+                                                                                                                                                            (cdr
+                                                                                                                                                             d_235)))
+                                                                                                                                                (equal?
+                                                                                                                                                 '()
+                                                                                                                                                 d_236))
+                                                                                                                                              #f)
+                                                                                                                                            #f))
+                                                                                                                                        #f)
+                                                                                                                                      #f))
+                                                                                                                                  #f)
+                                                                                                                                #f))
+                                                                                                                            #f)
+                                                                                                                          #f)
+                                                                                                                      (let-values (((pos_4)
+                                                                                                                                    (let-values (((d_237)
+                                                                                                                                                  (cdr
+                                                                                                                                                   v_64)))
+                                                                                                                                      (let-values (((d_238)
+                                                                                                                                                    (cdr
+                                                                                                                                                     d_237)))
+                                                                                                                                        (let-values (((a_246)
+                                                                                                                                                      (car
+                                                                                                                                                       d_238)))
+                                                                                                                                          a_246)))))
+                                                                                                                        (list
+                                                                                                                         'record-accessor
+                                                                                                                         struct:s_6
+                                                                                                                         pos_4))
+                                                                                                                      (if (if (pair?
+                                                                                                                               v_64)
+                                                                                                                            (if (let-values (((a_247)
+                                                                                                                                              (car
+                                                                                                                                               v_64)))
+                                                                                                                                  (equal?
+                                                                                                                                   'make-struct-field-mutator
+                                                                                                                                   a_247))
+                                                                                                                              (let-values (((d_239)
+                                                                                                                                            (cdr
+                                                                                                                                             v_64)))
+                                                                                                                                (if (pair?
+                                                                                                                                     d_239)
+                                                                                                                                  (if (let-values (((a_248)
+                                                                                                                                                    (car
+                                                                                                                                                     d_239)))
+                                                                                                                                        ((lambda (v_66)
+                                                                                                                                           (eq?
+                                                                                                                                            v_66
+                                                                                                                                            -set!_18))
+                                                                                                                                         a_248))
+                                                                                                                                    (let-values (((d_240)
+                                                                                                                                                  (cdr
+                                                                                                                                                   d_239)))
+                                                                                                                                      (if (pair?
+                                                                                                                                           d_240)
+                                                                                                                                        (if (let-values (((a_249)
+                                                                                                                                                          (car
+                                                                                                                                                           d_240)))
+                                                                                                                                              #t)
+                                                                                                                                          (let-values (((d_241)
+                                                                                                                                                        (cdr
+                                                                                                                                                         d_240)))
+                                                                                                                                            (if (pair?
+                                                                                                                                                 d_241)
+                                                                                                                                              (if (let-values (((a_250)
+                                                                                                                                                                (car
+                                                                                                                                                                 d_241)))
+                                                                                                                                                    #t)
+                                                                                                                                                (let-values (((d_242)
+                                                                                                                                                              (cdr
+                                                                                                                                                               d_241)))
+                                                                                                                                                  (equal?
+                                                                                                                                                   '()
+                                                                                                                                                   d_242))
+                                                                                                                                                #f)
+                                                                                                                                              #f))
+                                                                                                                                          #f)
+                                                                                                                                        #f))
+                                                                                                                                    #f)
+                                                                                                                                  #f))
+                                                                                                                              #f)
+                                                                                                                            #f)
+                                                                                                                        (let-values (((pos_5)
+                                                                                                                                      (let-values (((d_243)
+                                                                                                                                                    (cdr
+                                                                                                                                                     v_64)))
+                                                                                                                                        (let-values (((d_244)
+                                                                                                                                                      (cdr
+                                                                                                                                                       d_243)))
+                                                                                                                                          (let-values (((a_251)
+                                                                                                                                                        (car
+                                                                                                                                                         d_244)))
+                                                                                                                                            a_251)))))
+                                                                                                                          (list
+                                                                                                                           'record-mutator
+                                                                                                                           struct:s_6
+                                                                                                                           pos_5))
+                                                                                                                        (let-values ()
+                                                                                                                          (error
+                                                                                                                           "oops"))))))))))
+                                                                                                 (let-values (((result_55)
+                                                                                                               (if (post-guard-var_8)
+                                                                                                                 (for-loop_58
+                                                                                                                  rest_67
+                                                                                                                  rest_68)
+                                                                                                                 null)))
+                                                                                                   (cons
+                                                                                                    elem_7
+                                                                                                    result_55))))))
+                                                                                         null))))
+                                                                      for-loop_58)
+                                                                    lst_111
+                                                                    lst_112)))))))
                                                           (let-values ()
                                                             (list
                                                              'define-values
