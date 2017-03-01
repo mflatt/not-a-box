@@ -54,7 +54,26 @@
       (pretty-print v))
     v)
 
-  (define-record-type linklet (fields code import-abi defn-info compiled? name importss exports))
+  ;; A linklet is implemented as a procedure that takes an argument
+  ;; for each import plus an `variable` for each export, and calling
+  ;; the procedure runs the linklet body.
+
+  ;; A source linklet has a list of list of imports; those are all
+  ;; flattened into a sequence of arguments for the linklet procedure,
+  ;; followed by the arguments to receive the export `variable`s. Each
+  ;; import is either a `variable` or the variable's value as
+  ;; indicated by the "ABI" (which is based on information about which
+  ;; exports of an imported linklet are constants).
+
+  ;; A linklet also has a table of information about its 
+
+  (define-record linklet (code           ; the procedure
+                          compiled?      ; whether the procedure is in source or value form
+                          importss-abi   ; ABI for each import, in parallel to `importss`
+                          exports-info   ; hash(sym -> known) for info about each export; see "known.rkt"
+                          name           ; name of the linklet (for debugging purposes)
+                          importss       ; list of list of import symbols
+                          exports))      ; list of export symbols
 
   (define compile-linklet
     (case-lambda
@@ -62,14 +81,18 @@
      [(c name) (compile-linklet c name #f (lambda (key) (values #f #f)))]
      [(c name import-keys) (compile-linklet c name import-keys (lambda (key) (values #f #f)))]
      [(c name import-keys get-import)
-      (define-values (impl-lam import-abi defn-info)
+      ;; Convert the linklet S-expression to a `lambda` S-expression:
+      (define-values (impl-lam importss-abi exports-info)
         (schemify-linklet (show "linklet" c) prim-knowns
+                          ;; Callback to get a specific linklet for a
+                          ;; given import:
                           (lambda (index)
                             (lookup-linklet get-import import-keys index))))
+      ;; Create the linklet:
       (let ([lk (make-linklet (expand (show "schemified" impl-lam))
-                              import-abi
-                              defn-info
                               #f
+                              importss-abi
+                              exports-info
                               name
                               (map (lambda (ps)
                                      (map (lambda (p) (if (pair? p) (car p) p))
@@ -77,6 +100,10 @@
                                    (cadr c))
                               (map (lambda (p) (if (pair? p) (cadr p) p))
                                    (caddr c)))])
+        ;; In general, `compile-linklet` is allowed to extend the set
+        ;; of linklet imports if `import-keys` is provided (e.g., for
+        ;; cross-linklet optimization where inlining needs a new
+        ;; direct import) - but we don't do that, currently
         (if import-keys
             (values lk import-keys)
             lk))]))
@@ -90,18 +117,19 @@
            (and key
                 (let-values ([(lnk/inst more-import-keys) (get-import key)])
                   (and (linklet? lnk/inst)
-                       (linklet-defn-info lnk/inst)))))))
+                       (linklet-exports-info lnk/inst)))))))
 
-  (define (recompile-linklet . args)
-    (raise (exn:fail "recompile-linklet: no" (current-continuation-marks))))
+  (define (recompile-linklet lnk . args) lnk)
 
+  ;; Intended to speed up reuse of a linklet in exchange for not being
+  ;; able to serialize anymore
   (define (eval-linklet linklet)
     (if (linklet-compiled? linklet)
         linklet
         (make-linklet (eval (linklet-code linklet))
-                      (linklet-import-abi linklet)
-                      (linklet-defn-info linklet)
                       #t
+                      (linklet-importss-abi linklet)
+                      (linklet-exports-info linklet)
                       (linklet-name linklet)
                       (linklet-importss linklet)
                       (linklet-exports linklet))))
@@ -118,6 +146,8 @@
      [(linklet import-instances target-instance use-prompt?)
       (cond
        [target-instance
+        ;; Instantiate into the given instance and return the
+        ;; result of the linklet body:
         (apply
          (if (linklet-compiled? linklet)
              (linklet-code linklet)
@@ -127,10 +157,11 @@
                         (map extract-variables
                              import-instances
                              (linklet-importss linklet)
-                             (linklet-import-abi linklet)))
+                             (linklet-importss-abi linklet)))
                  (create-variables target-instance
                                    (linklet-exports linklet))))]
        [else
+        ;; Make a fresh instance, recur, and return the instance
         (let ([i (make-instance (linklet-name linklet))])
           (instantiate-linklet linklet import-instances i use-prompt?)
           i)])]))
@@ -141,12 +172,21 @@
   (define (linklet-export-variables linklet)
     (linklet-exports linklet))
 
+  ;; ----------------------------------------
+
+  ;; A potentially mutable import or definition is accessed through
+  ;; the indirection of a `variable`; accessing a variable includes a
+  ;; check for undefined, although that check shouldn't be necessary
+  ;; for imported variables.
+    
+  (define-record variable (val name))
+
   (define undefined (gensym "undefined"))
-  
-  (define-record-type variable (fields (mutable val) name))
 
   (define (variable-set! var val)
-    (variable-val-set! var val))
+    ;; More is needed here to make sure that a constant is not
+    ;; redefined
+    (set-variable-val! var val))
 
   (define (variable-ref var)
     (define v (variable-val var))
@@ -158,20 +198,23 @@
           (current-continuation-marks)))
         v))
 
-  (define (extract-variables inst syms abis)
+  ;; Find variables or values needed from an instance for a linklet's
+  ;; imports
+  (define (extract-variables inst syms imports-abi)
     (define ht (instance-hash inst))
-    (map (lambda (sym abi)
+    (map (lambda (sym import-abi)
            (let ([var (or (hash-ref ht sym #f)
                           (raise-arguments-error 'instantiate-linklet
                                                  "variable not found in imported instance"
                                                  "instance" inst
                                                  "name" sym))])
-             (if abi
+             (if import-abi
                  (variable-val var)
                  var)))
          syms
-         abis))
-  
+         imports-abi))
+
+  ;; Create the variables needed for a linklet's exports
   (define (create-variables inst syms)
     (define ht (instance-hash inst))
     (map (lambda (sym)
@@ -181,6 +224,9 @@
                  var)))
          syms))
 
+  ;; ----------------------------------------
+
+  ;; An instance represents the instantiation of a linklet
   (define-record-type (instance new-instance instance?)
     (fields name data hash))
 
@@ -229,12 +275,14 @@
                      (let ([var (make-variable undefined k)])
                        (hash-set! (instance-hash i) k var)
                        var))])
-        (variable-val-set! var v))]))
+        (set-variable-val! var v))]))
 
   (define (instance-unset-variable! i k)
     (let ([var (hash-ref (instance-hash i) k #f)])
       (when var
-        (variable-val-set! var undefined))))
+        (set-variable-val! var undefined))))
+
+  ;; --------------------------------------------------
 
   (define-record-type linklet-directory (fields hash))
 

@@ -1,8 +1,8 @@
 #lang racket/base
 (require racket/pretty
          racket/match
-         "schemify.rkt"
-         "known.rkt")
+         "schemify/schemify.rkt"
+         "schemify/known.rkt")
 
 (define l (cdddr (read)))
 

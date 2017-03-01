@@ -1,15 +1,17 @@
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
+CONVERT_DEPS = convert.rkt schemify/schemify.rkt schemify/known.rkt schemify/match.rkt
+
 expander-demo: expander.so expander-demo.ss
 	scheme core.so regexp.so port.so linklet.so expander.so expander-demo.ss
 
-PRIMITIVES_TABLES = kernel-primitives.scm unsafe-primitives.scm
+PRIMITIVES_TABLES = kernel-primitives.scm unsafe-primitives.scm flfxnum-primitives.scm
 
 expander.so: expander.sls expander.scm expander-compat.scm $(PRIMITIVES_TABLES) core.so port.so regexp.so linklet.so
 	$(COMP) '(compile-file "expander.sls")' | scheme -q core.so port.so regexp.so linklet.so
 
-expander.scm: expander.rktl convert.rkt schemify.rkt
+expander.scm: expander.rktl $(CONVERT_DEPS)
 	racket convert.rkt < expander.rktl > expander.scm
 
 
@@ -22,7 +24,7 @@ linklet.so: linklet.sls schemify.so primitive-procs.so
 schemify.so: schemify.sls schemify.scm primitive-procs.so regexp.so
 	$(COMP) '(compile-file "schemify.sls")' | scheme -q core.so port.so regexp.so primitive-procs.so
 
-schemify.scm: schemify.rktl convert.rkt schemify.rkt
+schemify.scm: schemify.rktl $(CONVERT_DEPS)
 	racket convert.rkt < schemify.rktl > schemify.scm
 
 primitive-procs.so: primitive-procs.sls
@@ -38,7 +40,7 @@ regexp-demo: regexp.so regexp-demo.scm
 regexp.so: regexp.scm regexp.sls core.so port.so
 	$(COMP) '(compile-file "regexp.sls")' | scheme -q core.so port.so
 
-regexp.scm: regexp.rktl convert.rkt schemify.rkt
+regexp.scm: regexp.rktl $(CONVERT_DEPS)
 	racket convert.rkt < regexp.rktl > regexp.scm
 
 
@@ -48,7 +50,7 @@ port-demo: port.so
 port.so: port.scm port.sls core.so
 	$(COMP) '(compile-file "port.sls")' | scheme -q core.so
 
-port.scm: port.rktl convert.rkt schemify.rkt
+port.scm: port.rktl $(CONVERT_DEPS)
 	racket convert.rkt < port.rktl > port.scm
 
 
