@@ -1,7 +1,8 @@
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
-CONVERT_DEPS = convert.rkt schemify/schemify.rkt schemify/known.rkt schemify/match.rkt
+SCHEMIFY_DEPS = schemify/schemify.rkt schemify/known.rkt schemify/match.rkt
+CONVERT_DEPS = convert.rkt $(SCHEMIFY_DEPS)
 
 expander-demo: expander.so expander-demo.ss
 	scheme core.so regexp.so port.so linklet.so expander.so expander-demo.ss
@@ -88,9 +89,9 @@ core.so: core.sls $(CORE_SRCS)
 # a linklet-based Racket repo clone identified by a
 # `LINKLET_RACKET` environment variable:
 local-linklets:
-	$(MAKE) -f Mf-linklet local-linklets
+	$(MAKE) -f Mf-linklet local-linklets SCHEMIFY_DEPS="$(SCHEMIFY_DEPS)"
 all-linklets:
-	$(MAKE) -f Mf-linklet all-linklets
+	$(MAKE) -f Mf-linklet all-linklets SCHEMIFY_DEPS="$(SCHEMIFY_DEPS)"
 
 clean:
 	rm -f core.so regexp.so port.so immutable-hash.so linklet.so primitive-procs.so linklet.so expander.so schemify.so

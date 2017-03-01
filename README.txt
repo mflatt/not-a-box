@@ -29,12 +29,13 @@ The files:
          example "regexp-demo.ss" runs the regexp matcher on a few
          examples.
 
- schemify.rkt and match.rkt - Source to "schemify.scm", which is part
-         of the implementation of linklets.
+ schemify/schemify.rkt - Source to "schemify.scm", which is part of
+         the implementation of linklets --- specifically, for
+         compiling a Racket linklet to a Chez procedure.
 
  other *.rkt - Racket scripts like "convert.rkt" or comparisions like
          "regexp-demo.rkt". For example, you can run "regexp-demo.rkt"
-         and compare the reported timing to "regexp-dem.ss".
+         and compare the reported timing to "regexp-demo.ss".
 
 
 Building linklets from source:
@@ -46,7 +47,7 @@ Building linklets from source:
 
   For example, "regexp.rktl" is generated from `make regexp-src` in
   the "pkgs/regexp". The "schemify.rktl" linklet is generated from
-  "schemify.rkt" here, though.
+  "schemify/schemify.rkt" here, though.
 
   To rebuild those sources, set the `LINKLET_RACKET` environment
   variable to a built git clone of the "linklet" branch (it's probably

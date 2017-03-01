@@ -11,8 +11,8 @@ all-linklets:
 	$(MAKE) -f Mf-linklet port
 	$(MAKE) -f Mf-linklet regexp
 
-schemify.rktl: schemify.rkt match.rkt known.rkt
-	$(LINKLET_RACKET)/racket/bin/racket $(LINKLET_RACKET)/pkgs/expander/bootstrap-run.rkt -t schemify.rkt -c compiled/cache-src ++knot read - -s -x -o schemify.rktl
+schemify.rktl: $(SCHEMIFY_DEPS)
+	$(LINKLET_RACKET)/racket/bin/racket $(LINKLET_RACKET)/pkgs/expander/bootstrap-run.rkt -t schemify/schemify.rkt -c compiled/cache-src ++knot read - -s -x -o schemify.rktl
 
 expander:
 	cd $(LINKLET_RACKET)/pkgs/expander ; $(MAKE) expander-src
