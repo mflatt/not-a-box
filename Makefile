@@ -1,7 +1,10 @@
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
-SCHEMIFY_DEPS = schemify/schemify.rkt schemify/known.rkt schemify/match.rkt
+SCHEMIFY_DEPS = schemify/schemify.rkt schemify/known.rkt schemify/match.rkt \
+                schemify/find-definition.rkt schemify/left-to-right.rkt	schemify/mutated.rkt \
+                schemify/struct-type-info.rkt schemify/import.rkt schemify/mutated-state.rkt \
+                schemify/simple.rkt
 CONVERT_DEPS = convert.rkt $(SCHEMIFY_DEPS)
 
 expander-demo: expander.so expander-demo.ss
@@ -13,26 +16,26 @@ expander.so: expander.sls expander.scm expander-compat.scm $(PRIMITIVES_TABLES) 
 	$(COMP) '(compile-file "expander.sls")' | scheme -q core.so port.so regexp.so linklet.so
 
 expander.scm: expander.rktl $(CONVERT_DEPS)
-	racket convert.rkt < expander.rktl > expander.scm
+	racket convert.rkt expander.rktl expander.scm
 
 
 linklet-demo: linklet.so
-	scheme immutable-hash.so core.so regexp.so primitive-procs.so schemify.so linklet.so linklet-demo.ss
+	scheme immutable-hash.so core.so regexp.so known-primitive.so schemify.so linklet.so linklet-demo.ss
 
-linklet.so: linklet.sls schemify.so primitive-procs.so
-	$(COMP) '(compile-file "linklet.sls")' | scheme -q core.so regexp.so primitive-procs.so schemify.so
+linklet.so: linklet.sls schemify.so known-primitive.so
+	$(COMP) '(compile-file "linklet.sls")' | scheme -q core.so regexp.so known-primitive.so schemify.so
 
-schemify.so: schemify.sls schemify.scm primitive-procs.so regexp.so
-	$(COMP) '(compile-file "schemify.sls")' | scheme -q core.so port.so regexp.so primitive-procs.so
+schemify.so: schemify.sls schemify.scm known-primitive.so regexp.so
+	$(COMP) '(compile-file "schemify.sls")' | scheme -q core.so port.so regexp.so known-primitive.so
 
 schemify.scm: schemify.rktl $(CONVERT_DEPS)
-	racket convert.rkt < schemify.rktl > schemify.scm
+	racket convert.rkt schemify.rktl schemify.scm
 
-primitive-procs.so: primitive-procs.sls
-	$(COMP) '(compile-file "primitive-procs.sls")' | scheme -q
+known-primitive.so: known-primitive.sls
+	$(COMP) '(compile-file "known-primitive.sls")' | scheme -q
 
-primitive-procs.sls: make-primitive-procs.rkt
-	racket make-primitive-procs.rkt
+known-primitive.sls: known-primitive.rkt
+	racket known-primitive.rkt
 
 
 regexp-demo: regexp.so regexp-demo.scm
@@ -42,7 +45,7 @@ regexp.so: regexp.scm regexp.sls core.so port.so
 	$(COMP) '(compile-file "regexp.sls")' | scheme -q core.so port.so
 
 regexp.scm: regexp.rktl $(CONVERT_DEPS)
-	racket convert.rkt < regexp.rktl > regexp.scm
+	racket convert.rkt regexp.rktl regexp.scm
 
 
 port-demo: port.so
@@ -52,7 +55,7 @@ port.so: port.scm port.sls core.so
 	$(COMP) '(compile-file "port.sls")' | scheme -q core.so
 
 port.scm: port.rktl $(CONVERT_DEPS)
-	racket convert.rkt < port.rktl > port.scm
+	racket convert.rkt port.rktl port.scm
 
 
 hash-demo: core.so
@@ -94,5 +97,5 @@ all-linklets:
 	$(MAKE) -f Mf-linklet all-linklets SCHEMIFY_DEPS="$(SCHEMIFY_DEPS)"
 
 clean:
-	rm -f core.so regexp.so port.so immutable-hash.so linklet.so primitive-procs.so linklet.so expander.so schemify.so
+	rm -f core.so regexp.so port.so immutable-hash.so linklet.so known-primitive.so linklet.so expander.so schemify.so
 	rm -f expander.scm port.scm regexp.scm schemify.scm

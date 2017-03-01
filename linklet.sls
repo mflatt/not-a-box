@@ -33,6 +33,7 @@
           ;; For use in schemified linklets:
           variable-set!
           variable-ref
+          variable-ref/no-check
           make-instance-variable-reference)
   (import (except (chezscheme)
                   apply procedure?
@@ -83,7 +84,8 @@
      [(c name import-keys get-import)
       ;; Convert the linklet S-expression to a `lambda` S-expression:
       (define-values (impl-lam importss-abi exports-info)
-        (schemify-linklet (show "linklet" c) prim-knowns
+        (schemify-linklet (show "linklet" c)
+                          prim-knowns
                           ;; Callback to get a specific linklet for a
                           ;; given import:
                           (lambda (index)
@@ -175,13 +177,11 @@
   ;; ----------------------------------------
 
   ;; A potentially mutable import or definition is accessed through
-  ;; the indirection of a `variable`; accessing a variable includes a
-  ;; check for undefined, although that check shouldn't be necessary
-  ;; for imported variables.
+  ;; the indirection of a `variable`; accessing a variable may include
+  ;; a check for undefined, since going through a `variable`
+  ;; sacrifices the undefined check of the host Scheme
     
   (define-record variable (val name))
-
-  (define undefined (gensym "undefined"))
 
   (define (variable-set! var val)
     ;; More is needed here to make sure that a constant is not
@@ -190,13 +190,16 @@
 
   (define (variable-ref var)
     (define v (variable-val var))
-    (if (eq? v undefined)
+    (if (eq? v unsafe-undefined)
         (raise
          (exn:fail:contract:variable
           (string-append (symbol->string (variable-name var))
                          ": undefined;\n cannot reference undefined identifier")
           (current-continuation-marks)))
         v))
+
+  (define (variable-ref/no-check var)
+    (variable-val var))
 
   ;; Find variables or values needed from an instance for a linklet's
   ;; imports
@@ -219,7 +222,7 @@
     (define ht (instance-hash inst))
     (map (lambda (sym)
            (or (hash-ref ht sym #f)
-               (let ([var (make-variable undefined sym)])
+               (let ([var (make-variable unsafe-undefined sym)])
                  (hash-set! ht sym var)
                  var)))
          syms))
@@ -251,11 +254,11 @@
   (define instance-variable-value
     (case-lambda
      [(i sym fail-k)
-      (define var (hash-ref (instance-hash i) sym undefined))
-      (define v (if (eq? var undefined)
-                    undefined
+      (define var (hash-ref (instance-hash i) sym unsafe-undefined))
+      (define v (if (eq? var unsafe-undefined)
+                    unsafe-undefined
                     (variable-val var)))
-      (if (eq? v undefined)
+      (if (eq? v unsafe-undefined)
           (fail-k)
           v)]
      [(i sym)
@@ -272,7 +275,7 @@
      [(i k v) (instance-set-variable-value! i k v #f)]
      [(i k v mode)
       (let ([var (or (hash-ref (instance-hash i) k #f)
-                     (let ([var (make-variable undefined k)])
+                     (let ([var (make-variable unsafe-undefined k)])
                        (hash-set! (instance-hash i) k var)
                        var))])
         (set-variable-val! var v))]))
@@ -280,7 +283,7 @@
   (define (instance-unset-variable! i k)
     (let ([var (hash-ref (instance-hash i) k #f)])
       (when var
-        (set-variable-val! var undefined))))
+        (set-variable-val! var unsafe-undefined))))
 
   ;; --------------------------------------------------
 

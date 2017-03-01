@@ -1,22 +1,28 @@
 #lang racket/base
 (require "match.rkt"
          "known.rkt"
-         "import.rkt")
+         "import.rkt"
+         "mutated-state.rkt"
+         "simple.rkt")
 
 (provide (struct-out struct-type-info)
-         make-struct-type-info)
+         struct-type-info-rest-properties-list-pos
+         make-struct-type-info
+         pure-properties-list?)
 
 (struct struct-type-info (name parent immediate-field-count field-count pure-constructor? rest))
+(define struct-type-info-rest-properties-list-pos 0)
 
 ;; Parse `make-struct-type` forms, returning a `struct-type-info`
 ;; if the parse succeed:
-(define (make-struct-type-info v knowns imports mutated)
+(define (make-struct-type-info v prim-knowns knowns imports mutated)
   (match v
     [`(make-struct-type (quote ,name) ,parent ,fields 0 #f . ,rest)
      (and (symbol? name)
           (or (not parent)
+              (known-struct-type? (hash-ref prim-knowns parent #f))
               (and (known-struct-type? (hash-ref-either knowns imports parent))
-                   (not (hash-ref mutated parent #f))))
+                   (simple-mutated-state? (hash-ref mutated parent #f))))
           (exact-nonnegative-integer? fields)
           (struct-type-info name
                             parent
@@ -30,6 +36,21 @@
                                 (not (list-ref rest 3)))
                             rest))]
     [`(let-values () ,body)
-     (make-struct-type-info body knowns imports mutated)]
+     (make-struct-type-info body prim-knowns knowns imports mutated)]
     [`,_ #f]))
 
+;; Check whether `e` has the shape of a property list that uses only
+;; properties where the property doesn't have a guard or won't invoke
+;; a guarded procedure
+(define (pure-properties-list? e prim-knowns knowns imports mutated)
+  (match e
+    [`(list (cons ,props ,vals) ...)
+     (for/and ([prop (in-list props)]
+               [val (in-list vals)])
+       (and (symbol? prop)
+            (or (known-struct-type-property/immediate-guard? (hash-ref prim-knowns prop #f))
+                (known-struct-type-property/immediate-guard? (hash-ref-either knowns imports prop)))
+            (simple? val prim-knowns knowns imports mutated)))]
+    [`null #t]
+    [`'() #t]
+    [`,_ #f]))

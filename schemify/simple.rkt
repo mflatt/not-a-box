@@ -1,13 +1,10 @@
 #lang racket/base
 (require "match.rkt"
          "known.rkt"
-         "import.rkt")
+         "import.rkt"
+         "mutated-state.rkt")
 
-(provide simple?
-         delayed?)
-
-;; To recognize delayed mutated info:
-(define (delayed? v) (procedure? v))
+(provide simple?)
 
 ;; Check whether an expression is simple in the sense that its order
 ;; of evaluation isn't detectable. This function receives both
@@ -37,26 +34,30 @@
             (simple? body))]
       [`(,proc ,arg)
        (and (symbol? proc)
-            (let ([v (hash-ref-either knowns imports proc)])
+            (let ([v (or (hash-ref-either knowns imports proc)
+                         (hash-ref prim-knowns proc #f))])
               (and v
                    (not (hash-ref mutated proc #f))
                    (or (known-predicate? v)
                        (and (known-constructor? v)
-                            (= 1 (known-constructor-field-count v))))))
+                            (let ([c (known-constructor-field-count v)])
+                              (or (eq? c 'any)
+                                  (= 1 c)))))))
             (simple? arg))]
       [`(,proc . ,args)
        (and (symbol? proc)
-            (let ([v (hash-ref-either knowns imports proc)])
+            (let ([v (or (hash-ref-either knowns imports proc)
+                         (hash-ref prim-knowns proc #f))])
               (and (known-constructor? v)
-                   (= (length args) (known-constructor-field-count v))))
-            (not (hash-ref mutated proc #f))
+                   (let ([c (known-constructor-field-count v)])
+                     (or (eq? c 'any)
+                         (= (length args) c)))))
+            (simple-mutated-state? (hash-ref mutated proc #f))
             (for/and ([arg (in-list args)])
               (simple? arg)))]
       [`,_
        (or (and (symbol? e)
-                (let ([v (hash-ref mutated e #f)])
-                  (or (not v)
-                      (delayed? v))))
+                (simple-mutated-state? (hash-ref mutated e #f)))
            (integer? e)
            (boolean? e)
            (string? e)

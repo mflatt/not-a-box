@@ -11,20 +11,25 @@
          known-predicate known-predicate? known-predicate-type
          known-accessor known-accessor? known-accessor-type
          known-mutator known-mutator? known-mutator-type
+         known-struct-type-property/immediate-guard known-struct-type-property/immediate-guard?
          
          a-known-constant
          a-known-unknown
-         a-known-procedure)
+         a-known-procedure
+         a-known-struct-type-property/immediate-guard)
 
 (struct known-constant () #:prefab #:omit-define-syntaxes)
 (struct known-unknown () #:prefab #:omit-define-syntaxes #:super struct:known-constant)
 (struct known-procedure () #:prefab #:omit-define-syntaxes #:super struct:known-constant)
 (struct known-struct-type (type field-count) #:prefab #:omit-define-syntaxes)
-(struct known-constructor (type field-count) #:prefab #:omit-define-syntaxes #:super struct:known-procedure)
+(struct known-constructor (type field-count) ; field count can be 'any
+        #:prefab #:omit-define-syntaxes #:super struct:known-procedure)
 (struct known-predicate (type) #:prefab #:omit-define-syntaxes #:super struct:known-procedure)
 (struct known-accessor (type) #:prefab #:omit-define-syntaxes #:super struct:known-procedure)
 (struct known-mutator (type) #:prefab #:omit-define-syntaxes #:super struct:known-procedure)
+(struct known-struct-type-property/immediate-guard () #:prefab #:omit-define-syntaxes)
 
 (define a-known-constant (known-constant))
 (define a-known-unknown (known-unknown))
 (define a-known-procedure (known-procedure))
+(define a-known-struct-type-property/immediate-guard (known-struct-type-property/immediate-guard))

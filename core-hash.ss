@@ -100,11 +100,14 @@
 
 (define hash-ref
   (case-lambda
-    [(ht k) (hash-ref ht k (lambda ()
-                             (raise-arguments-error
-                              'hash-ref
-                              "no value found for key"
-                              "key" k)))]
+    [(ht k) 
+     (let ([v (hash-ref ht k none)])
+       (if (eq? v none)
+           (raise-arguments-error
+            'hash-ref
+            "no value found for key"
+            "key" k)
+           v))]
     [(ht k fail)
      (cond
       [(mutable-hash? ht)
@@ -116,7 +119,7 @@
            (hashtable-ref (mutable-hash-ht ht) k fail))]
       [(hamt? ht) (hamt-ref ht k fail)]
       [(weak-equal-hash? ht) (weak-hash-ref ht k fail)]
-      [else (raise-argument-error 'hash-ref "hash?" 0 ht k)])]))
+      [else (raise-argument-error 'hash-ref "hash?" ht)])]))
 
 (define (hash-for-each ht proc)
   (cond

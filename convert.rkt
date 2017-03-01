@@ -1,10 +1,18 @@
 #lang racket/base
-(require racket/pretty
+(require racket/cmdline
+         racket/pretty
          racket/match
          "schemify/schemify.rkt"
-         "schemify/known.rkt")
+         "schemify/known.rkt"
+         "known-primitive.rkt")
 
-(define l (cdddr (read)))
+(define-values (in-file out-file)
+  (command-line
+   #:args
+   (in-file out-file)
+   (values in-file out-file)))
+
+(define l (cdddr (call-with-input-file* in-file read)))
 
 (define lifts (make-hash))
 (define ordered-lifts null)
@@ -58,6 +66,38 @@
 
 (lift l)
 
+(define prim-known-procs
+  ;; Register primitives:
+  (let ([ns (make-base-namespace)])
+    (parameterize ([current-namespace ns])
+      (namespace-require 'racket/unsafe/ops)
+      (namespace-require 'racket/flonum)
+      (namespace-require 'racket/fixnum))
+    (for/fold ([prim-knowns (hasheq)]) ([s (in-list (namespace-mapped-symbols ns))])
+      (with-handlers ([exn:fail? (lambda (exn) prim-knowns)])
+        (cond
+         [(procedure? (eval s ns))
+          (hash-set prim-knowns s a-known-procedure)]
+         [else
+          (hash-set prim-knowns s a-known-constant)])))))
+
+(define prim-knowns
+  (let* ([prim-knowns (for/fold ([prim-knowns (hasheq)]) ([s (in-list known-procedures)])
+                        (hash-set prim-knowns s a-known-procedure))]
+         [prim-knowns (for/fold ([prim-knowns prim-knowns]) ([s+c (in-list known-constructors)])
+                        (hash-set prim-knowns (car s+c) (known-constructor (car s+c) (cadr s+c))))]
+         [prim-knowns (for/fold ([prim-knowns prim-knowns]) ([s (in-list known-struct-type-property/immediate-guards)])
+                        (hash-set prim-knowns s a-known-struct-type-property/immediate-guard))]
+         [prim-knowns (for/fold ([prim-knowns prim-knowns]) ([s (in-list known-constants)])
+                        (hash-set prim-knowns s a-known-constant))])
+    prim-knowns))
+
+;; Convert:
+(define schemified-body
+  (schemify-body l prim-knowns #hasheq() #hasheq()))
+
+;; ----------------------------------------
+
 ;; Set a hook to redirect literal regexps and
 ;; hash tables to lifted bindings
 (pretty-print-size-hook
@@ -110,56 +150,53 @@
      (write-string (format "#\\x~x" (char->integer v)) out)]
     [else #f])))
 
-;; Write out lifted regexp and hash-table literals
-(for ([k (in-list (reverse ordered-lifts))])
-  (define v (hash-ref lifts k))
-  (pretty-write
-   `(define ,v
-     ,(let loop ([k k])
-        (cond
-         [(or (regexp? k)
-              (byte-regexp? k))
-          `(,(cond [(byte-regexp? k)  'byte-regexp]
-                   [(byte-pregexp? k) 'byte-pregexp]
-                   [(pregexp? k)      'pregexp]
-                   [else              'regexp])
-            ,(object-name k))]
-         [(hash? k)
-          `(,(cond
-              [(hash-equal? k) 'hash]
-              [(hash-eqv? k) 'hasheqv]
-              [else 'hasheq])
-            ,@(for*/list ([(k v) (in-hash k)]
-                          [e (in-list (list k v))])
-                `(quote ,e)))]
-         [(pair? k)
-          `(cons ,(loop (car k)) ,(loop (cdr k)))]
-         [(keyword? k)
-          `(string->keyword ,(keyword->string k))]
-         [(null? k) ''()]
-         [else k])))))
+;; ----------------------------------------
 
-(define prim-knowns
-  ;; Register primitives:
-  (let ([ns (make-base-namespace)])
-    (parameterize ([current-namespace ns])
-      (namespace-require 'racket/unsafe/ops)
-      (namespace-require 'racket/flonum)
-      (namespace-require 'racket/fixnum))
-    (for/fold ([prim-knowns (hasheq)]) ([s (in-list (namespace-mapped-symbols ns))])
-      (with-handlers ([exn:fail? (lambda (exn) prim-knowns)])
-        (cond
-         [(procedure? (eval s ns))
-          (hash-set prim-knowns s a-known-procedure)]
-         [else
-          (hash-set prim-knowns s a-known-constant)])))))
+(with-handlers ([void (lambda (exn)
+                        (when (file-exists? out-file)
+                          (with-handlers ([void (lambda (exn)
+                                                  (log-error "delete failed: ~s" exn))])
+                            (delete-file out-file)))
+                        (raise exn))])
+  (with-output-to-file
+   out-file
+   #:exists 'truncate
+   (lambda ()
+     ;; Write out lifted regexp and hash-table literals
+     (for ([k (in-list (reverse ordered-lifts))])
+       (define v (hash-ref lifts k))
+       (pretty-write
+        `(define ,v
+          ,(let loop ([k k])
+             (cond
+              [(or (regexp? k)
+                   (byte-regexp? k))
+               `(,(cond [(byte-regexp? k)  'byte-regexp]
+                        [(byte-pregexp? k) 'byte-pregexp]
+                        [(pregexp? k)      'pregexp]
+                        [else              'regexp])
+                 ,(object-name k))]
+              [(hash? k)
+               `(,(cond
+                   [(hash-equal? k) 'hash]
+                   [(hash-eqv? k) 'hasheqv]
+                   [else 'hasheq])
+                 ,@(for*/list ([(k v) (in-hash k)]
+                               [e (in-list (list k v))])
+                     `(quote ,e)))]
+              [(pair? k)
+               `(cons ,(loop (car k)) ,(loop (cdr k)))]
+              [(keyword? k)
+               `(string->keyword ,(keyword->string k))]
+              [(null? k) ''()]
+              [else k])))))
 
-;; Write out converted forms
-(for ([v (in-list (schemify-body l prim-knowns #hasheq() #hasheq()))])
-  (unless (equal? v '(void))
-    (let loop ([v v])
-      (match v
-        [`(begin ,vs ...)
-         (for-each loop vs)]
-        [else
-         (pretty-write v)]))))
+     ;; Write out converted forms
+     (for ([v (in-list schemified-body)])
+       (unless (equal? v '(void))
+         (let loop ([v v])
+           (match v
+             [`(begin ,vs ...)
+              (for-each loop vs)]
+             [else
+              (pretty-write v)])))))))

@@ -9,7 +9,7 @@ regexp.scm
 schemify.scm
 
 # Also generated:
-primitive-procs.sls
+known-primitive.sls
 
 # common backups, autosaves, lock files, OS meta-files
 *~

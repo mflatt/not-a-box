@@ -15,20 +15,22 @@
                           (procedure? (eval s ns))))
       (values s a-known-procedure))))
 
-(define-values (schemified info)
-  (schemify-linklet '(linklet  () () 5)
-                    #;
-                    '(linklet 
+(define-values (schemified importss-abi exports-info)
+  (schemify-linklet '(linklet 
                       ()
-                      ()
+                      (x y z)
                       (define-values (struct:s make-s s? s-ref s-set!)
                         (make-struct-type 's #f 2 0 #f))
                       (define-values (y) (make-s (lambda () x) 5))
                       (define-values (x) (lambda () y))
-                      (define-values (done) 'done))
+                      (x)
+                      (letrec-values ([(loop) (lambda () (loop))]) (loop))
+                      (define-values (done) (z)))
                     #;
                     (call-with-input-file "regexp.rktl" read)
                     prim-knowns
                     (lambda args #hasheq())))
 
 (pretty-print schemified)
+(pretty-print exports-info)
+

@@ -6,6 +6,7 @@
          "simple.rkt"
          "find-definition.rkt"
          "mutated.rkt"
+         "mutated-state.rkt"
          "left-to-right.rkt")
 
 (provide schemify-linklet
@@ -67,7 +68,7 @@
       (define id (if (pair? ex) (car ex) ex))
       (hash-set exports id (gensym (symbol->string id)))))
   ;; Schemify the body, collecting information about defined names:
-  (define-values (new-body defn-info)
+  (define-values (new-body defn-info mutated)
     (schemify-body* (cdddr lk) prim-knowns imports exports))
   (values
    ;; Build `lambda` with schemified body:
@@ -93,7 +94,8 @@
      (define id (ex-int-id ex))
      (define v (hash-ref defn-info id #f))
      (cond
-      [v
+      [(and v
+            (not (set!ed-mutated-state? (hash-ref mutated id #f))))
        (define ext-id (ex-ext-id id))
        (hash-set knowns ext-id v)]
       [else knowns]))))
@@ -101,7 +103,7 @@
 ;; ----------------------------------------
 
 (define (schemify-body l prim-knowns imports exports)
-  (define-values (new-body defn-info)
+  (define-values (new-body defn-info mutated)
     (schemify-body* l prim-knowns imports exports))
   new-body)
 
@@ -113,7 +115,9 @@
   ;; Make another pass to gather known-binding information:
   (define knowns
     (for/fold ([knowns (hasheq)]) ([form (in-list l)])
-      (find-definitions form prim-knowns knowns imports mutated)))
+      (define-values (new-knowns info)
+        (find-definitions form prim-knowns knowns imports mutated))
+      new-knowns))
   ;; While schemifying, add calls to install exported values in to the
   ;; corresponding exported `variable` records, but delay those
   ;; installs to the end, if possible
@@ -145,7 +149,7 @@
              (let id-loop ([ids ids] [accum-exprs null] [accum-ids accum-ids])
                (cond
                 [(null? ids) (loop (cdr l) accum-exprs accum-ids)]
-                [(hash-ref mutated (car ids) #f)
+                [(via-variable-mutated-state? (hash-ref mutated (car ids) #f))
                  (define id (car ids))
                  (cond
                   [(hash-ref exports id #f)
@@ -161,7 +165,7 @@
            (loop (cdr l) (cons schemified accum-exprs) accum-ids)])])))
   ;; Return both schemified and known-binding information, where
   ;; the later is used for cross-linklet optimization
-  (values schemified knowns))
+  (values schemified knowns mutated))
 
 (define (make-set-variable id exports)
   (define ex-var (hash-ref exports id))
@@ -198,7 +202,7 @@
          (define sti (and (eq? struct: struct:2)
                           (eq? make make2)
                           (eq? ?1 ?2)
-                          (make-struct-type-info mk knowns imports mutated)))
+                          (make-struct-type-info mk prim-knowns knowns imports mutated)))
          (cond
           [sti
            `(begin
@@ -271,7 +275,7 @@
                  knowns)))
          `(letrec* ,(for/list ([id (in-list ids)]
                                [rhs (in-list rhss)])
-                      `[,id ,(schemify rhs)])
+                      `[,id ,(schemify/knowns new-knowns rhs)])
            ,@(for/list ([body (in-list bodys)])
                (schemify/knowns new-knowns body)))]
         [`(letrec-values ([(,idss ...) ,rhss] ...) ,bodys ...)
@@ -334,7 +338,8 @@
         [`(,rator ,exps ...)
          (let ([args (map schemify exps)])
            (left-to-right/app
-            (if (or (known-procedure? (hash-ref-either knowns imports rator))
+            (if (or (and (known-procedure? (hash-ref-either knowns imports rator))
+                         (not (hash-ref mutated rator #f)))
                     (known-procedure? (hash-ref prim-knowns rator #f))
                     (lambda? rator))
                 `(,(schemify rator) . ,args)
@@ -343,7 +348,7 @@
         [`,_
          (cond
           [(and (symbol? v)
-                (hash-ref mutated v #f)
+                (via-variable-mutated-state? (hash-ref mutated v #f))
                 (hash-ref exports v #f))
            => (lambda (ex-id) `(variable-ref ,ex-id))]
           [(and (symbol? v)
@@ -352,6 +357,8 @@
                 (if (known-constant? (import-lookup im))
                     ;; Not boxed:
                     (import-id im)
-                    ;; Will be boxed:
-                    `(variable-ref ,(import-id im))))]
+                    ;; Will be boxed, but won't be undefined (because the
+                    ;; module system won't link to an instance whose
+                    ;; definitions didn't complete):
+                    `(variable-ref/no-check ,(import-id im))))]
           [else v])]))))

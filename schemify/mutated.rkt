@@ -3,20 +3,28 @@
          "known.rkt"
          "import.rkt"
          "simple.rkt"
-         "find-definition.rkt")
+         "find-definition.rkt"
+         "struct-type-info.rkt"
+         "mutated-state.rkt")
 
-(provide mutated-in-body
-         delayed?)
+(provide mutated-in-body)
+
+;; See "mutated-state.rkt" for information on the content of the
+;; `mutated` table.
+
+;; We don't have to worry about errors or escapes that prevent the
+;; definition of an identifier, because that will abort the enclosing
+;; linklet.
 
 (define (mutated-in-body l exports prim-knowns knowns imports)
   ;; Find all `set!`ed variables, and also record all bindings
-  ;; that might be used too early as 
+  ;; that might be used too early
   (define mutated (make-hasheq))
   ;; Defined names start out as 'not-ready; start with `exports`,
-  ;; because anything exports but not defined is implicitly in an
-  ;; undefined state:
+  ;; because anything exported but not defined is implicitly in an
+  ;; undefined state and must be accessed through a `variable`:
   (for ([id (in-hash-keys exports)])
-    (hash-set! mutated id 'not-ready))
+    (hash-set! mutated id 'undefined))
   ;; Find all defined variables:
   (for ([form (in-list l)])
     (match form
@@ -32,10 +40,20 @@
     ;; before discovering that its mutated via `set!`, but any use of
     ;; that information is correct, because it dynamically precedes
     ;; the `set!`
-    (define knowns (find-definitions form prim-knowns prev-knowns imports mutated))
+    (define-values (knowns info)
+      (find-definitions form prim-knowns prev-knowns imports mutated))
     (match form
       [`(define-values ,ids ,rhs)
-       (find-mutated! rhs ids prim-knowns knowns imports mutated)
+       (cond
+        [info
+         ;; Look just at the "rest" part:
+         (for ([e (in-list (struct-type-info-rest info))]
+               [pos (in-naturals)])
+           (unless (and (= pos struct-type-info-rest-properties-list-pos)
+                        (pure-properties-list? e prim-knowns knowns imports mutated))
+             (find-mutated! e ids prim-knowns knowns imports mutated)))]
+        [else
+         (find-mutated! rhs ids prim-knowns knowns imports mutated)])
        ;; For any among `ids` that didn't get a delay and wasn't used
        ;; too early, the variable is now ready, so remove from
        ;; `mutated`:
@@ -51,11 +69,12 @@
       [`(define-values ,ids ,rhs)
        (for ([id (in-list ids)])
          (define state (hash-ref mutated id #f))
-         (when (delayed? state)
+         (when (delayed-mutated-state? state)
            (hash-remove! mutated id)
            (state)))]
       [`,_ (void)]))
-  ;; Everything else in `mutated` is either 'set!ed, 'too-early, or unreachable:
+  ;; Everything else in `mutated` is either 'set!ed, 'too-early,
+  ;; 'undefined, or unreachable:
   mutated)
 
 ;; Schemify `let-values` to `let`, etc., and
@@ -140,9 +159,9 @@
        (when (symbol? v)
          (define state (hash-ref mutated v #f))
          (cond
-          [(eq? state 'not-ready)
+          [(not-ready-mutated-state? state)
            (hash-set! mutated v 'too-early)]
-          [(delayed? state)
+          [(delayed-mutated-state? state)
            (cond
             [ids
              ;; Chain delays

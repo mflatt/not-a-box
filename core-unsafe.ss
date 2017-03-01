@@ -73,19 +73,16 @@
 (define unsafe-fxvector-ref #3%fxvector-ref)
 (define unsafe-fxvector-set! #3%fxvector-set!)
 
-(define unsafe-undefined (let* ([p (make-record-type "undefined" '())])
+(define unsafe-undefined (let ([p (make-record-type "undefined" '())])
                            ((record-constructor p))))
-(define (check-not-unsafe-undefined v sym)
-  (if (eq? v unsafe-undefined)
-      (raise-arguments-error
-       sym "undefined;\n cannot use before initialization")
-      (void)))
-(define (check-not-unsafe-undefined/assign v sym)
-  (if (eq? v unsafe-undefined)
-      (raise-arguments-error
-       sym "assignment disallowed;\n cannot assign before initialization")
-      (void)))
 
+(define (check-not-unsafe-undefined v sym)
+  (when (eq? v unsafe-undefined)
+    (raise-arguments-error sym "undefined;\n cannot use before initialization")))
+
+(define (check-not-unsafe-undefined/assign v sym)
+  (when (eq? v unsafe-undefined)
+    (raise-arguments-error sym "assignment disallowed;\n cannot assign before initialization")))
 
 (define-syntax (define-extfl-ids stx)
   (syntax-case stx ()
