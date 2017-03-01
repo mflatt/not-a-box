@@ -3458,7 +3458,7 @@
                                             (list
                                              'make-record-type-descriptor
                                              (list 'quote (struct-type-info-name sti_0))
-                                             (struct-type-info-parent sti_0)
+                                             (schemify_0 (struct-type-info-parent sti_0))
                                              #f
                                              #f
                                              #f
@@ -3714,7 +3714,7 @@
                                                  (list 'quote (struct-type-info-name sti_0))
                                                  (struct-type-info-immediate-field-count sti_0)
                                                  0
-                                                 (struct-type-info-parent sti_0)
+                                                 (schemify_0 (struct-type-info-parent sti_0))
                                                  (map2 schemify_0 (struct-type-info-rest sti_0)))))))))
                                         (let-values () (list 'define-values (cadr v_46) (schemify_0 (caddr v_46)))))))
                                   (if (if (pair? v_47)
@@ -4860,7 +4860,8 @@
                                                                                                                   (let-values ()
                                                                                                                     (list
                                                                                                                      (list
-                                                                                                                      ids_46
+                                                                                                                      (car
+                                                                                                                       ids_46)
                                                                                                                       rhs_36)))
                                                                                                                   (let-values ()
                                                                                                                     (let-values (((lr_0)

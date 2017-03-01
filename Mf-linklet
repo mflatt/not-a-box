@@ -1,0 +1,27 @@
+
+# To build various ".rktl" files from sources, set LINKLET_RACKET to the
+# directory of a Git clone of the linklet-based Racket implementation,
+# and then use `make schemify`
+
+local-linklets: schemify.rktl
+
+all-linklets:
+	$(MAKE) -f Mf-linklet local-linklets
+	$(MAKE) -f Mf-linklet expander
+	$(MAKE) -f Mf-linklet port
+	$(MAKE) -f Mf-linklet regexp
+
+schemify.rktl: schemify.rkt match.rkt known.rkt
+	$(LINKLET_RACKET)/racket/bin/racket $(LINKLET_RACKET)/pkgs/expander/bootstrap-run.rkt -t schemify.rkt -c compiled/cache-src ++knot read - -s -x -o schemify.rktl
+
+expander:
+	cd $(LINKLET_RACKET)/pkgs/expander ; $(MAKE) expander-src
+	cp $(LINKLET_RACKET)/pkgs/expander/compiled/expander.rktl .
+
+port:
+	cd $(LINKLET_RACKET)/pkgs/port ; $(MAKE) port-src
+	cp $(LINKLET_RACKET)/pkgs/port/compiled/port.rktl .
+
+regexp:
+	cd $(LINKLET_RACKET)/pkgs/regexp ; $(MAKE) regexp-src
+	cp $(LINKLET_RACKET)/pkgs/regexp/compiled/regexp.rktl .

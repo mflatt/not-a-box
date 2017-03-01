@@ -1,3 +1,4 @@
+;; Temporary compatibility stubs
 
 (define-values (prop:checked-procedure checked-procedure? checked-procedure-ref)
   (make-struct-type-property 'checked-procedure))
@@ -189,6 +190,9 @@
 (define compile-enforce-module-constants
   (make-parameter #t))
 
+(define current-thread-group
+  (make-parameter 'thread-group))
+
 (define (load-extension f) (error "no load-extension"))
 
 (define (cache-configuration id proc) (proc))
@@ -197,7 +201,10 @@
 
 (define (find-system-path key)
   (case key
-    [(exec-file) (string->path (or (getenv "AS_IF_RACKET") "/usr/bin/racket"))]
+    [(exec-file) (or (let ([s (getenv "LINKLET_RACKET")])
+                       (and s
+                            (build-path s "racket" "bin" "racket")))
+                     (string->path "/usr/local/bin/racket"))]
     [(config-dir) (string->path "../config")]
     [(collects-dir) (string->path "../collects")]
     [(addon-dir) (string->path "/tmp/addon")]
@@ -248,11 +255,20 @@
 (define-values (prop:evt evt? evt-ref) (make-struct-type-property 'evt))
 (define (wrap-evt e v) e)
 (define always-evt 'always)
+(define (sleep . args) (void))
+(define (thread thunk) (void))
 (define (current-thread) 't)
 (define (thread-wait t) t)
+(define (kill-thread t) (void))
+(define (thread-suspend t) (void))
+(define (thread-resume t) (void))
 (define (thread-send t v) t)
+(define (thread-receive-evt t) 'thread-receive-evt)
+(define (thread-group? v) #f)
+(define (make-thread-group . args) 'thread-group)
 (define (make-semaphore) 'sema)
 (define (semaphore-post s) (void))
+(define (semaphore-wait s) (void))
 (define (sync . args) #f)
 (define (sync/timeout t . args) #f)
 (define (semaphore-peek-evt sema) 'sema-peek)
@@ -319,6 +335,8 @@
 (define (eval-jit-enabled) #t)
 
 (define (current-memory-use . mode) 0)
+
+(define (collect-garbage) (collect))
 
 (define (current-plumber) 'plumber)
 (define (plumber-add-flush! p v) (set! at-exit (cons v null)))

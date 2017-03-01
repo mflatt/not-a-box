@@ -95,6 +95,7 @@
    cleanse-path
    close-input-port
    close-output-port
+   collect-garbage
    compile-enforce-module-constants
    complete-path?
    continuation-mark-set-first
@@ -117,13 +118,16 @@
    current-load-relative-directory
    current-load/use-compiled
    current-logger
+   current-memory-use
    current-milliseconds
    current-output-port
+   current-plumber
    current-print
    current-prompt-read
    current-read-interaction
    current-seconds
    current-thread
+   current-thread-group
    datum-intern-literal
    default-continuation-prompt-tag
    directory-exists?
@@ -147,6 +151,7 @@
    error-value->string-handler
    eval-jit-enabled
    even?
+   evt?
    exact-integer?
    exact-nonnegative-integer?
    exact-positive-integer?
@@ -219,6 +224,7 @@
    integer->integer-bytes
    integer?
    interned-char?
+   kill-thread
    length
    list
    list*
@@ -264,6 +270,7 @@
    make-struct-type
    make-struct-type-property
    make-thread-cell
+   make-thread-group
    make-vector
    make-weak-box
    make-weak-hash
@@ -307,6 +314,7 @@
    peek-bytes-avail!*
    peek-char-or-special
    placeholder-set!
+   plumber-add-flush!
    port-count-lines!
    port-next-location
    port-read-handler
@@ -380,14 +388,17 @@
    seconds->date
    semaphore-peek-evt
    semaphore-post
+   semaphore-wait
    set-box!
    simplify-path
+   sleep
    split-path
    string
    string->bytes/latin-1
    string->bytes/locale
    string->bytes/utf-8
    string->immutable-string
+   string->list
    string->number
    string->path
    string->symbol
@@ -426,10 +437,15 @@
    system-library-subpath
    system-path-convention-type
    system-type
+   thread-group?
+   thread-receive-evt
+   thread-resume
    thread-send
+   thread-suspend
    thread-wait
    true-object?
    time-apply
+   thread
    unbox
    use-collection-link-paths
    use-compiled-file-paths

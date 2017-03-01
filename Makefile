@@ -82,6 +82,13 @@ CORE_SRCS = core-constant.ss \
 core.so: core.sls $(CORE_SRCS)
 	$(COMP) '(compile-file "core.sls")' | scheme -q
 
+# To build various ".rktl" files from sources, which requires
+# a linklet-based Racket repo clone identified by a
+# `LINKLET_RACKET` environment variable:
+local-linklets:
+	$(MAKE) -f Mf-linklet local-linklets
+all-linklets:
+	$(MAKE) -f Mf-linklet all-linklets
 
 clean:
 	rm -f core.so regexp.so port.so immutable-hash.so linklet.so primitive-procs.so linklet.so expander.so schemify.so

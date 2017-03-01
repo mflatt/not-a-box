@@ -20,13 +20,20 @@
 (eval 'x)
 
 (define (run s)
-  (eval (read (open-input-string s))))
-(run "'x")
+  (show (eval (read (open-input-string s)))))
+;; (run "'x")
 
-;; Set `AS_IF_RACKET` to a linklet-branch Racket executable's
-;; path to allow a `racket/base` load to possibly succeed
-(current-library-collection-links
- (find-library-collection-links))
-(current-library-collection-paths
- (find-library-collection-paths))
-(time (eval '(|#%require| racket/base)))
+;; Set `LINKLET_RACKET` to a built linklet-branch Racket checkout
+;; to allow a `racket/base` load to possibly succeed
+(when (getenv "LINKLET_RACKET")
+  (current-library-collection-links
+   (find-library-collection-links))
+  (current-library-collection-paths
+   (find-library-collection-paths))
+  
+  (time (eval '(|#%require| racket/base)))
+
+  ;;(time (eval `(|#%require| (file ,(string-append (getenv "LINKLET_RACKET") "/pkgs/regexp/demo.rkt")))))
+  ;;(time (eval `(|#%require| (file ,(string-append (getenv "LINKLET_RACKET") "/pkgs/expander/main.rkt")))))
+  
+  )

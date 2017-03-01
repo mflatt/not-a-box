@@ -3,7 +3,7 @@
 (define-record mutable-hash (ht keys keys-stale?))
 (define (create-mutable-hash ht) (make-mutable-hash ht '#() #t))
 
-(define (hash? v) (or (mutable-hash? v) (hamt? v)))
+(define (hash? v) (or (hamt? v) (mutable-hash? v) (weak-equal-hash? v)))
 
 (define (make-hash) (create-mutable-hash (make-hashtable equal-hash-code equal?)))
 

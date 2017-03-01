@@ -1,4 +1,4 @@
-(define-record struct-type-prop (name table guard))
+(define-record struct-type-prop (name table guard supers))
 
 (define rtd-props (make-weak-eq-hashtable))
 (define rtd-inspectors (make-weak-eq-hashtable))
@@ -10,7 +10,7 @@
     [(name guard supers) (make-struct-type-property name guard supers #f)]
     [(name guard supers can-inpersonate?)
      (define table (make-weak-eq-hashtable))
-     (values (make-struct-type-prop name table guard)
+     (values (make-struct-type-prop name table guard supers)
              (lambda (v) (and (record? v)
                          (not (eq? none (hashtable-ref table (record-rtd v) none)))))
              (lambda (v)
@@ -99,27 +99,33 @@
                                          (cons prop:procedure props)
                                          props)))
      (for-each (lambda (prop+val)
-                 (let ([prop (car prop+val)]
-                       [val (cdr prop+val)])
-                   (hashtable-set! (struct-type-prop-table prop)
-                                   rtd
-                                   (let ([guard (struct-type-prop-guard prop)])
-                                     (if guard
-                                         (let ([parent-count (if parent-rtd
-                                                                 (struct-type-field-count parent-rtd)
-                                                                 0)])
-                                           (guard val
-                                                  (list name
-                                                        fields
-                                                        auto-fields
-                                                        (make-position-based-accessor rtd parent-count (+ fields auto-fields))
-                                                        (make-position-based-mutator rtd parent-count (+ fields auto-fields))
-                                                        (if (integer? proc-spec)
-                                                            (cons proc-spec immutables)
-                                                            immutables)
-                                                        parent-rtd
-                                                        #f)))
-                                         val)))))
+                 (let loop ([prop (car prop+val)]
+                            [val (cdr prop+val)])
+                   (let ([guarded-val
+                          (let ([guard (struct-type-prop-guard prop)])
+                            (if guard
+                                (let ([parent-count (if parent-rtd
+                                                        (struct-type-field-count parent-rtd)
+                                                        0)])
+                                  (guard val
+                                         (list name
+                                               fields
+                                               auto-fields
+                                               (make-position-based-accessor rtd parent-count (+ fields auto-fields))
+                                               (make-position-based-mutator rtd parent-count (+ fields auto-fields))
+                                               (if (integer? proc-spec)
+                                                   (cons proc-spec immutables)
+                                                   immutables)
+                                               parent-rtd
+                                               #f)))
+                                val))])
+                     (hashtable-set! (struct-type-prop-table prop)
+                                     rtd
+                                     guarded-val)
+                     (for-each (lambda (super)
+                                 (loop (car super)
+                                       ((cdr super) guarded-val)))
+                               (struct-type-prop-supers prop)))))
                (if proc-spec
                    (cons (cons prop:procedure proc-spec) props)
                    props))

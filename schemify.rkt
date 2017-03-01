@@ -420,7 +420,7 @@
         [sti
          `(begin
            (define ,struct:s (make-record-type-descriptor ',(struct-type-info-name sti)
-                                                          ,(struct-type-info-parent sti)
+                                                          ,(schemify (struct-type-info-parent sti))
                                                            #f #f #f
                                                           ',(for/vector ([i (in-range (struct-type-info-immediate-field-count sti))])
                                                               `(mutable ,(string->symbol (format "f~a" i))))))
@@ -443,7 +443,7 @@
                                                       ',(struct-type-info-name sti)
                                                       ,(struct-type-info-immediate-field-count sti)
                                                       0
-                                                      ,(struct-type-info-parent sti)
+                                                      ,(schemify (struct-type-info-parent sti))
                                                       ,@(map schemify (struct-type-info-rest sti)))))))]
         [else
          `(define-values ,(cadr v) ,(schemify (caddr v)))])]
@@ -509,7 +509,7 @@
                          `([,(gensym "lr")
                             ,(make-let-values null rhs '(void))])]
                         [(and (pair? ids) (null? (cdr ids)))
-                         `([,ids ,rhs])]
+                         `([,(car ids) ,rhs])]
                         [else
                          (define lr (gensym "lr"))
                          `([,lr ,(make-let-values ids rhs `(vector . ,ids))]
