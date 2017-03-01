@@ -61,6 +61,8 @@
    ;; unsafe-flsqrt
    ;; unsafe-flexpt
 
+   unsafe-flrandom
+
    unsafe-vector-ref
    unsafe-vector-set!
    unsafe-vector*-ref

@@ -52,6 +52,22 @@
 
 (define (equal-secondary-hash-code v) (equal-hash-code v))
 
+(define fx->fl fixnum->flonum)
+(define fxrshift fxarithmetic-shift-right)
+(define fxlshift fxarithmetic-shift-left)
+(define shared-fxvector fxvector)
+(define make-shared-fxvector make-fxvector)
+
+(define fl->fx flonum->fixnum)
+(define ->fl real->flonum)
+(define (fl->exact-integer fl) (inexact->exact (flfloor fl)))
+(define unsafe-flrandom random)
+
+(define flreal-part real-part)
+(define flimag-part imag-part)
+(define make-flrectangular make-rectangular)
+
+(define (flvector . args) 'flvector)
 (define (flvector? v) #f)
 (define (flvector-length v) 0)
 (define (flvector-ref v i) 0)
@@ -62,6 +78,9 @@
   (case-lambda
    [(n) 'no-flvector]
    [(n val) 'no-flvector]))
+(define shared-flvector flvector)
+(define make-shared-flvector make-flvector)
+(define (flvector-copy vec) 'flvector)
 
 (define (object-name o)
   (cond
@@ -423,7 +442,7 @@
 ;; primitives need to be imported (prefered) or defined
 ;; (less efficient to access) there
 (define (fill-environment!)
-  (eval `(import (core) (port) (regexp)))
+  (eval `(import (core) (port) (regexp) (linklet)))
   
   (let ([install-table
          (lambda (table)
@@ -449,7 +468,7 @@
     [(|#%foreign|) tbd-table]
     [(|#%futures|) tbd-table]
     [(|#%place|) tbd-table]
-    [(|#%flfxnum|) tbd-table]
+    [(|#%flfxnum|) flfxnum-table]
     [(|#%extfl|) tbd-table]
     [(|#%network|) tbd-table]
     [else #f]))
@@ -469,6 +488,7 @@
 
 (include "kernel-primitives.scm")
 (include "unsafe-primitives.scm")
+(include "flfxnum-primitives.scm")
 
 (define linklet-table
   (make-primitive-table
@@ -510,6 +530,8 @@
 ;; each must be specifically defined
 (define compat-table
   (make-primitive-table
+   primitive-table
+   
    prop:checked-procedure checked-procedure? checked-procedure-ref
    prop:impersonator-of -impersonator-of? impersonator-of-ref
    prop:arity-string arity-string? arity-string-ref
@@ -539,6 +561,22 @@
 
    equal-secondary-hash-code
 
+   fx->fl
+   fxrshift
+   fxlshift
+   shared-fxvector
+   make-shared-fxvector
+
+   fl->fx
+   ->fl
+   fl->exact-integer
+   unsafe-flrandom
+   
+   flreal-part
+   flimag-part
+   make-flrectangular
+
+   flvector
    flvector?
    flvector-length
    flvector-ref
@@ -546,6 +584,8 @@
    flvector-set!
    unsafe-flvector-set!
    make-flvector
+   shared-flvector
+   make-shared-flvector
 
    object-name
 
