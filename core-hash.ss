@@ -56,7 +56,7 @@
 (define (hash-set ht k v)
   (cond
    [(hamt? ht) (hamt-set ht k v)]
-   [else (raise-argument-error 'hash-set! "(and/c hash? immutable?)" ht)]))
+   [else (raise-argument-error 'hash-set "(and/c hash? immutable?)" ht)]))
 
 (define (hash-remove ht k)
   (cond
