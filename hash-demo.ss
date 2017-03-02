@@ -326,3 +326,26 @@
       (unless (hash-keys-subset? half-numbers numbers)
         (error 'subset? "failed"))
       (loop (sub1 i)))))
+
+;; ---------------------------------------- 
+
+(printf "many tables\n")
+(collect-garbage)
+(define m1 (current-memory-use))
+(define hts
+  (time 
+   (let loop ([i 0])
+     (if (< i 100)
+         (cons
+          (let loop2 ([i 0])
+            (if (< i 10000)
+                (hash-set 
+                 (loop2 (+ i 1))
+                 (gensym)
+                 (cons (random 100) (random 100)))
+                (hasheq)))
+          (loop (+ 1 i)))
+         null))))
+(collect-garbage)
+(printf "~a\n" (- (current-memory-use) m1))
+

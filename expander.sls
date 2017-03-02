@@ -64,6 +64,7 @@
                           list? input-port? output-port? port-name
                           procedure? apply
                           string-copy! substring
+                          gensym symbol->string
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day
                           open-input-output-file
@@ -71,7 +72,6 @@
                   [fprintf chez:fprintf]
                   [current-error-port chez:current-error-port]
                   [string->number chez:string->number]
-                  [gensym chez:gensym]
                   [file-exists? chez:file-exists?]
                   [directory-list chez:directory-list])
           (core)

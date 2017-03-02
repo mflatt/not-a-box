@@ -18,15 +18,26 @@
 
 (define codes (make-weak-eq-hashtable))
 (define counter 12345)
+
 (define (eq-hash-code x)
   (cond
-   [(symbol? x) (symbol-hash x)]
+   [(symbol? x) (symbol-fast-hash x)]
    [else
     (or (eq-hashtable-ref codes x #f)
-        (begin
-          (set! counter (add1 counter))
+        (let ([c (add1 counter)])
+          (set! counter c)
           (eq-hashtable-set! codes x counter)
-          counter))]))
+          c))]))
+
+(define (symbol-fast-hash sym)
+  ;; Avoid forcing the universal name of a gensym when hashing
+  (if (gensym? sym)
+      (or (getprop sym 'racket-gensym-hash-code)
+          (let ([c (add1 counter)])
+            (set! counter c)
+            (putprop sym 'racket-gensym-hash-code c)
+            c))
+      (symbol-hash sym)))
 
 (define number-hash
   (lambda (z)
@@ -91,7 +102,7 @@
            [(null? x) (values (update hc 496904691) i)]
            [(box? x) (f (unbox x) (update hc 410225874) i)]
            [(hash? x) (hash-hash-code x f (update hc 587441022) i)]
-           [(symbol? x) (values (update hc (symbol-hash x)) i)]
+           [(symbol? x)(values (update hc (symbol-fast-hash x)) i)]
            [(string? x) (values (update hc (string-hash x)) i)]
            [(number? x) (values (update hc (number-hash x)) i)]
            [(bytevector? x) (values (update hc (bytevector-hash x)) i)]

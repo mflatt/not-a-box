@@ -76,6 +76,7 @@ CORE_SRCS = core-constant.ss \
             core-error.ss \
             core-bytes.ss \
             core-string.ss \
+            core-symbol.ss \
             core-list.ss \
             core-vector.ss \
             core-box.ss \
@@ -83,6 +84,7 @@ CORE_SRCS = core-constant.ss \
             core-mpair.ss \
             core-integer.ss \
             core-time.ss \
+            core-memory.ss \
             core-unsafe.ss
 
 core.so: core.sls $(CORE_SRCS)

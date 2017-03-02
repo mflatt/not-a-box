@@ -23,13 +23,6 @@
           current-inspector
           make-inspector
 
-          time-apply
-          current-inexact-milliseconds
-          current-milliseconds
-          current-gc-milliseconds
-          current-seconds
-          seconds->date
-
           struct:exn exn exn? exn-message exn-continuation-marks
           struct:exn:break exn:break exn:break? exn:break-continuation
           struct:exn:break:hang-up exn:break:hang-up exn:break:hang-up?
@@ -152,6 +145,12 @@
           string->immutable-string
           substring
 
+          gensym
+          symbol-interned?
+          string->uninterned-symbol
+          string->unreadable-symbol
+          symbol->string
+
           list?
 
           vector-copy!
@@ -179,6 +178,16 @@
           arithmetic-shift
 
           mpair? mcons mcar mcdr set-mcar! set-mcdr!
+
+          time-apply
+          current-inexact-milliseconds
+          current-milliseconds
+          current-gc-milliseconds
+          current-seconds
+          seconds->date
+
+          collect-garbage
+          current-memory-use
 
           unsafe-car
           unsafe-cdr
@@ -237,17 +246,6 @@
           unsafe-flsqrt
           unsafe-flexpt
 
-          flsin
-          flcos
-          fltan
-          flasin
-          flacos
-          flatan
-          fllog
-          flexp
-          flsqrt
-          flexpt
-
           extflsin extflcos extfltan
           extflasin extflacos extflatan
           extfltruncate extflround extflfloor extflceiling
@@ -289,16 +287,19 @@
                   [void chez:void]
                   [apply chez:apply]
                   [procedure? chez:procedure?]
-                  [substring chez:substring])
+                  [substring chez:substring]
+                  [gensym chez:gensym]
+                  [symbol->string chez:symbol->string])
           (only (chezscheme csv7)
                 record-field-accessor
                 record-field-mutator))
 
-  (define none (gensym "none"))
+  (define none (chez:gensym "none"))
 
   (include "core-constant.ss")
   (include "core-equal.ss")
   (include "core-hash-code.ss")
+  (include "core-symbol.ss")
   (include "core-struct.ss")
   (include "core-hamt.ss")
   (include "core-hash.ss")
@@ -315,6 +316,7 @@
   (include "core-mpair.ss")
   (include "core-integer.ss")
   (include "core-time.ss")
+  (include "core-memory.ss")
   (include "core-unsafe.ss")
   
   (set-base-exception-handler!)

@@ -96,6 +96,7 @@
                           open-input-file abort
                           current-output-port current-input-port current-error-port
                           port-name string-copy! substring
+                                                    gensym symbol->string
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [make-parameter chez:make-parameter]

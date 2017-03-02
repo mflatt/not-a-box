@@ -247,21 +247,6 @@
 
 (define (port-read-handler p) read)
 
-(define gensym
-  (case-lambda
-   [() (chez:gensym)]
-   [(s) (cond
-         [(string? s) (chez:gensym s)]
-         [(symbol? s) (chez:gensym (symbol->string s))]
-         [else (raise-argument-error
-                'gensym
-                "(or/c symbol? string?)"
-                s)])]))
-
-(define (symbol-interned? s) (not (gensym? s)))
-(define (string->uninterned-symbol s) (gensym s))
-(define (string->unreadable-symbol s) (string->symbol (format "$$~a$$" s)))
-
 ;; Not good enough...
 (define (make-ephemeron k v)
   (weak-cons k v))
@@ -352,19 +337,6 @@
 (define (true-object? v) (eq? v #t))
 
 (define (eval-jit-enabled) #t)
-
-(define current-memory-use
-  (case-lambda
-   [() (bytes-allocated)]
-   [(mode)
-    (cond
-     [(not mode) (bytes-allocated)]
-     [(eq? mode 'cumulative) (sstats-bytes (statistics))]
-     [else
-      ;; must be a custodian...
-      (bytes-allocated)])]))
-
-(define (collect-garbage) (collect))
 
 (define (current-plumber) 'plumber)
 (define (plumber-add-flush! p v) (set! at-exit (cons v null)))
