@@ -251,7 +251,7 @@
 ;; A `hash-iterate-first` operation triggers an O(n)
 ;; gathering of the keys of a mutable hash table. That's
 ;; unfortunate, but there appears to be no way around it.
-(define (prepate-iterate! ht i)
+(define (prepare-iterate! ht i)
   (let ([vec (mutable-hash-keys ht)])
     (or (and (or i (not (mutable-hash-keys-stale? ht)))
              vec)
@@ -297,7 +297,7 @@
    [else (raise-argument-error 'hash-iterate-next "hash?" ht)]))
 
 (define (mutable-hash-iterate-next ht init-i)
-  (let* ([vec (prepate-iterate! ht init-i)] ; vec expected to have > `init-i` elements
+  (let* ([vec (prepare-iterate! ht init-i)] ; vec expected to have > `init-i` elements
          [len (vector-length vec)])
     (let loop ([i (or init-i -1)])
       (let ([i (add1 i)])
@@ -337,7 +337,7 @@
         [(k v) (values k v)]))]
    [(mutable-hash? ht)
     (check-i who i)
-    (let* ([vec (prepate-iterate! ht i)]
+    (let* ([vec (prepare-iterate! ht i)]
            [len (vector-length vec)]
            [p (if (< i len)
                   (vector-ref vec i)

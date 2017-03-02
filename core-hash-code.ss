@@ -22,9 +22,10 @@
 (define (eq-hash-code x)
   (cond
    [(symbol? x) (symbol-fast-hash x)]
+   [(fixnum? x) x]
    [else
     (or (eq-hashtable-ref codes x #f)
-        (let ([c (add1 counter)])
+        (let ([c (fx1+ counter)])
           (set! counter c)
           (eq-hashtable-set! codes x counter)
           c))]))
@@ -33,7 +34,7 @@
   ;; Avoid forcing the universal name of a gensym when hashing
   (if (gensym? sym)
       (or (getprop sym 'racket-gensym-hash-code)
-          (let ([c (add1 counter)])
+          (let ([c (fx1+ counter)])
             (set! counter c)
             (putprop sym 'racket-gensym-hash-code c)
             c))
