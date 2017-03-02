@@ -96,6 +96,8 @@
   (bytes-set! bstr 3 (bitwise-and (arithmetic-shift num -24) #xFF))
   bstr)
 
+(define (integer-bytes->integer b) 0)
+
 (define (char-graphic? x) #f)
 
 (define (system-library-subpath) "x86_64-macosx/3m")
@@ -228,6 +230,7 @@
                                                        message))))
 (define (current-logger) 'logger)
 (define (logger? v) (eq? v 'logger))
+(define (logger-name v) #f)
 
 (define (port-read-handler p) read)
 
@@ -374,6 +377,14 @@
                 ;; FIXME
                 (chez:string->number s radix)]))
 
+;; ----------------------------------------
+
+(define (bytes-open-converter . _) #f)
+(define (bytes-convert . _) #f)
+(define (file-stream-buffer-mode . _) #f)
+(define (file-truncate f sz) (truncate-file f sz))
+(define (flush-output p) (flush-output-port p))
+(define (link-exists? l) #f)
 ;; ----------------------------------------
 
 ;; The environment is used to evaluate linklets, so all
@@ -544,7 +555,13 @@
    string-locale-downcase
 
    integer->integer-bytes
-
+   integer-bytes->integer
+   file-stream-buffer-mode
+   logger-name
+   file-truncate
+   flush-output
+   link-exists?
+   
    char-graphic?
 
    system-type
@@ -598,7 +615,12 @@
 
    open-input-output-file
 
+   bytes-open-converter
+   bytes-convert
+   path->directory-path
+   collect-garbage
    find-system-path
+   ;find-user-path
 
    version
 
