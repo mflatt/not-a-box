@@ -157,6 +157,7 @@
           vector-copy!
           vector-immutable
           vector->immutable-vector
+          vector->values
 
           box-immutable
           box-cas!

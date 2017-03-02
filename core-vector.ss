@@ -15,3 +15,24 @@
 
 (define vector-immutable vector)
 (define (vector->immutable-vector x) x)
+
+(define vector->values
+  (case-lambda
+    [(vec)
+     (let ([len (vector-length vec)])
+       (cond
+        [(fx= len 0) (values)]
+        [(fx= len 1) (vector-ref vec 0)]
+        [(fx= len 2) (values (vector-ref vec 0) (vector-ref vec 1))]
+        [(fx= len 3) (values (vector-ref vec 0) (vector-ref vec 1) (vector-ref vec 2))]
+        [else (chez:apply values (vector->list vec))]))]
+    [(vec start)
+     (vector->values vec start (vector-length vec))]
+    [(vec start end)
+     ;; FIXME: check range
+     (chez:apply values
+                 (let loop ([start start])
+                   (cond
+                    [(fx= start end) null]
+                    [else (cons (vector-ref vec start)
+                                (loop (fx1+ start)))])))]))

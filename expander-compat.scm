@@ -353,7 +353,16 @@
 
 (define (eval-jit-enabled) #t)
 
-(define (current-memory-use . mode) 0)
+(define current-memory-use
+  (case-lambda
+   [() (bytes-allocated)]
+   [(mode)
+    (cond
+     [(not mode) (bytes-allocated)]
+     [(eq? mode 'cumulative) (sstats-bytes (statistics))]
+     [else
+      ;; must be a custodian...
+      (bytes-allocated)])]))
 
 (define (collect-garbage) (collect))
 

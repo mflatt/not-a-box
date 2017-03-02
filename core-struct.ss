@@ -360,7 +360,11 @@
     (let* ([rtd (record-rtd f)]
            [v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f)])
       (cond
-       [(procedure? v) (lambda args (apply v f args))]
+       [(procedure? v) (case-lambda
+                         [(a) (v f a)]
+                         [(a b) (v f a b)]
+                         [(a b c) (v f a b c)]
+                         [args (apply v f args)])]
        [(fixnum? v) (unsafe-struct-ref f v)]
        [else (not-a-procedure f)]))]
    [else (not-a-procedure f)]))
