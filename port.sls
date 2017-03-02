@@ -95,8 +95,9 @@
                           list? equal? input-port? output-port?
                           open-input-file abort
                           current-output-port current-input-port current-error-port
-                          port-name string-copy! substring
-                                                    gensym symbol->string
+                          port-name string-copy! substring string-set!
+                          gensym symbol->string
+                          set-box! vector-set!
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [make-parameter chez:make-parameter]

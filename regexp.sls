@@ -33,8 +33,9 @@
                           open-input-string open-output-string get-output-string
                           format printf fprintf
                           write display newline port-name
-                          list? equal? string-copy! substring
+                          list? equal? string-copy! substring string-set!
                           gensym symbol->string
+                          set-box! vector-set!
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [void chez:void])

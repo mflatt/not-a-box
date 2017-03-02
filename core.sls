@@ -144,6 +144,7 @@
           string-copy!
           string->immutable-string
           substring
+          string-set!
 
           gensym
           symbol-interned?
@@ -153,14 +154,18 @@
 
           list?
 
+          vector-set!
           vector-copy!
           vector-immutable
           vector->immutable-vector
           vector->values
 
+          set-box!
           box-immutable
           box-cas!
           make-weak-box weak-box? weak-box-value
+
+          immutable?
 
           keyword?
           keyword->string
@@ -289,7 +294,10 @@
                   [procedure? chez:procedure?]
                   [substring chez:substring]
                   [gensym chez:gensym]
-                  [symbol->string chez:symbol->string])
+                  [symbol->string chez:symbol->string]
+                  [string-set! chez:string-set!]
+                  [vector-set! chez:vector-set!]
+                  [set-box! chez:set-box!])
           (only (chezscheme csv7)
                 record-field-accessor
                 record-field-mutator))
@@ -312,6 +320,7 @@
   (include "core-list.ss")
   (include "core-vector.ss")
   (include "core-box.ss")
+  (include "core-immutable.ss")
   (include "core-keyword.ss")
   (include "core-mpair.ss")
   (include "core-integer.ss")

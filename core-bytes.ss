@@ -2,19 +2,27 @@
 (define bytes? bytevector?)
 
 (define bytes-length bytevector-length)
-(define make-bytes make-bytevector)
-(define bytes-set! bytevector-u8-set!)
+(define make-bytes make-bytevector)    
 (define bytes->list bytevector->u8-list)
 (define list->bytes u8-list->bytevector)
 (define bytes-ref bytevector-u8-ref)
+
+(define (bytes-set! bstr pos v)
+  (unless (and (bytes? bstr) (unsafe-mutable? bstr))
+    (raise-argument-error 'bytes-set! "(and/c bytes? (not/c immutable?))" bstr))
+  (bytevector-u8-set! bstr pos v))
 
 (define (bytes->immutable-bytes s) s)
 
 (define bytes-copy!
   (case-lambda
-    [(dest d-start src) (bytes-copy! dest d-start src 0 (bytes-length src))]
-    [(dest d-start src s-start) (bytes-copy! dest d-start src s-start (bytes-length src))]
+    [(dest d-start src)
+     (bytes-copy! dest d-start src 0 (bytes-length src))]
+    [(dest d-start src s-start)
+     (bytes-copy! dest d-start src s-start (bytes-length src))]
     [(dest d-start src s-start s-end)
+     (unless (and (bytes? dest) (unsafe-mutable? dest))
+       (raise-argument-error 'bytes-set! "(and/c bytes? (not/c immutable?))" dest))
      (bytevector-copy! src s-start dest d-start (- s-end s-start))]))
 
 (define bytes-copy bytevector-copy)

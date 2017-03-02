@@ -80,6 +80,7 @@ CORE_SRCS = core-constant.ss \
             core-list.ss \
             core-vector.ss \
             core-box.ss \
+            core-immutable.ss \
             core-keyword.ss \
             core-mpair.ss \
             core-integer.ss \
