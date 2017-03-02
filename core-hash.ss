@@ -328,11 +328,13 @@
   (cond
    [(hamt? ht)
     (check-i who i)
-    (hamt-iterate-key+value
-     ht i
-     (lambda ()
-       (raise-arguments-error who "no element at index"
-                              "index" i)))]
+    (call-with-values (lambda () (hamt-iterate-key+value ht i none))
+      (case-lambda
+        [(v) (if (eq? v none)
+                 (raise-arguments-error who "no element at index"
+                                        "index" i)
+                 v)]
+        [(k v) (values k v)]))]
    [(mutable-hash? ht)
     (check-i who i)
     (let* ([vec (prepate-iterate! ht i)]

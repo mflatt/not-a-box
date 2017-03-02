@@ -210,31 +210,31 @@
         #f
         pos)))
 
-(define (hamt-iterate-key h pos fail-k)
+(define (hamt-iterate-key h pos fail)
   (let ([e (node-entry-at-position h pos)])
     (if e
         (entry*-key e)
-        (fail-k))))
+        fail)))
 
-(define (hamt-iterate-value h pos fail-k)
+(define (hamt-iterate-value h pos fail)
   (let ([e (node-entry-at-position h pos)])
     (if e
         (entry*-value e)
-        (fail-k))))
+        fail)))
 
-(define (hamt-iterate-key+value h pos fail-k)
+(define (hamt-iterate-key+value h pos fail)
   (let ([e (node-entry-at-position h pos)])
     (if e
         (values (entry*-key e)
                 (entry*-value e))
-        (fail-k))))
+        fail)))
 
-(define (hamt-iterate-pair h pos fail-k)
+(define (hamt-iterate-pair h pos fail)
   (let ([e (node-entry-at-position h pos)])
     (if e
         (cons (entry*-key e)
               (entry*-value e))
-        (fail-k))))
+        fail)))
 
 ;; "unsafe" iteration works with a record; it's unsafe only in the
 ;; sense that it doesn't make sure the iteration value is compatible

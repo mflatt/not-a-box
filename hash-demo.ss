@@ -146,6 +146,30 @@
            v))
      (loop (sub1 j)))))
 
+(printf "safe vs. unsafe on small table\n")
+(let ([ht (let loop ([ht (hasheq)] [i 8])
+            (if (zero? i)
+                ht
+                (loop (hash-set ht (gensym) #t) (sub1 i))))]
+      [N 1000000])
+  (time
+   (let loop ([j N])
+     (unless (zero? j)
+       (let loop ([v #f] [i (unsafe-immutable-hash-iterate-first ht)])
+         (if i
+             (loop (unsafe-immutable-hash-iterate-value ht i)
+                   (unsafe-immutable-hash-iterate-next ht i))
+             v))
+       (loop (sub1 j)))))
+  (time
+   (let loop ([j N])
+     (unless (zero? j)
+       (let loop ([v #f] [i (hash-iterate-first ht)])
+         (if i
+             (loop (hash-iterate-value ht i)
+                   (hash-iterate-next ht i))
+             v))
+       (loop (sub1 j))))))
 
 ;; ----------------------------------------
 
