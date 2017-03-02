@@ -85,7 +85,7 @@
                           (lambda (index)
                             (lookup-linklet get-import import-keys index))))
       ;; Create the linklet:
-      (let ([lk (make-linklet (expand (show "schemified" impl-lam))
+      (let ([lk (make-linklet (show "schemified" impl-lam)
                               #f
                               importss-abi
                               exports-info
