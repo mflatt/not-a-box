@@ -63,22 +63,33 @@
 ;; evaluation order
 (define (left-to-right/app rator rands plain-app?
                            unannotate prim-knowns knowns imports mutated)
-  (define (finish app)
-    (if plain-app? app `(|#%app| . ,app)))
-  (let loop ([l (cons rator rands)] [accum null])
+  (let loop ([l (cons rator rands)] [accum null] [pending-non-simple #f] [pending-id #f])
     (cond
-     [(null? l) (finish (reverse accum))]
+     [(null? l)
+      (let ([app
+             (cond
+              [pending-non-simple
+               ;; Since the last non-simple was followed only by simples,
+               ;; we don't need that variable
+               (let loop ([accum accum] [rev-accum null])
+                 (cond
+                  [(null? accum) rev-accum]
+                  [(eq? (car accum) pending-id)
+                   (loop (cdr accum) (cons pending-non-simple rev-accum))]
+                  [else
+                   (loop (cdr accum) (cons (car accum) rev-accum))]))]
+              [else (reverse accum)])])
+        (if plain-app?
+            app
+            `(|#%app| . ,app)))]
      [(simple? (unannotate (car l)) prim-knowns knowns imports mutated)
-      (loop (cdr l) (cons (car l) accum))]
-     [(andmap (lambda (v) (simple? (unannotate v) prim-knowns knowns imports mutated)) (cdr l))
-      (finish (append (reverse accum) l))]
+      (loop (cdr l) (cons (car l) accum) pending-non-simple pending-id)]
+     [pending-non-simple
+      `(let ([,pending-id ,pending-non-simple])
+        ,(loop l accum #f #f))]
      [else
-      (define g (gensym (string-append "app_" (number->string counter))))
-      (set! counter (add1 counter))
-      `(let ([,g ,(car l)])
-        ,(loop (cdr l) (cons g accum)))])))
-
-(define counter 0)
+      (define g (gensym "app_"))
+      (loop (cdr l) (cons g accum) (car l) g)])))
 
 ;; ----------------------------------------
 
