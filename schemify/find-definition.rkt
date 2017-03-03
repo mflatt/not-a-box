@@ -47,7 +47,7 @@
                (for/fold ([knowns knowns]) ([id (in-list acc/muts)]
                                             [maker (in-list make-acc/muts)])
                  (cond
-                  [(wrap-eq? (car maker) -ref)
+                  [(wrap-eq? (wrap-car maker) -ref)
                    (hash-set knowns (unwrap id) (known-accessor type))]
                   [else
                    (hash-set knowns (unwrap id) (known-mutator type))]))])

@@ -2301,7 +2301,8 @@
                                                                                   (let-values (((knowns_11)
                                                                                                 (let-values ()
                                                                                                   (if (wrap-eq?
-                                                                                                       (car maker_0)
+                                                                                                       (wrap-car
+                                                                                                        maker_0)
                                                                                                        -ref_10)
                                                                                                     (let-values ()
                                                                                                       (hash-set

@@ -359,15 +359,25 @@
           [pos (correlated-position v)]
           [span (correlated-span v)])
       (if (and pos span (or (path? src) (string? src)))
+          ;; FIXME - annotations disabled, for now:
           e ; (make-annotation e (make-source-object (source->sfd src) pos (+ pos span)) stripped-e)
           e)))
 
+  (define sfd-cache (make-weak-hash))
+  ;; FIXME: Using an empty port means that file positions will be
+  ;; reported instead of line and column numbers. Using actual file
+  ;; content at this point raises all sorts of issues, though.
+  ;; Maybe something need to be different at the srcloc layer.
+  (define empty-port (open-bytevector-input-port '#vu8()))
+
   (define (source->sfd src)
-    ;; Need some reasonable caching here
-    (make-source-file-descriptor (if (path? src)
-                                     (path->string src)
-                                     src)
-                                 (open-bytevector-input-port '#vu8())))
+    (or (hash-ref sfd-cache src #f)
+        (let ([src (if (path? src)
+                       (path->string src)
+                       src)])
+          (let ([sfd (make-source-file-descriptor src empty-port)])
+            (hash-set! sfd-cache src sfd)
+            sfd))))
 
   ;; --------------------------------------------------
 
