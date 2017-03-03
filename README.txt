@@ -45,21 +45,21 @@ Building linklets from source:
 
             https://github.com/mflatt/racket
 
-  For example, "regexp.rktl" is generated from `make regexp-src` in
-  the "pkgs/regexp". The "schemify.rktl" linklet is generated from
-  "schemify/schemify.rkt" here, though.
+ For example, "regexp.rktl" is generated from `make regexp-src` in the
+ "pkgs/regexp". The "schemify.rktl" linklet is generated from
+ "schemify/schemify.rkt" here, though.
 
-  To rebuild those sources, set the `LINKLET_RACKET` environment
-  variable to a built git clone of the "linklet" branch (it's probably
-  enough to make with `PKGS="compiler-lib"`), and then use `make
-  all-linklets`.
+ To rebuild those sources, set the `LINKLET_RACKET` environment
+ variable to a built git clone of the "linklet" branch (it's probably
+ enough to make with `PKGS="compiler-lib"`), and then use `make
+ all-linklets`.
 
 
 Running "expander-demo.ss":
 
  A `make expander-demo` builds and tries the expander on simple
  examples. If `LINKLET_RACKET` is set as for building linklets, the
- "expandre-demo.ss" also tries loading `racket/base` from source.
+ "expander-demo.ss" also tries loading `racket/base` from source.
 
 
 Dumping linklets and schemified linklets:
@@ -71,14 +71,20 @@ Dumping linklets and schemified linklets:
 
 Status and thoughts on various Racket subsystems:
 
- * "core-struct.ss" is half an implementation of Racket structures, with
-   structure-type properties, applicable structs, `gen:equal+hash`,
-   and so on in terms of Chez records. Applicable structs work by
-   adding an indirection to each function call (in a little compiler
-   from fully-expanded code to Chez) when the target is not obviously
-   a plain procedure; even with a simple analysis, which is currently
-   in "convert.rkt", the indirection is not needed often in a typical
-   program, and the overhead appears to be light when it is needed.
+ * Immutable vectors, string, and byte strings are a problem. The
+   current implementation keeps a weak hash table of all immutable
+   objects, and every checked `vector-set!`, `string-set!`, or
+   `bytes-set!` consults the table.
+
+ * "core-struct.ss" is half an implementation of Racket structures,
+   with structure-type properties, applicable structs,
+   `gen:equal+hash`, and so on in terms of Chez records. Applicable
+   structs work by adding an indirection to each function call (in a
+   little compiler from fully-expanded code to Chez) when the target
+   is not obviously a plain procedure; with the analysis in
+   "schemify/schemify.rkt", the indirection is not needed often in a
+   typical program, and the overhead appears to be light when it is
+   needed.
 
    The rest of the implementation of Racket structures looks
    straightforward.
@@ -102,8 +108,10 @@ Status and thoughts on various Racket subsystems:
    advantage of threads with thread-unsafe primitives wrapped to
    divert to a barrier when called in a future.
 
- * Ephemerons probably require support from Chez, but I haven't
-   investigated enough to be sure.
+ * Ephemerons probably require support from Chez. I think an
+   allocaiton space can be created and managed much like the weak-pair
+   space, but with an extra loop in the GC implementation before the
+   guardian loop to find the fixpoint of ephemeron references.
 
  * GC-based memory accounting similarly seems to require new support,
    but that can wait a while.

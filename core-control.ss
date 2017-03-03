@@ -15,6 +15,10 @@
 
 ;; ----------------------------------------
 
+;; This implementation of continuation marks has not yet been made to
+;; work with `call/cc` or exception escapes, so beware of trying
+;; program that have escapes or catch exceptions.
+
 (define-record continuation-mark-set (marks k))
 (define-record mark-stack-frame (prev   ; prev frame
                                  k      ; continuation for this frame
