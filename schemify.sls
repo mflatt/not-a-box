@@ -19,7 +19,8 @@
                           gensym symbol->string
                           vector-set! set-box!
                           date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day)
+                          date-week-day date-year-day
+                          random)
                   [void chez:void])
           (rename (core)
                   [correlated? core:correlated?]

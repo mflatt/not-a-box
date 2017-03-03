@@ -98,13 +98,14 @@
                           memv memq member
                           output-port-buffer-mode
                           list? equal? input-port? output-port?
-                          open-input-file abort
+                          open-input-file open-output-file abort
                           current-output-port current-input-port current-error-port
                           port-name string-copy! substring string-set!
                           gensym symbol->string
                           set-box! vector-set!
                           date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day)
+                          date-week-day date-year-day
+                          random)
                   [make-parameter chez:make-parameter]
                   [void chez:void]
                   [standard-input-port current-input-port]
@@ -140,6 +141,8 @@
     (if (1/path? p) (1/path->string p) p))
   (define (open-input-file path mode mode2)
     (open-file-input-port (->string path)))
+  (define (open-output-file path mode mode2)
+    (open-file-output-port (->string path)))
   (define (directory-exists? p)
     (file-directory? (->string p)))
   (define (resolve-path p) p)

@@ -39,7 +39,8 @@
                           gensym symbol->string
                           set-box! vector-set!
                           date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day)
+                          date-week-day date-year-day
+                          random)
                   [void chez:void])
           (core)
           (port))

@@ -183,6 +183,8 @@
           exact-positive-integer?
           byte?
           arithmetic-shift
+          random
+          pseudo-random-generator?
 
           mpair? mcons mcar mcdr set-mcar! set-mcdr!
           
@@ -313,7 +315,8 @@
                   [symbol->string chez:symbol->string]
                   [string-set! chez:string-set!]
                   [vector-set! chez:vector-set!]
-                  [set-box! chez:set-box!])
+                  [set-box! chez:set-box!]
+                  [random chez:random])
           (only (chezscheme csv7)
                 record-field-accessor
                 record-field-mutator))
@@ -340,7 +343,7 @@
   (include "core-immutable.ss")
   (include "core-keyword.ss")
   (include "core-mpair.ss")
-  (include "core-integer.ss")
+  (include "core-number.ss")
   (include "core-correlated.ss")
   (include "core-time.ss")
   (include "core-memory.ss")

@@ -312,8 +312,6 @@
 (define (placeholder-set! ph v) (error "no placeholders, yet"))
 (define (make-reader-graph v) v)
 
-(define (pseudo-random-generator? v) #f)
-
 (define (list-pair? v) #f)
 (define (interned-char? v) #f)
 (define (true-object? v) (eq? v #t))
@@ -656,8 +654,6 @@
    make-placeholder
    placeholder-set!
    make-reader-graph
-
-   pseudo-random-generator?
 
    list-pair?
    interned-char?
