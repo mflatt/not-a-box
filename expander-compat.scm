@@ -98,20 +98,6 @@
 
 (define (char-graphic? x) #f)
 
-(define system-type
-  (case-lambda
-   [() 'macosx]
-   [(mode)
-    (case mode
-      [(os) 'macosx]
-      [(word) 64]
-      [(gc) '3m]
-      [(link) 'framework]
-      [(machine) "localhost info..."]
-      [(so-suffix) (string->bytes/latin-1 ".dylib")]
-      [(so-mode) 'local]
-      [(fs-change) '#(#f #f #f #f)])]))
-      
 (define (system-library-subpath) "x86_64-macosx/3m")
 (define (system-path-convention-type) 'unix)
 

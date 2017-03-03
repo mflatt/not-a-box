@@ -206,6 +206,8 @@
           collect-garbage
           current-memory-use
 
+          system-type
+
           unsafe-car
           unsafe-cdr
           unsafe-list-tail
@@ -339,6 +341,7 @@
   (include "core-correlated.ss")
   (include "core-time.ss")
   (include "core-memory.ss")
+  (include "core-system.ss")
   (include "core-unsafe.ss")
   
   (set-base-exception-handler!)

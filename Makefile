@@ -87,6 +87,7 @@ CORE_SRCS = core-constant.ss \
             core-correlated.ss \
             core-time.ss \
             core-memory.ss \
+            core-system.ss \
             core-unsafe.ss
 
 core.so: core.sls $(CORE_SRCS)
