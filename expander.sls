@@ -51,7 +51,7 @@
                           sort vector-sort vector-sort!
                           filter force delay identifier?
                           equal? read-char peek-char
-                          close-output-port open-input-file
+                          close-output-port open-input-file open-output-file
                           make-input-port make-output-port
                           close-input-port
                           error current-eval
@@ -59,6 +59,8 @@
                           error make-parameter
                           current-input-port current-output-port
                           open-input-string open-output-string get-output-string
+                          with-input-from-file with-output-to-file
+                          call-with-input-file call-with-output-file
                           format printf
                           write display newline
                           list? input-port? output-port? port-name

@@ -7,10 +7,12 @@
                           list? equal? read-char
                           close-input-port close-output-port
                           make-input-port make-output-port
-                          open-input-file peek-char
+                          open-input-file open-output-file peek-char
                           error make-parameter input-port? output-port?
                           current-input-port current-output-port current-error-port
                           open-input-string open-output-string get-output-string
+                          with-input-from-file with-output-to-file
+                          call-with-input-file call-with-output-file
                           format printf fprintf
                           write display newline port-name
                           string-copy! substring string-set!
