@@ -1,5 +1,6 @@
 #lang racket/base
-(require "match.rkt"
+(require "wrap.rkt"
+         "match.rkt"
          "known.rkt"
          "import.rkt"
          "mutated-state.rkt"
@@ -18,23 +19,25 @@
 (define (make-struct-type-info v prim-knowns knowns imports mutated)
   (match v
     [`(make-struct-type (quote ,name) ,parent ,fields 0 #f . ,rest)
-     (and (symbol? name)
-          (or (not parent)
-              (known-struct-type? (hash-ref prim-knowns parent #f))
-              (and (known-struct-type? (hash-ref-either knowns imports parent))
-                   (simple-mutated-state? (hash-ref mutated parent #f))))
-          (exact-nonnegative-integer? fields)
-          (struct-type-info name
-                            parent
-                            fields
-                            (+ fields (if parent
-                                          (known-struct-type-field-count
-                                           (hash-ref-either knowns imports parent))
-                                          0))
-                            ;; no guard => pur constructor
-                            (or ((length rest) . < . 4)
-                                (not (list-ref rest 3)))
-                            rest))]
+     (let ([u-name (unwrap name)]
+           [u-parent (unwrap parent)])
+       (and (symbol? u-name)
+            (or (not u-parent)
+                (known-struct-type? (hash-ref prim-knowns u-parent #f))
+                (and (known-struct-type? (hash-ref-either knowns imports u-parent))
+                     (simple-mutated-state? (hash-ref mutated u-parent #f))))
+            (exact-nonnegative-integer? fields)
+            (struct-type-info name
+                              parent
+                              fields
+                              (+ fields (if parent
+                                            (known-struct-type-field-count
+                                             (hash-ref-either knowns imports u-parent))
+                                            0))
+                              ;; no guard => pur constructor
+                              (or ((length rest) . < . 4)
+                                  (not (list-ref rest 3)))
+                              rest)))]
     [`(let-values () ,body)
      (make-struct-type-info body prim-knowns knowns imports mutated)]
     [`,_ #f]))
@@ -47,10 +50,11 @@
     [`(list (cons ,props ,vals) ...)
      (for/and ([prop (in-list props)]
                [val (in-list vals)])
-       (and (symbol? prop)
-            (or (known-struct-type-property/immediate-guard? (hash-ref prim-knowns prop #f))
-                (known-struct-type-property/immediate-guard? (hash-ref-either knowns imports prop)))
-            (simple? val prim-knowns knowns imports mutated)))]
+       (let ([u-prop (unwrap prop)])
+         (and (symbol? u-prop)
+              (or (known-struct-type-property/immediate-guard? (hash-ref prim-knowns u-prop #f))
+                  (known-struct-type-property/immediate-guard? (hash-ref-either knowns imports u-prop)))
+              (simple? val prim-knowns knowns imports mutated))))]
     [`null #t]
     [`'() #t]
     [`,_ #f]))

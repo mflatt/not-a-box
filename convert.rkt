@@ -94,7 +94,7 @@
 
 ;; Convert:
 (define schemified-body
-  (schemify-body l prim-knowns #hasheq() #hasheq()))
+  (schemify-body l (lambda (old-v new-v) new-v) values prim-knowns #hasheq() #hasheq()))
 
 ;; ----------------------------------------
 

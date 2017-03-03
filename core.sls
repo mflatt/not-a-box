@@ -183,6 +183,18 @@
           arithmetic-shift
 
           mpair? mcons mcar mcdr set-mcar! set-mcdr!
+          
+          correlated?
+          correlated-source
+          correlated-line
+          correlated-column
+          correlated-position
+          correlated-span
+          correlated-e
+          correlated->datum
+          datum->correlated
+          correlated-property
+          correlated-property-symbol-keys
 
           time-apply
           current-inexact-milliseconds
@@ -324,6 +336,7 @@
   (include "core-keyword.ss")
   (include "core-mpair.ss")
   (include "core-integer.ss")
+  (include "core-correlated.ss")
   (include "core-time.ss")
   (include "core-memory.ss")
   (include "core-unsafe.ss")

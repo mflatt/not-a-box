@@ -38,6 +38,9 @@
                   date-week-day date-year-day
                   void)
           (core)
+          (only (port)
+                path?
+                path->string)
           (regexp)
           (schemify))
 
@@ -81,13 +84,15 @@
       ;; Convert the linklet S-expression to a `lambda` S-expression:
       (define-values (impl-lam importss-abi exports-info)
         (schemify-linklet (show "linklet" c)
+                          convert-to-annotation
+                          unannotate
                           prim-knowns
                           ;; Callback to get a specific linklet for a
                           ;; given import:
                           (lambda (index)
                             (lookup-linklet get-import import-keys index))))
       ;; Create the linklet:
-      (let ([lk (make-linklet (show "schemified" impl-lam)
+      (let ([lk (make-linklet (show "schemified" (remove-annotation-boundary impl-lam))
                               #f
                               importss-abi
                               exports-info
@@ -310,6 +315,59 @@
   (define (make-instance-variable-reference vr v)
     (make-variable-reference (variable-reference-instance vr) v))
 
+  ;; --------------------------------------------------
+
+  ;; Used to wrap a term that isn't annotated, but also doesn't have
+  ;; correlated objects or nested annotations:
+  (define-record boundary (e stripped-e))
+  
+  (define (convert-to-annotation old-term new-term)
+    (let-values ([(e stripped-e) (remove-annotation-boundary* new-term)])
+      (make-boundary (if (correlated? old-term)
+                         (transfer-srcloc old-term e stripped-e)
+                         e)
+                     stripped-e)))
+
+  (define (remove-annotation-boundary term)
+    (let-values ([(e stripped-e) (remove-annotation-boundary* term)])
+      e))
+
+  (define (unannotate term)
+    (let-values ([(e stripped-e) (remove-annotation-boundary* term)])
+      stripped-e))
+
+  (define (remove-annotation-boundary* v)
+    (cond
+     [(boundary? v) (values (boundary-e v)
+                            (boundary-stripped-e v))]
+     [(pair? v) (let-values ([(a stripped-a) (remove-annotation-boundary* (car v))]
+                             [(d stripped-d) (remove-annotation-boundary* (cdr v))])
+                  (if (and (eq? a (car v))
+                           (eq? d (cdr v)))
+                      (values v v)
+                      (values (cons a d)
+                              (cons stripped-a stripped-d))))]
+     [(correlated? v) (let-values ([(e stripped-e) (remove-annotation-boundary* (correlated-e v))])
+                        (values (transfer-srcloc v e stripped-e)
+                                stripped-e))]
+     ;; correlated or boundary will be nested only in pairs
+     ;; with current expander and schemifier
+     [else (values v v)]))
+
+  (define (transfer-srcloc v e stripped-e)
+    (let ([src (correlated-source v)]
+          [pos (correlated-position v)]
+          [span (correlated-span v)])
+      (if (and pos span (or (path? src) (string? src)))
+          e ; (make-annotation e (make-source-object (source->sfd src) pos (+ pos span)) stripped-e)
+          e)))
+
+  (define (source->sfd src)
+    ;; Need some reasonable caching here
+    (make-source-file-descriptor (if (path? src)
+                                     (path->string src)
+                                     src)
+                                 (open-bytevector-input-port '#vu8())))
 
   ;; --------------------------------------------------
 

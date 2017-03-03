@@ -1,5 +1,6 @@
 #lang racket/base
-(require "match.rkt"
+(require "wrap.rkt"
+         "match.rkt"
          "known.rkt"
          "import.rkt"
          "mutated-state.rkt")
@@ -33,33 +34,36 @@
               (simple? rhs))
             (simple? body))]
       [`(,proc ,arg)
-       (and (symbol? proc)
-            (let ([v (or (hash-ref-either knowns imports proc)
-                         (hash-ref prim-knowns proc #f))])
-              (and v
-                   (not (hash-ref mutated proc #f))
-                   (or (known-predicate? v)
-                       (and (known-constructor? v)
-                            (let ([c (known-constructor-field-count v)])
-                              (or (eq? c 'any)
-                                  (= 1 c)))))))
-            (simple? arg))]
-      [`(,proc . ,args)
-       (and (symbol? proc)
-            (let ([v (or (hash-ref-either knowns imports proc)
-                         (hash-ref prim-knowns proc #f))])
-              (and (known-constructor? v)
-                   (let ([c (known-constructor-field-count v)])
-                     (or (eq? c 'any)
-                         (= (length args) c)))))
-            (simple-mutated-state? (hash-ref mutated proc #f))
-            (for/and ([arg (in-list args)])
+       (let ([proc (unwrap proc)])
+         (and (symbol? proc)
+              (let ([v (or (hash-ref-either knowns imports proc)
+                           (hash-ref prim-knowns proc #f))])
+                (and v
+                     (not (hash-ref mutated proc #f))
+                     (or (known-predicate? v)
+                         (and (known-constructor? v)
+                              (let ([c (known-constructor-field-count v)])
+                                (or (eq? c 'any)
+                                    (= 1 c)))))))
               (simple? arg)))]
+      [`(,proc . ,args)
+       (let ([proc (unwrap proc)])
+         (and (symbol? proc)
+              (let ([v (or (hash-ref-either knowns imports proc)
+                           (hash-ref prim-knowns proc #f))])
+                (and (known-constructor? v)
+                     (let ([c (known-constructor-field-count v)])
+                       (or (eq? c 'any)
+                           (= (length args) c)))))
+              (simple-mutated-state? (hash-ref mutated proc #f))
+              (for/and ([arg (in-list args)])
+                (simple? arg))))]
       [`,_
-       (or (and (symbol? e)
-                (simple-mutated-state? (hash-ref mutated e #f)))
-           (integer? e)
-           (boolean? e)
-           (string? e)
-           (bytes? e)
-           (regexp? e))])))
+       (let ([e (unwrap e)])
+         (or (and (symbol? e)
+                  (simple-mutated-state? (hash-ref mutated e #f)))
+             (integer? e)
+             (boolean? e)
+             (string? e)
+             (bytes? e)
+             (regexp? e)))])))

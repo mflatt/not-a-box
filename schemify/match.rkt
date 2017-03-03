@@ -1,5 +1,6 @@
 #lang racket/base
-(require (for-syntax racket/base))
+(require (for-syntax racket/base)
+         "wrap.rkt")
 
 ;; One more time, still yet another pattern matching library again...
 (provide match)
@@ -43,18 +44,19 @@
      (if (syntax-case #'pat (unquote)
            [(unquote bind-id) #t]
            [_ #f])
-         #`(list? #,id)
-         #`(and (list? #,id)
-                (for/and ([v (in-list #,id)])
+         #`(wrap-list? #,id)
+         #`(and (wrap-list? #,id)
+                (for/and ([v (in-wrap-list #,id)])
                   #,(check-one #'v #'pat))))]
     [(p1 . p2)
-     #`(and (pair? #,id)
-            (let ([a (car #,id)])
-              #,(check-one #'a #'p1))
-            (let ([d (cdr #,id)])
-              #,(check-one #'d #'p2)))]
+     #`(let ([p (unwrap #,id)])
+         (and (pair? p)
+              (let ([a (car p)])
+                #,(check-one #'a #'p1))
+              (let ([d (cdr p)])
+                #,(check-one #'d #'p2))))]
     [_
-     #`(equal? (quote #,pattern) #,id)]))
+     #`(wrap-equal? (quote #,pattern) #,id)]))
 
 (define-for-syntax (extract-one id pattern)
   (syntax-case pattern (unquote ?)
@@ -71,10 +73,10 @@
        [(unquote bind-id)
         (if (free-identifier=? #'bind-id #'_)
             #'(values)
-            id)]
+            #`(unwrap-list #,id))]
        [_
         (with-syntax ([pat-ids (extract-pattern-variables #'pat)])
-          #`(for/lists pat-ids ([v (in-list #,id)])
+          #`(for/lists pat-ids ([v (in-wrap-list #,id)])
               #,(extract-one #'v #'pat)))])]
     [(p1 . p2)
      (let ([ids1 (extract-pattern-variables #'p1)]
@@ -83,16 +85,17 @@
         [(and (null? ids1) (null? ids2))
          #'(values)]
         [(null? ids1)
-         #`(let ([d (cdr #,id)])
+         #`(let ([d (cdr (unwrap #,id))])
              #,(extract-one #'d #'p2))]
         [(null? ids2)
-         #`(let ([a (car #,id)])
+         #`(let ([a (car (unwrap #,id))])
              #,(extract-one #'a #'p1))]
         [else
-         #`(let-values ([#,ids1 (let ([a (car #,id)])
-                                  #,(extract-one #'a #'p1))]
-                        [#,ids2 (let ([d (cdr #,id)])
-                                  #,(extract-one #'d #'p2))])
-             (values #,@ids1 #,@ids2))]))]
+         #`(let ([p (unwrap #,id)])
+             (let-values ([#,ids1 (let ([a (car p)])
+                                    #,(extract-one #'a #'p1))]
+                          [#,ids2 (let ([d (cdr p)])
+                                    #,(extract-one #'d #'p2))])
+               (values #,@ids1 #,@ids2)))]))]
     [_
      #'(values)]))

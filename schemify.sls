@@ -19,10 +19,17 @@
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day)
                   [void chez:void])
-          (core)
+          (rename (core)
+                  [correlated? core:correlated?]
+                  [correlated-e core:correlated-e])
           (regexp)
           (port)
           (known-primitive))
+  
+  ;; Bridge for flattened "schemify/wrap.rkt":
+  (define (primitive-table kernel)
+    (hash 'syntax? core:correlated?
+          'syntax-e core:correlated-e))
 
   (include "schemify.scm")
 

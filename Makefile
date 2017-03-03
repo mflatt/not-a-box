@@ -84,6 +84,7 @@ CORE_SRCS = core-constant.ss \
             core-keyword.ss \
             core-mpair.ss \
             core-integer.ss \
+            core-correlated.ss \
             core-time.ss \
             core-memory.ss \
             core-unsafe.ss

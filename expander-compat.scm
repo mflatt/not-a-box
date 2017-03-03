@@ -391,40 +391,26 @@
                 (chez:string->number s radix)]))
 
 ;; ----------------------------------------
-;; This `datum->syntax` layer is meant to be for just
-;; source locations and properties that the compiler might
-;; inspect. Probably it should map to Chez annotations.
-
-(define (host:datum->syntax ignored datum srcloc)
-  datum)
-
-(define (host:syntax->datum v)
-  v)
-
-(define (syntax-property-symbol-keys v)
-  null)
-
-(define syntax-property
-  (case-lambda
-   [(v k) #f]
-   [(v k val) v]))
-
-(define (syntax-e v) (raise-argument-error 'syntax-e "syntax?" v))
-(define (syntax-source v) #f)
-(define (syntax-line v) #f)
-(define (syntax-column v) #f)
-(define (syntax-position v) #f)
-(define (syntax-span v) #f)
-
-(define (syntax? v) #f)
-
-;; ----------------------------------------
 
 ;; The environment is used to evaluate linklets, so all
 ;; primitives need to be imported (prefered) or defined
 ;; (less efficient to access) there
 (define (fill-environment!)
-  (eval `(import (core) (port) (regexp) (linklet)))
+  (eval `(import (rename (core)
+                         [correlated? syntax?]
+                         [correlated-source syntax-source]
+                         [correlated-line syntax-line]
+                         [correlated-column syntax-column]
+                         [correlated-position syntax-position]
+                         [correlated-span syntax-span]
+                         [correlated-e syntax-e]
+                         [correlated->datum syntax->datum]
+                         [datum->correlated datum->syntax]
+                         [correlated-property syntax-property]
+                         [correlated-property-symbol-keys syntax-property-symbol-keys])
+                 (port)
+                 (regexp)
+                 (linklet)))
   
   (let ([install-table
          (lambda (table)
@@ -703,17 +689,6 @@
    datum-intern-literal
    current-load-extension
    string->number
-   host:datum->syntax
-   host:syntax->datum
-   syntax-property-symbol-keys
-   syntax-property
-   syntax-e
-   syntax-source
-   syntax-line
-   syntax-column
-   syntax-position
-   syntax-span
-   syntax?
 
    prop:chaperone-unsafe-undefined
    chaperone-struct-unsafe-undefined))

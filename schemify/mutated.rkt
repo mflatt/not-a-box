@@ -1,5 +1,6 @@
 #lang racket/base
-(require "match.rkt"
+(require "wrap.rkt"
+         "match.rkt"
          "known.rkt"
          "import.rkt"
          "simple.rkt"
@@ -28,9 +29,9 @@
   ;; Find all defined variables:
   (for ([form (in-list l)])
     (match form
-      [`(define-values ,ids ,rhs)
+      [`(define-values (,ids ...) ,rhs)
        (for ([id (in-list ids)])
-         (hash-set! mutated id 'not-ready))]
+         (hash-set! mutated (unwrap id) 'not-ready))]
       [`,_ (void)]))
   ;; Walk through the body:
   (for/fold ([prev-knowns knowns]) ([form (in-list l)])
@@ -43,7 +44,7 @@
     (define-values (knowns info)
       (find-definitions form prim-knowns prev-knowns imports mutated))
     (match form
-      [`(define-values ,ids ,rhs)
+      [`(define-values (,ids ...) ,rhs)
        (cond
         [info
          ;; Look just at the "rest" part:
@@ -58,7 +59,7 @@
        ;; too early, the variable is now ready, so remove from
        ;; `mutated`:
        (for ([id (in-list ids)])
-         (when (eq? 'not-ready (hash-ref mutated id #f))
+         (when (eq? 'not-ready (hash-ref mutated (unwrap id) #f))
            (hash-remove! mutated id)))]
       [`,_
        (find-mutated! form #f prim-knowns knowns imports mutated)])
@@ -66,12 +67,13 @@
   ;; For definitions that are not yet used, force delays:
   (for ([form (in-list l)])
     (match form
-      [`(define-values ,ids ,rhs)
+      [`(define-values (,ids ...) ,rhs)
        (for ([id (in-list ids)])
-         (define state (hash-ref mutated id #f))
-         (when (delayed-mutated-state? state)
-           (hash-remove! mutated id)
-           (state)))]
+         (let ([id (unwrap id)])
+           (define state (hash-ref mutated id #f))
+           (when (delayed-mutated-state? state)
+             (hash-remove! mutated id)
+             (state))))]
       [`,_ (void)]))
   ;; Everything else in `mutated` is either 'set!ed, 'too-early,
   ;; 'undefined, or unreachable:
@@ -83,10 +85,11 @@
   (define (delay! ids thunk)
     (define done? #f)
     (for ([id (in-list ids)])
-      (when (eq? 'not-ready (hash-ref mutated id 'not-ready))
-        (hash-set! mutated id (lambda () (unless done?
-                                      (set! done? #t)
-                                      (thunk)))))))
+      (let ([id (unwrap id)])
+        (when (eq? 'not-ready (hash-ref mutated id 'not-ready))
+          (hash-set! mutated id (lambda () (unless done?
+                                        (set! done? #t)
+                                        (thunk))))))))
   (let find-mutated! ([v v] [ids ids])
     (define (find-mutated!* l ids)
       (let loop ([l l])
@@ -113,15 +116,16 @@
        (find-mutated!* bodys ids)]
       [`(letrec-values ([,idss ,rhss] ...) ,bodys ...)
        (for* ([ids (in-list idss)]
-              [id (in-list ids)])
-         (hash-set! mutated id 'not-ready))
+              [id (in-wrap-list ids)])
+         (hash-set! mutated (unwrap id) 'not-ready))
        (for ([ids (in-list idss)]
              [rhs (in-list rhss)])
-         (find-mutated! rhs ids)
+         (find-mutated! rhs (unwrap-list ids))
          ;; Each `id` in `ids` is now ready (but might also hold a delay):
-         (for ([id (in-list ids)])
-           (when (eq? 'not-ready (hash-ref mutated id))
-             (hash-remove! mutated id))))
+         (for ([id (in-wrap-list ids)])
+           (let ([id (unwrap id)])
+             (when (eq? 'not-ready (hash-ref mutated id))
+               (hash-remove! mutated id)))))
        (find-mutated!* bodys ids)]
       [`(if ,tst ,thn ,els)
        (find-mutated! tst #f)
