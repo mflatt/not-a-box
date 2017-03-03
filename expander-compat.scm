@@ -281,8 +281,6 @@
                (srcloc-line s)
                (srcloc-column s))))
 
-(define (procedure-arity p)
-  (arity-at-least 0))
 (define (procedure-arity? v)
   #t)
 
@@ -637,7 +635,6 @@
 
    srcloc->string
    
-   procedure-arity
    procedure-arity?
    procedure-reduce-arity
    procedure->method

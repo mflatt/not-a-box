@@ -46,13 +46,38 @@
 
 (check (|#%app| (make-p (lambda (x) (cons x x)) 'whatever) 10) '(10 . 10))
 
+(check (procedure-arity (make-p add1 'x)) 1)
+(check (procedure-arity (make-p (case-lambda [(x) 1] [(x y z . w) 2]) 'x))
+       (list 1 (arity-at-least 3)))
+(check (procedure-arity-includes? (make-p (case-lambda [(x) 1] [(x y z . w) 2]) 'x) 0)
+       #f)
+(check (procedure-arity-includes? (make-p (case-lambda [(x) 1] [(x y z . w) 2]) 'x) 1)
+       #t)
+(check (procedure-arity-includes? (make-p (case-lambda [(x) 1] [(x y z . w) 2]) 'x) 2)
+       #f)
+(check (procedure-arity-includes? (make-p (case-lambda [(x) 1] [(x y z . w) 2]) 'x) 3)
+       #t)
+(check (procedure-arity-includes? (make-p (case-lambda [(x) 1] [(x y z . w) 2]) 'x) 3000)
+       #t)
+
 (define-values (struct:p0 make-p0 p0? p0-ref p0-set!)
-  (make-struct-type 'p #f 2 0 #f))
+  (make-struct-type 'p0 #f 2 0 #f))
 (define-values (struct:p1 make-p1 p1? p1-ref p1-set!)
-  (make-struct-type 'p struct:p0 2 0 #f (list (cons prop:procedure 0))))
+  (make-struct-type 'p1 struct:p0 2 0 #f (list (cons prop:procedure 0))))
 
 (check (|#%app| (make-p (lambda (x) (cons x x)) 'whatever) 10) '(10 . 10))
 (check (|#%app| (make-p1 'no 'nope (lambda (x) (list x x)) 'whatever) 11) '(11 11))
+
+(define-values (struct:p2 make-p2 p2? p2-ref p2-set!)
+  (make-struct-type 'p2 struct:p0 2 0 #f
+                    (list (cons prop:procedure
+                                (lambda (p2 x)
+                                  (list (|#%app| p2-ref p2 0) x))))))
+
+(check (|#%app| (make-p2 0 1 'a 'b) 'c) '(a c))
+(check (procedure-arity (make-p2 0 1 'a 'b)) 1)
+(check (procedure-arity-includes? (make-p2 0 1 'a 'b) 1) #t)
+(check (procedure-arity-includes? (make-p2 0 1 'a 'b) 2) #f)
 
 ;; ----------------------------------------
 ;; Inspectors and `struct->vector`

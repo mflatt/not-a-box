@@ -60,6 +60,15 @@
           struct:arity-at-least arity-at-least arity-at-least?
           arity-at-least-value
 
+          prop:procedure
+          prop:method-arity-error
+          apply
+          procedure?
+          |#%app|
+          procedure-arity-includes?
+          procedure-arity
+          procedure-extract-target
+          
           raise-argument-error
           raise-arguments-error
           raise-result-error
@@ -90,13 +99,6 @@
           prefab-key->struct-type
           make-prefab-struct
           prop:equal+hash
-          procedure-arity-includes?
-          prop:procedure
-          prop:method-arity-error
-          apply
-          procedure?
-          |#%app|
-          procedure-extract-target
           inspector?
           inspector-superior?
 
@@ -323,6 +325,7 @@
   (include "core-hash-code.ss")
   (include "core-symbol.ss")
   (include "core-struct.ss")
+  (include "core-procedure.ss")
   (include "core-hamt.ss")
   (include "core-hash.ss")
   (include "core-thread-cell.ss")
