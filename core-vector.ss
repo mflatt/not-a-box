@@ -8,7 +8,7 @@
                   (if (vector? src) (vector-length src) 0))]
    [(dest dest-start src src-start src-end)
     (unless (and (vector? dest) (unsafe-mutable? dest))
-      (raise-argument-error 'vector-set! "(and/c vector? (not/c immutable?))" dest))
+      (raise-argument-error 'vector-copy! "(and/c vector? (not/c immutable?))" dest))
     (let loop ([i (- src-end src-start)])
       (unless (zero? i)
         (let ([i (sub1 i)])
@@ -22,13 +22,15 @@
 
 (define (vector-immutable . args)
   (let ([vec (apply vector args)])
-    (set-immutable! vec)
+    (unless (eq? vec '#())
+      (set-immutable! vec))
     vec))
 
 (define (vector->immutable-vector vec)
   (unless (vector? vec)
     (raise-argument-error 'vector->immutable-vector "vector?" vec))
-  (if (unsafe-immutable? vec)
+  (if (or (unsafe-immutable? vec)
+          (eq? vec '#()))
       vec
       (let ([vec (vector-copy vec)])
         (set-immutable! vec)
