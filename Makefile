@@ -61,6 +61,9 @@ port.scm: port.rktl $(CONVERT_DEPS)
 hash-demo: core.so
 	scheme core.so hash-demo.ss
 
+set-demo: core.so
+	scheme core.so set-demo.ss
+
 struct-demo: core.so
 	scheme core.so struct-demo.ss
 
@@ -70,6 +73,8 @@ CORE_SRCS = core-constant.ss \
             core-struct.ss \
             core-procedure.ss \
             core-hamt.ss \
+            core-immutable-hash.ss \
+            core-immutable-set.ss \
             core-hash.ss \
             core-thread-cell.ss \
             core-parameter.ss \

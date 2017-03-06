@@ -10,17 +10,18 @@
   (let loop ([ht (parameterization-ht p)] [args args])
     (cond
      [(null? args) (make-parameterization ht)]
-     [else (loop (hamt-set ht (car args) (make-thread-cell (cadr args)))
+     [else (loop (immutable-hash-set ht (car args) (make-thread-cell (cadr args)))
                  (cddr args))])))
 
 (define (parameter-cell key)
-  (hamt-ref (parameterization-ht
-             (continuation-mark-set-first
-              #f
-              parameterization-key
-              empty-parameterization))
-            key
-            #f))
+  (immutable-hash-ref
+   (parameterization-ht
+    (continuation-mark-set-first
+     #f
+     parameterization-key
+     empty-parameterization))
+   key
+   #f))
 
 (define make-parameter
   (case-lambda
@@ -29,7 +30,7 @@
      (let ([default-c (make-thread-cell v)])
        (define self
          (case-lambda
-           [() 
+           [()
             (let ([c (or (parameter-cell self)
                          default-c)])
               (thread-cell-ref c))]

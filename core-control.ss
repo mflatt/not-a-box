@@ -38,9 +38,9 @@
               (eq? k (mark-stack-frame-k mark-stack)))
          (begin
            (set-mark-stack-frame-table! mark-stack
-                                        (hamt-set (mark-stack-frame-table mark-stack)
-                                                  key
-                                                  val))
+                                        (immutable-hash-set (mark-stack-frame-table mark-stack)
+							    key
+							    val))
            (set-mark-stack-frame-flat! mark-stack #f)
            (proc))
          (begin0
@@ -79,7 +79,7 @@
              empty-parameterization
              none-v)]
         [else
-         (let ([v (hamt-ref (car marks) key none)])
+         (let ([v (immutable-hash-ref (car marks) key none)])
            (if (eq? v none)
                (loop (cdr marks))
                v))]))]))

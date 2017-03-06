@@ -3,7 +3,7 @@
 (define-record mutable-hash (ht keys keys-stale?))
 (define (create-mutable-hash ht) (make-mutable-hash ht '#() #t))
 
-(define (hash? v) (or (hamt? v) (mutable-hash? v) (weak-equal-hash? v)))
+(define (hash? v) (or (immutable-hash? v) (mutable-hash? v) (weak-equal-hash? v)))
 
 (define (make-hash) (create-mutable-hash (make-hashtable equal-hash-code equal?)))
 
@@ -40,35 +40,33 @@
   (cond
    [(mutable-hash? ht) (create-mutable-hash (hashtable-copy (mutable-hash-ht ht) #t))]
    [(weak-equal-hash? ht) (weak-hash-copy ht)]
-   [(hamt? ht)
-    (let ([ht (cond
-               [(hamt-eq? ht) (make-hasheq)]
-               [(hamt-eqv? ht) (make-hasheqv)]
-               [else (make-hash)])])
-      (let loop ([i (hamt-iterate-first ht)])
-        (when i
-          (let-values ([(k v) (hamt-iterate-key+value ht i #f)])
-            (hashtable-set! ht k v)
-            (loop (hamt-iterate-next ht i)))))
-      (create-mutable-hash ht))]
+   [(immutable-hash? ht)
+    (let ([cpy (cond
+		[(immutable-hash-eq? ht) (make-hasheq)]
+		[(immutable-hash-eqv? ht) (make-hasheqv)]
+		[else (make-hash)])])
+      (immutable-hash-for-each
+       ht
+       (lambda (k v) (hashtable-set! cpy k v)))
+      (create-mutable-hash cpy))]
    [else (raise-argument-error 'hash-copy "hash?" ht)]))
 
 (define (hash-set ht k v)
   (cond
-   [(hamt? ht) (hamt-set ht k v)]
+   [(immutable-hash? ht) (immutable-hash-set ht k v)]
    [else (raise-argument-error 'hash-set! "(and/c hash? immutable?)" ht)]))
 
 (define (hash-remove ht k)
   (cond
-   [(hamt? ht) (hamt-remove ht k)]
+   [(immutable-hash? ht) (immutable-hash-remove ht k)]
    [else (raise-argument-error 'hash-remove "(and/c hash? immutable?)" ht)]))
 
 (define (hash-eq? ht)
   (cond
    [(mutable-hash? ht)
     (eq? (hashtable-equivalence-function (mutable-hash-ht ht)) eq?)]
-   [(hamt? ht)
-    (hamt-eq? ht)]
+   [(immutable-hash? ht)
+    (immutable-hash-eq? ht)]
    [(weak-equal-hash? ht) #f]
    [else (raise-argument-error 'hash-eq? "hash?" ht)]))
 
@@ -76,8 +74,8 @@
   (cond
    [(mutable-hash? ht)
     (eq? (hashtable-equivalence-function (mutable-hash-ht ht)) eqv?)]
-   [(hamt? ht)
-    (hamt-eqv? ht)]
+   [(immutable-hash? ht)
+    (immutable-hash-eqv? ht)]
    [(weak-equal-hash? ht) #f]
    [else (raise-argument-error 'hash-eqv? "hash?" ht)]))
 
@@ -85,8 +83,8 @@
   (cond
    [(mutable-hash? ht)
     (eq? (hashtable-equivalence-function (mutable-hash-ht ht)) equal?)]
-   [(hamt? ht)
-    (hamt-equal? ht)]
+   [(immutable-hash? ht)
+    (immutable-hash-equal? ht)]
    [(weak-equal-hash? ht) #t]
    [else (raise-argument-error 'hash-equal? "hash?" ht)]))
 
@@ -94,13 +92,13 @@
   (cond
    [(mutable-hash? ht)
     (hashtable-weak? (mutable-hash-ht ht))]
-   [(hamt? ht) #f]
+   [(immutable-hash? ht) #f]
    [(weak-equal-hash? ht) #t]
    [else (raise-argument-error 'hash-weak? "hash?" ht)]))
 
 (define hash-ref
   (case-lambda
-    [(ht k) 
+    [(ht k)
      (let ([v (hash-ref ht k none)])
        (if (eq? v none)
            (raise-arguments-error
@@ -117,7 +115,7 @@
                  (fail)
                  v))
            (hashtable-ref (mutable-hash-ht ht) k fail))]
-      [(hamt? ht) (hamt-ref ht k fail)]
+      [(immutable-hash? ht) (immutable-hash-ref ht k fail)]
       [(weak-equal-hash? ht) (weak-hash-ref ht k fail)]
       [else (raise-argument-error 'hash-ref "hash?" ht)])]))
 
@@ -129,7 +127,7 @@
         (let-values ([(key val) (hash-iterate-key+value ht i)])
           (proc key val))
         (loop (hash-iterate-next ht i))))]
-   [(hamt? ht) (hamt-for-each ht proc)]
+   [(immutable-hash? ht) (immutable-hash-for-each ht proc)]
    [(weak-equal-hash? ht) (weak-hash-for-each ht proc)]
    [else (raise-argument-error 'hash-for-each "hash?" ht)]))
 
@@ -143,28 +141,28 @@
            (let-values ([(key val) (hash-iterate-key+value ht i)])
              (proc key val))
            (loop (hash-iterate-next ht i)))))]
-   [(hamt? ht) (hamt-map ht proc)]
+   [(immutable-hash? ht) (immutable-hash-map ht proc)]
    [(weak-equal-hash? ht) (weak-hash-map ht proc)]
    [else (raise-argument-error 'hash-map "hash?" ht)]))
 
 (define (hash-count ht)
   (cond
    [(mutable-hash? ht) (hashtable-size (mutable-hash-ht ht))]
-   [(hamt? ht) (hamt-count ht)]
+   [(immutable-hash? ht) (immutable-hash-count ht)]
    [(weak-equal-hash? ht) (weak-hash-count ht)]
    [else (raise-argument-error 'hash-count "hash?" ht)]))
 
 (define (hash-keys-subset? ht1 ht2)
   (cond
-   [(and (hamt? ht1)
-         (hamt? ht2)
-         (or (and (hamt-eq? ht1)
-                  (hamt-eq? ht2))
-             (and (hamt-eqv? ht1)
-                  (hamt-eqv? ht2))
-             (and (hamt-equal? ht1)
-                  (hamt-equal? ht2))))
-    (hamt-keys-subset? ht1 ht2)]
+   [(and (immutable-hash? ht1)
+         (immutable-hash? ht2)
+         (or (and (immutable-hash-eq? ht1)
+                  (immutable-hash-eq? ht2))
+             (and (immutable-hash-eqv? ht1)
+                  (immutable-hash-eqv? ht2))
+             (and (immutable-hash-equal? ht1)
+                  (immutable-hash-equal? ht2))))
+    (immutable-hash-keys-subset? ht1 ht2)]
    [(and (hash? ht1)
          (hash? ht2)
          (or (and (hash-eq? ht1)
@@ -194,15 +192,15 @@
 ;; and returns a new `k`; stop if `k` becomes #f
 (define (hash=? ht1 ht2 eql? k)
   (cond
-   [(and (hamt? ht1)
-         (hamt? ht2)
-         (or (and (hamt-eq? ht1)
-                  (hamt-eq? ht2))
-             (and (hamt-eqv? ht1)
-                  (hamt-eqv? ht2))
-             (and (hamt-equal? ht1)
-                  (hamt-equal? ht2))))
-    (hamt=? ht1 ht2 eql? k)]
+   [(and (immutable-hash? ht1)
+         (immutable-hash? ht2)
+         (or (and (immutable-hash-eq? ht1)
+                  (immutable-hash-eq? ht2))
+             (and (immutable-hash-eqv? ht1)
+                  (immutable-hash-eqv? ht2))
+             (and (immutable-hash-equal? ht1)
+                  (immutable-hash-equal? ht2))))
+    (immutable-hash=? ht1 ht2 eql? k)]
    [(and (hash? ht1)
          (hash? ht2)
          (or (and (hash-eq? ht1)
@@ -232,7 +230,7 @@
 ;; then stop
 (define (hash-hash-code ht f hc k)
   (cond
-   [(hamt? ht) (hamt-hash-code ht f hc k)]
+   [(immutable-hash? ht) (immutable-hash-hash-code ht f hc k)]
    [else
     (let loop ([hc hc] [k k] [i (hash-iterate-first ht)])
       (cond
@@ -246,7 +244,7 @@
              [else
               (let-values ([(hc k) (f val hc k)])
                 (loop hc k (hash-iterate-next ht i)))])))]))]))
-    
+
 
 ;; A `hash-iterate-first` operation triggers an O(n)
 ;; gathering of the keys of a mutable hash table. That's
@@ -270,8 +268,8 @@
 
 (define (hash-iterate-first ht)
   (cond
-   [(hamt? ht)
-    (hamt-iterate-first ht)]
+   [(immutable-hash? ht)
+    (immutable-hash-iterate-first ht)]
    [(mutable-hash? ht)
     (mutable-hash-iterate-next ht #f)]
    [(weak-equal-hash? ht) (weak-hash-iterate-first ht)]
@@ -285,9 +283,9 @@
 
 (define (hash-iterate-next ht i)
   (cond
-   [(hamt? ht)
+   [(immutable-hash? ht)
     (check-i 'hash-iterate-next i)
-    (hamt-iterate-next ht i)]
+    (immutable-hash-iterate-next ht i)]
    [(mutable-hash? ht)
     (check-i 'hash-iterate-next i)
     (mutable-hash-iterate-next ht i)]
@@ -322,13 +320,13 @@
                   (loop (add1 i)))]))])))))
 
 (define (do-hash-iterate-key+value who ht i
-                                   hamt-iterate-key+value
+                                   immutable-hash-iterate-key+value
                                    weak-hash-iterate-key+value
                                    key? value? pair?)
   (cond
-   [(hamt? ht)
+   [(immutable-hash? ht)
     (check-i who i)
-    (call-with-values (lambda () (hamt-iterate-key+value ht i none))
+    (call-with-values (lambda () (immutable-hash-iterate-key+value ht i none))
       (case-lambda
         [(v) (if (eq? v none)
                  (raise-arguments-error who "no element at index"
@@ -363,25 +361,25 @@
 
 (define (hash-iterate-key ht i)
   (do-hash-iterate-key+value 'hash-iterate-key ht i
-                             hamt-iterate-key
+                             immutable-hash-iterate-key
                              weak-hash-iterate-key
                              #t #f #f))
 
 (define (hash-iterate-value ht i)
   (do-hash-iterate-key+value 'hash-iterate-value ht i
-                             hamt-iterate-value
+                             immutable-hash-iterate-value
                              weak-hash-iterate-value
                              #f #t #f))
 
 (define (hash-iterate-key+value ht i)
   (do-hash-iterate-key+value 'hash-iterate-key+value ht i
-                             hamt-iterate-key+value
+                             immutable-hash-iterate-key+value
                              weak-hash-iterate-key+value
                              #t #t #f))
 
 (define (hash-iterate-pair ht i)
   (do-hash-iterate-key+value 'hash-iterate-pair ht i
-                             hamt-iterate-pair
+                             immutable-hash-iterate-pair
                              weak-hash-iterate-pair
                              #t #t #t))
 
@@ -420,7 +418,7 @@
 
 (define (weak-hash-ref t key fail)
   (let* ([code (equal-hash-code key)]
-         [vals (hamt-ref (weak-equal-hash-ht t) code '())])
+         [vals (immutable-hash-ref (weak-equal-hash-ht t) code '())])
     (let loop ([vals vals])
       (cond
        [(null? vals)
@@ -434,7 +432,7 @@
 
 (define (weak-hash-ref-key ht key)
   (let* ([code (equal-hash-code key)]
-         [vals (hamt-ref (weak-equal-hash-ht ht) code '())])
+         [vals (immutable-hash-ref (weak-equal-hash-ht ht) code '())])
     (let loop ([vals vals])
       (cond
        [(null? vals) #f]
@@ -443,7 +441,7 @@
 
 (define (weak-hash-set! t k v)
   (let* ([code (equal-hash-code k)]
-         [vals (hamt-ref (weak-equal-hash-ht t) code '())])
+         [vals (immutable-hash-ref (weak-equal-hash-ht t) code '())])
     (let loop ([vals vals])
       (cond
        [(null? vals)
@@ -455,16 +453,16 @@
           (set-weak-equal-hash-count! t
                                       (add1 (weak-equal-hash-count t)))
           (set-weak-equal-hash-ht! t
-                                   (hamt-set ht code
+                                   (immutable-hash-set ht code
                                                        (cons (weak-cons k v)
-                                                             (hamt-ref ht code '())))))]
+                                                             (immutable-hash-ref ht code '())))))]
        [(equal? (caar vals) k)
         (set-cdr! (car vals) v)]
        [else (loop (cdr vals))]))))
 
 (define (weak-hash-remove! t k)
   (let* ([code (equal-hash-code k)]
-         [vals (hamt-ref (weak-equal-hash-ht t) code '())])
+         [vals (immutable-hash-ref (weak-equal-hash-ht t) code '())])
     (let loop ([vals vals])
       (cond
        [(null? vals)
@@ -481,7 +479,7 @@
   (set-weak-equal-hash-prune-at! t 128))
 
 (define (weak-hash-for-each ht proc)
-  (hamt-for-each
+  (immutable-hash-for-each
    (weak-equal-hash-ht ht)
    (lambda (k l)
      (let loop ([l l])
@@ -495,11 +493,11 @@
 
 (define (weak-hash-map t proc)
   (let ([ht (weak-equal-hash-ht t)])
-    (let loop ([i (unsafe-hamt-iterate-first ht)])
+    (let loop ([i (unsafe-immutable-hash-iterate-first ht)])
       (cond
-       [i (let iloop ([l (unsafe-hamt-iterate-value ht i)])
+       [i (let iloop ([l (unsafe-immutable-hash-iterate-value ht i)])
             (cond
-             [(null? l) (loop (unsafe-hamt-iterate-next ht i))]
+             [(null? l) (loop (unsafe-immutable-hash-iterate-next ht i))]
              [else
               (let ([k (caar l)])
                 (if (bwp-object? k)
@@ -527,7 +525,7 @@
                [pos 0])
           (call/cc
            (lambda (esc)
-             (hamt-for-each
+             (immutable-hash-for-each
               (weak-equal-hash-ht ht)
               (lambda (k l)
                 (let loop ([l l])
@@ -616,17 +614,17 @@
   (let ([ht (weak-equal-hash-ht t)])
     (let-values ([(new-ht count)
                   (let loop ([ht ht]
-                             [i (hamt-iterate-first ht)]
+                             [i (immutable-hash-iterate-first ht)]
                              [count 0])
                     (cond
                      [(not i) (values ht count)]
                      [else
-                      (let-values ([(key l) (hamt-iterate-key+value ht i #f)])
+                      (let-values ([(key l) (immutable-hash-iterate-key+value ht i #f)])
                         (let ([l (filter (lambda (p) (not (bwp-object? (car p)))) l)])
                           (loop (if (null? l)
                                     ht
                                     (hash-set ht key l))
-                                (hamt-iterate-next ht i)
+                                (immutable-hash-iterate-next ht i)
                                 (+ count (length l)))))]))])
       (set-weak-equal-hash-ht! t new-ht)
       (set-weak-equal-hash-count! t count)

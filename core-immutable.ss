@@ -2,7 +2,7 @@
 (define immutables (make-weak-eq-hashtable))
 
 (define (immutable? v)
-  (or (hamt? v)
+  (or (immutable? v)
       (and (or (string? v)
                (bytes? v)
                (vector? v)
