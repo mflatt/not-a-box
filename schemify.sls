@@ -4,7 +4,7 @@
           prim-knowns)
   (import (rename (except (chezscheme)
                           apply procedure?
-                          list? equal? read-char
+                          list? read-char
                           close-input-port close-output-port
                           make-input-port make-output-port
                           open-input-file open-output-file peek-char
