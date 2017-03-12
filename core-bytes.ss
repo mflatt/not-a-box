@@ -6,13 +6,17 @@
 (define bytes->list bytevector->u8-list)
 (define list->bytes u8-list->bytevector)
 (define bytes-ref bytevector-u8-ref)
+(define bytes-set! bytevector-u8-set!)
 
-(define (bytes-set! bstr pos v)
-  (unless (and (bytes? bstr) (unsafe-mutable? bstr))
-    (raise-argument-error 'bytes-set! "(and/c bytes? (not/c immutable?))" bstr))
-  (bytevector-u8-set! bstr pos v))
-
-(define (bytes->immutable-bytes s) s)
+(define (bytes->immutable-bytes s)
+  (unless (bytes? s)
+    (raise-argument-error 'bytes->immutable-bytes "bytes?" s))
+  (if (or (bytevector-immutable? s)
+          (fx= 0 (bytevector-length s)))
+      s
+      (let ([s2 (bytevector-copy s)])
+        (bytevector-set-immutable! s2)
+        s2)))
 
 (define bytes-copy!
   (case-lambda
@@ -21,7 +25,7 @@
     [(dest d-start src s-start)
      (bytes-copy! dest d-start src s-start (bytes-length src))]
     [(dest d-start src s-start s-end)
-     (unless (and (bytes? dest) (unsafe-mutable? dest))
+     (unless (and (bytes? dest) (not (bytevector-immutable? dest)))
        (raise-argument-error 'bytes-set! "(and/c bytes? (not/c immutable?))" dest))
      (bytevector-copy! src s-start dest d-start (- s-end s-start))]))
 

@@ -145,7 +145,6 @@
           string-copy!
           string->immutable-string
           substring
-          string-set!
 
           gensym
           symbol-interned?
@@ -155,7 +154,6 @@
 
           list?
 
-          vector-set!
           vector-copy!
           vector-immutable
           vector->immutable-vector
@@ -311,8 +309,6 @@
                   [substring chez:substring]
                   [gensym chez:gensym]
                   [symbol->string chez:symbol->string]
-                  [string-set! chez:string-set!]
-                  [vector-set! chez:vector-set!]
                   [set-box! chez:set-box!]
                   [random chez:random])
           (only (chezscheme csv7)

@@ -66,8 +66,8 @@
                           list? input-port? output-port? port-name
                           procedure? apply
                           string-copy! substring
-                          gensym symbol->string string-set!
-                          vector-set! set-box!
+                          gensym symbol->string
+                          set-box!
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day
                           open-input-output-file

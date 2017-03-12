@@ -21,7 +21,8 @@
   (or (and (gensym? s)
            (getprop s 'racket-string))
       (let ([str (chez:symbol->string s)])
-        (set-immutable! str)
+        (unless (zero? (string-length str))
+          (string-set-immutable! str))
         str)))
       
 (define (string->uninterned-symbol str)

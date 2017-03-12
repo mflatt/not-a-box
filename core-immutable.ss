@@ -1,19 +1,9 @@
 
-(define immutables (make-weak-eq-hashtable))
-
 (define (immutable? v)
   (or (hamt? v)
-      (and (or (string? v)
-               (bytes? v)
-               (vector? v)
-               (box? v))
-           (hashtable-ref immutables v #f))))
-
-(define (unsafe-immutable? v)
-  (hashtable-ref immutables v #f))
-
-(define (unsafe-mutable? v)
-  (not (unsafe-immutable? v)))
-
-(define (set-immutable! v)
-  (hashtable-set! immutables v #t))
+      (cond
+       [(string? v) (string-immutable? v)]
+       [(bytes? v) (bytevector-immutable? v)]
+       [(vector? v) (vector-immutable? v)]
+       [(box? v) (box-immutable? v)]
+       [else #f])))
