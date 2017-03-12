@@ -102,7 +102,6 @@
           inspector?
           inspector-superior?
 
-          equal?
           eq-hash-code
           eqv-hash-code
           equal-hash-code
@@ -288,7 +287,6 @@
 
           unsafe-string-length)
   (import (rename (except (chezscheme)
-                          equal?
                           date? make-date
                           list?)
                   [date-second chez:date-second]
@@ -315,7 +313,6 @@
   (define none (chez:gensym "none"))
 
   (include "core-constant.ss")
-  (include "core-equal.ss")
   (include "core-hash-code.ss")
   (include "core-symbol.ss")
   (include "core-struct.ss")

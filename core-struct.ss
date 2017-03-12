@@ -94,6 +94,10 @@
            props)]
         [else
          '()]))
+     (when (not parent-rtd)
+       (record-equal+hash rtd
+                          default-struct-equal?
+                          default-struct-hash))
      (hashtable-set! rtd-props rtd (let ([props (append (map car props) parent-props)])
                                      (if proc-spec
                                          (cons prop:procedure props)
@@ -119,6 +123,8 @@
                                                parent-rtd
                                                #f)))
                                 val))])
+                     (when (eq? prop prop:equal+hash)
+                       (record-equal+hash rtd (car val) (cadr val)))
                      (hashtable-set! (struct-type-prop-table prop)
                                      rtd
                                      guarded-val)
@@ -197,6 +203,30 @@
   (let ([t (record-rtd r)])
     (and (struct-type-transparent? t)
          t)))
+
+(define (default-struct-equal? s1 s2 eql?)
+  (let ([t1 (record-rtd s1)]
+        [t2 (record-rtd s2)])
+    (and (eq? t1 t2)
+         (struct-type-transparent? t1)
+         (let ([n (struct-type-field-count t1)])
+           (let loop ([j 0])
+             (if (fx= j n)
+                 #t
+                 (and (eql? (unsafe-struct-ref s1 j)
+                            (unsafe-struct-ref s2 j))
+                      (loop (fx+ j 1)))))))))
+         
+(define (default-struct-hash s hash-code)
+  (let ([t (record-rtd s)])
+    (if (struct-type-transparent? t)
+        (let ([n (struct-type-field-count t)])
+          (let loop ([j 0] [hc 0])
+            (if (fx= j n)
+                hc
+                (loop (fx+ j 1)
+                      (hash-code-combine hc (hash-code (unsafe-struct-ref s j)))))))
+        (eq-hash-code s))))
 
 (define (struct->vector s)
   (if (record? s)
@@ -345,7 +375,12 @@
                (define name (record-constructor (make-record-constructor-descriptor struct:name #f #f)))
                (define name-field (record-accessor struct:name field-index))
                ...
-               (define dummy (hashtable-set! rtd-inspectors struct:name #f)))))])))
+               (define dummy
+                 (begin
+                   (record-equal+hash struct:name
+                                      default-struct-equal?
+                                      default-struct-hash)
+                   (hashtable-set! rtd-inspectors struct:name #f))))))])))
 
 (define-syntax define-struct
   (lambda (stx)

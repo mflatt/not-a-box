@@ -66,7 +66,6 @@ struct-demo: core.so
 	$(SCHEME) core.so struct-demo.ss
 
 CORE_SRCS = core-constant.ss \
-            core-equal.ss \
             core-hash-code.ss \
             core-struct.ss \
             core-procedure.ss \
