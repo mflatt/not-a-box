@@ -131,7 +131,7 @@
    unsafe-set-iterate-pair)
 
   (make-hamt-impl
-   [5 popcount32]
+   [4 popcount16]
 
    [set-bnode? set-bnode-array set-bnode-bitmap set-bnode-count
     set-bnode/equal? set-bnode/eqv? set-bnode/eq?
