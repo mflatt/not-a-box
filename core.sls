@@ -68,7 +68,7 @@
           procedure-arity-includes?
           procedure-arity
           procedure-extract-target
-          
+
           raise-argument-error
           raise-arguments-error
           raise-result-error
@@ -132,6 +132,11 @@
           ;; For intern tables:
           weak-hash-ref-key
 
+          set seteqv seteq
+	  set-member? set-add set-remove
+	  set-clear
+	  subset?
+
           bytes bytes?
           bytes-length
           make-bytes
@@ -187,7 +192,7 @@
           pseudo-random-generator?
 
           mpair? mcons mcar mcdr set-mcar! set-mcdr!
-          
+
           correlated?
           correlated-source
           correlated-line
@@ -280,7 +285,7 @@
           unsafe-vector*-set!
           unsafe-vector-length
           unsafe-vector*-length
-          
+
           unsafe-fxvector-ref
           unsafe-fxvector-set!
 
@@ -330,6 +335,8 @@
   (include "core-struct.ss")
   (include "core-procedure.ss")
   (include "core-hamt.ss")
+  (include "core-immutable-hash.ss")
+  (include "core-immutable-set.ss")
   (include "core-hash.ss")
   (include "core-thread-cell.ss")
   (include "core-control.ss")
@@ -349,6 +356,6 @@
   (include "core-memory.ss")
   (include "core-system.ss")
   (include "core-unsafe.ss")
-  
+
   (set-base-exception-handler!)
   (set-primitive-applicables!))
