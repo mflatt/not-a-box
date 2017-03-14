@@ -86,12 +86,10 @@
           struct?
           struct-type?
           struct-type
-          struct-type-equality
           struct-type-field-count
           unsafe-struct-ref
           unsafe-struct-set!
           struct->vector
-          struct-equal-hashity
           struct-type-transparent?
           struct-transparent-type
           prefab-key?
