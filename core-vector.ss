@@ -16,20 +16,7 @@
           (loop i))))]))
 
 (define (vector-immutable . args)
-  (let ([vec (apply vector args)])
-    (unless (eq? vec '#())
-      (vector-set-immutable! vec))
-    vec))
-
-(define (vector->immutable-vector vec)
-  (unless (vector? vec)
-    (raise-argument-error 'vector->immutable-vector "vector?" vec))
-  (if (or (vector-immutable? vec)
-          (eq? vec '#()))
-      vec
-      (let ([vec (vector-copy vec)])
-        (vector-set-immutable! vec)
-        vec)))
+  (vector->immutable-vector (apply vector args)))
 
 (define vector->values
   (case-lambda

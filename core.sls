@@ -143,7 +143,6 @@
           subbytes
 
           string-copy!
-          string->immutable-string
           substring
 
           gensym
@@ -156,7 +155,6 @@
 
           vector-copy!
           vector-immutable
-          vector->immutable-vector
           vector->values
 
           set-box!

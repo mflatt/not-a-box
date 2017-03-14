@@ -18,13 +18,11 @@
 (define (symbol->string s)
   (unless (symbol? s)
     (raise-argument-error 'symbol->string "symbol?" s))
-  (or (and (gensym? s)
-           (getprop s 'racket-string))
-      (let ([str (chez:symbol->string s)])
-        (unless (zero? (string-length str))
-          (string-set-immutable! str))
-        str)))
-      
+  (string-copy
+   (or (and (gensym? s)
+            (getprop s 'racket-string))
+       (chez:symbol->string s))))
+
 (define (string->uninterned-symbol str)
   (unless (string? str)
     (raise-argument-error 'string->uninterned-symbol "string?" str))

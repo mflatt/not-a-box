@@ -7,16 +7,7 @@
 (define list->bytes u8-list->bytevector)
 (define bytes-ref bytevector-u8-ref)
 (define bytes-set! bytevector-u8-set!)
-
-(define (bytes->immutable-bytes s)
-  (unless (bytes? s)
-    (raise-argument-error 'bytes->immutable-bytes "bytes?" s))
-  (if (or (bytevector-immutable? s)
-          (fx= 0 (bytevector-length s)))
-      s
-      (let ([s2 (bytevector-copy s)])
-        (bytevector-set-immutable! s2)
-        s2)))
+(define bytes->immutable-bytes bytevector->immutable-bytevector)
 
 (define bytes-copy!
   (case-lambda

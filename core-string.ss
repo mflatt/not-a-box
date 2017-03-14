@@ -20,14 +20,6 @@
                            (- src-end src-start)
                            0))]))
 
-(define (string->immutable-string x)
-  (if (or (string-immutable? x)
-          (fx= 0 (string-length x)))
-      x
-      (let ([s (string-copy x)])
-        (string-set-immutable! s)
-        s)))
-
 (define substring
   (case-lambda
    [(s start) (chez:substring s start (if (string? s) (string-length s) 0))]

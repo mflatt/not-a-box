@@ -1,4 +1,5 @@
-SCHEME = scheme
+SCHEME = /Users/mflatt/repo/again-ChezScheme/a6osx/bin/scheme -b /Users/mflatt/repo/again-ChezScheme/a6osx/boot/a6osx/petite.boot -b /Users/mflatt/repo/again-ChezScheme/a6osx/boot/a6osx/scheme.boot
+#SCHEME = scheme
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
@@ -92,7 +93,7 @@ CORE_SRCS = core-constant.ss \
             core-unsafe.ss
 
 core.so: core.sls $(CORE_SRCS)
-	$(COMP) '(compile-file "core.sls")' | $(SCHEME) -q
+	$(COMP) '(optimize-level 3)' '(compile-file "core.sls")' | $(SCHEME) -q
 
 # To build various ".rktl" files from sources, which requires
 # a linklet-based Racket repo clone identified by a
