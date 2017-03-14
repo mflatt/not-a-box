@@ -1,5 +1,4 @@
-SCHEME = /Users/mflatt/repo/again-ChezScheme/a6osx/bin/scheme -b /Users/mflatt/repo/again-ChezScheme/a6osx/boot/a6osx/petite.boot -b /Users/mflatt/repo/again-ChezScheme/a6osx/boot/a6osx/scheme.boot
-#SCHEME = scheme
+SCHEME = scheme
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
