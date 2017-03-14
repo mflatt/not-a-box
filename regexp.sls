@@ -37,7 +37,6 @@
                           write display newline port-name
                           list? string-copy! substring
                           gensym symbol->string
-                          set-box!
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day
                           random)

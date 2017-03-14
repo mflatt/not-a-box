@@ -1,29 +1,11 @@
-(define immutables (make-weak-eq-hashtable))
-
-(define (box-immutable? b)
-  (hashtable-ref immutables b #f))
-
-(define (box-set-immutable! b)
-  (hashtable-set! immutables b #t))
-
-(define (box-immutable v)
-  (let ([b (box v)])
-    (box-set-immutable! b)
-    b))
-
-(define (set-box! b v)
-  (unless (and (box? b) (not (box-immutable? b)))
-    (raise-argument-error 'set-box! "(and/c box? (not/c immutable?))" b))
-  (chez:set-box! b v))
-
 (define (box-cas! b v1 v2)
-  (unless (and (box? b) (not (box-immutable? b)))
+  (unless (mutable-box? b)
     (raise-argument-error 'box-cas! "(and/c box? (not/c immutable?))" b))
   (unsafe-box-cas! b v1 v2))
 
 (define (unsafe-box-cas! b v1 v2)
   (and (eq? v1 (unbox b))
-       (chez:set-box! b v2)
+       (set-box! b v2)
        #t))
 
 (define (make-weak-box v) (weak-cons v #t))

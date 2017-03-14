@@ -7,7 +7,7 @@
     (vector-copy! dest dest-start src src-start
                   (if (vector? src) (vector-length src) 0))]
    [(dest dest-start src src-start src-end)
-    (unless (and (vector? dest) (not (vector-immutable? dest)))
+    (unless (mutable-vector? dest)
       (raise-argument-error 'vector-copy! "(and/c vector? (not/c immutable?))" dest))
     (let loop ([i (- src-end src-start)])
       (unless (zero? i)
@@ -16,7 +16,9 @@
           (loop i))))]))
 
 (define (vector-immutable . args)
-  (vector->immutable-vector (apply vector args)))
+  (let ([vec (apply vector args)])
+    (#%$vector-set-immutable! vec)
+    vec))
 
 (define vector->values
   (case-lambda

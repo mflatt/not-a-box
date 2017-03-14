@@ -16,7 +16,7 @@
     [(dest d-start src s-start)
      (bytes-copy! dest d-start src s-start (bytes-length src))]
     [(dest d-start src s-start s-end)
-     (unless (and (bytes? dest) (not (bytevector-immutable? dest)))
+     (unless (mutable-bytevector? dest)
        (raise-argument-error 'bytes-set! "(and/c bytes? (not/c immutable?))" dest))
      (bytevector-copy! src s-start dest d-start (- s-end s-start))]))
 

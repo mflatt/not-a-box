@@ -157,8 +157,6 @@
           vector-immutable
           vector->values
 
-          set-box!
-          box-immutable
           box-cas!
           make-weak-box weak-box? weak-box-value
 
@@ -307,7 +305,6 @@
                   [substring chez:substring]
                   [gensym chez:gensym]
                   [symbol->string chez:symbol->string]
-                  [set-box! chez:set-box!]
                   [random chez:random])
           (only (chezscheme csv7)
                 record-field-accessor
