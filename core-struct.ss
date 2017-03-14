@@ -1,7 +1,6 @@
-(define-record struct-type-prop (name table guard supers))
+(define-record struct-type-prop (name guard supers))
 
 (define rtd-props (make-weak-eq-hashtable))
-(define rtd-inspectors (make-weak-eq-hashtable))
 
 (define make-struct-type-property
   (case-lambda
@@ -9,12 +8,19 @@
     [(name guard) (make-struct-type-property name guard '() #f)]
     [(name guard supers) (make-struct-type-property name guard supers #f)]
     [(name guard supers can-inpersonate?)
-     (define table (make-weak-eq-hashtable))
-     (values (make-struct-type-prop name table guard supers)
-             (lambda (v) (and (record? v)
-                         (not (eq? none (hashtable-ref table (record-rtd v) none)))))
-             (lambda (v)
-               (hashtable-ref table (record-rtd v) #f)))]))
+     (let ([st (make-struct-type-prop name guard supers)])
+       (values st
+               (lambda (v)
+                 (and (record? v)
+                      (not (eq? none (struct-property-ref st (record-rtd v) none)))))
+               (lambda (v)
+                 (struct-property-ref st (record-rtd v) #f))))]))
+
+(define (struct-property-ref prop rtd default)
+  (getprop (record-type-uid rtd) prop default))
+
+(define (struct-property-set! prop rtd val)
+  (putprop (record-type-uid rtd) prop val))
 
 (define-record-type (inspector new-inspector inspector?) (fields parent))
 
@@ -26,6 +32,13 @@
       (let ([parent (inspector-parent sub-insp)])
         (or (eq? parent sup-insp)
             (inspector-superior? sup-insp parent)))))
+
+(define (inspector-ref rtd)
+  (getprop (record-type-uid rtd) 'inspector none))
+
+(define (inspector-set! rtd insp)
+  (putprop (record-type-uid rtd) 'inspector insp))
+
 
 (define-record position-based-accessor (rtd offset field-count))
 (define-record position-based-mutator (rtd offset field-count))
@@ -83,59 +96,57 @@
     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard)
      (struct-type-install-properties! rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard name)]
     [(rtd name fields auto-fields parent-rtd props insp proc-spec immutables guard constructor-name)
-     (define parent-props
-       (cond
-        [parent-rtd
-         (let ([props (hashtable-ref rtd-props parent-rtd '())])
-           (for-each (lambda (prop)
-                       (define table (struct-type-prop-table prop))
-                       (hashtable-set! table rtd (hashtable-ref table parent-rtd #f)))
-                     props)
-           props)]
-        [else
-         '()]))
-     (when (not parent-rtd)
-       (record-equal+hash rtd
-                          default-struct-equal?
-                          default-struct-hash))
-     (hashtable-set! rtd-props rtd (let ([props (append (map car props) parent-props)])
-                                     (if proc-spec
-                                         (cons prop:procedure props)
-                                         props)))
-     (for-each (lambda (prop+val)
-                 (let loop ([prop (car prop+val)]
-                            [val (cdr prop+val)])
-                   (let ([guarded-val
-                          (let ([guard (struct-type-prop-guard prop)])
-                            (if guard
-                                (let ([parent-count (if parent-rtd
-                                                        (struct-type-field-count parent-rtd)
-                                                        0)])
-                                  (guard val
-                                         (list name
-                                               fields
-                                               auto-fields
-                                               (make-position-based-accessor rtd parent-count (+ fields auto-fields))
-                                               (make-position-based-mutator rtd parent-count (+ fields auto-fields))
-                                               (if (integer? proc-spec)
-                                                   (cons proc-spec immutables)
-                                                   immutables)
-                                               parent-rtd
-                                               #f)))
-                                val))])
-                     (when (eq? prop prop:equal+hash)
-                       (record-equal+hash rtd (car val) (cadr val)))
-                     (hashtable-set! (struct-type-prop-table prop)
-                                     rtd
-                                     guarded-val)
-                     (for-each (lambda (super)
-                                 (loop (car super)
-                                       ((cdr super) guarded-val)))
-                               (struct-type-prop-supers prop)))))
-               (if proc-spec
-                   (cons (cons prop:procedure proc-spec) props)
-                   props))
-     (hashtable-set! rtd-inspectors rtd insp)]))
+     (let ([parent-props
+            (if parent-rtd
+                (hashtable-ref rtd-props parent-rtd '())
+                '())])
+       (when (not parent-rtd)
+         (record-equal+hash rtd
+                            default-struct-equal?
+                            default-struct-hash))
+       ;; Record properties implemented by this type:
+       (hashtable-set! rtd-props rtd (let ([props (append (map car props) parent-props)])
+                                       (if proc-spec
+                                           (cons prop:procedure props)
+                                           props)))
+       ;; Copy parent properties for this type:
+       (for-each (lambda (prop)
+                   (struct-property-set! prop rtd (struct-property-ref prop parent-rtd #f)))
+                 parent-props)
+       ;; Install new property values
+       (for-each (lambda (prop+val)
+                   (let loop ([prop (car prop+val)]
+                              [val (cdr prop+val)])
+                     (let ([guarded-val
+                            (let ([guard (struct-type-prop-guard prop)])
+                              (if guard
+                                  (let ([parent-count (if parent-rtd
+                                                          (struct-type-field-count parent-rtd)
+                                                          0)])
+                                    (guard val
+                                           (list name
+                                                 fields
+                                                 auto-fields
+                                                 (make-position-based-accessor rtd parent-count (+ fields auto-fields))
+                                                 (make-position-based-mutator rtd parent-count (+ fields auto-fields))
+                                                 (if (integer? proc-spec)
+                                                     (cons proc-spec immutables)
+                                                     immutables)
+                                                 parent-rtd
+                                                 #f)))
+                                  val))])
+                       (when (eq? prop prop:equal+hash)
+                         (record-equal+hash rtd (car val) (cadr val)))
+                       (struct-property-set! prop rtd guarded-val)
+                       (for-each (lambda (super)
+                                   (loop (car super)
+                                         ((cdr super) guarded-val)))
+                                 (struct-type-prop-supers prop)))))
+                 (if proc-spec
+                     (cons (cons prop:procedure proc-spec) props)
+                     props))
+       ;; Record inspector
+       (inspector-set! rtd insp))]))
 
 (define make-struct-field-accessor
   (case-lambda
@@ -179,19 +190,8 @@
                              (lambda (val info)
                                (cons (gensym) val))))
 
-(define (struct-type-equality rtd)
-  (let ([v (hashtable-ref (struct-type-prop-table prop:equal+hash) rtd #f)])
-    (if v
-        (values (cadr v) (car v))
-        (values #f #f))))
-
-(define (struct-equal-hashity r)
-  (let ([v (hashtable-ref (struct-type-prop-table prop:equal+hash) (record-rtd r) #f)])
-    (and v
-         (caddr v))))
-
 (define (struct-type-transparent? rtd)
-  (let ([insp (hashtable-ref rtd-inspectors rtd none)])
+  (let ([insp (inspector-ref rtd)])
     (and (not (eq? insp none))
          (or (not insp)
              (inspector-superior? (current-inspector) insp))
@@ -239,11 +239,12 @@
                         (cond
                          [(not rtd) (values vec-len rec-len)]
                          [else
-                          (let ([insp (hashtable-ref rtd-inspectors rtd #f)]
+                          (let ([insp (inspector-ref rtd)]
                                 [len (vector-length (record-type-field-names rtd))])
                             (cond
                              [(or (not insp)
-                                  (inspector-superior? (current-inspector) insp))
+                                  (and (not (eq? insp none))
+                                       (inspector-superior? (current-inspector) insp)))
                               ;; A transparent region
                               (loop (+ vec-len len) (+ rec-len len) (record-type-parent rtd) #f)]
                              [dots-already?
@@ -257,12 +258,13 @@
             (vector-set! vec 0 (string->symbol (format "struct:~a" (record-type-name rtd))))
             (let loop ([vec-pos vec-len] [rec-pos rec-len] [rtd rtd] [dots-already? #f])
               (when rtd
-                (let* ([insp (hashtable-ref rtd-inspectors rtd #f)]
+                (let* ([insp (inspector-ref rtd)]
                        [len (vector-length (record-type-field-names rtd))]
                        [rec-pos (- rec-pos len)])
                   (cond
                    [(or (not insp)
-                        (inspector-superior? (current-inspector) insp))
+                        (and (not (eq? insp none))
+                             (inspector-superior? (current-inspector) insp)))
                     ;; Copy over a transparent region
                     (let ([vec-pos (- vec-pos len)])
                       (let floop ([n 0])
@@ -380,7 +382,7 @@
                    (record-equal+hash struct:name
                                       default-struct-equal?
                                       default-struct-hash)
-                   (hashtable-set! rtd-inspectors struct:name #f))))))])))
+                   (inspector-set! struct:name #f))))))])))
 
 (define-syntax define-struct
   (lambda (stx)

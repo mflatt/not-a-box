@@ -4,8 +4,8 @@
   (unsafe-box-cas! b v1 v2))
 
 (define (unsafe-box-cas! b v1 v2)
-  (and (eq? v1 (unbox b))
-       (set-box! b v2)
+  (and (eq? v1 (#3%unbox b))
+       (#3%set-box! b v2)
        #t))
 
 (define (make-weak-box v) (weak-cons v #t))
