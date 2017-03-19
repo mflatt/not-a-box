@@ -51,7 +51,7 @@
 		       (cdr assocs))))])))]))
 
 (define (make-empty-bnode eqtype)
-  (make-bnode eqtype (vector) (vector) 0 0 0))
+  (make-bnode eqtype (vector) #f 0 0 0))
 
 (define empty-hash (make-empty-bnode 'equal))
 (define empty-hasheqv (make-empty-bnode 'eqv))
@@ -195,6 +195,10 @@
   (cond [(bnode? node) (bnode-set node key val hash shift)]
 	[else          (cnode-set node key val)]))
 
+(define (node-has-key? node key hash shift)
+  (cond [(bnode? node) (bnode-has-key? node key hash shift)]
+	[else          (cnode-has-key? node key)]))
+
 (define (node-remove node key hash shift)
   (cond [(bnode? node) (bnode-remove node key hash shift)]
 	[else          (cnode-remove node key hash)]))
@@ -284,6 +288,9 @@
 	     (node-ref c key hash (down shift)))]
 
 	  [else NOTHING])))
+
+(define (bnode-has-key? node key hash shift)
+  (not (eq? NOTHING (bnode-ref node key hash shift))))
 
 (define (bnode-set node key val hash shift)
   (let ([bit (bnode-bit-pos hash shift)])
@@ -404,26 +411,62 @@
     (keys-foldk pop n f nil
 		(lambda (nil) (child-foldk pop n f nil kont)))))
 
+(define (array-keys-subset? f abm bbm)
+  (let loop ([abm abm] [bbm bbm] [ai 0] [bi 0])
+    (cond
+     [(fxzero? abm) #t]
+     [else
+      (let ([alsb (fxxor abm (fxlogand abm (fx1- abm)))]
+	    [blsb (fxxor bbm (fxlogand bbm (fx1- bbm)))])
+	(cond
+	 [(fx= alsb blsb)
+	  (and (f ai bi)
+	       (loop (fxlogand abm (fxnot alsb))
+		     (fxlogand bbm (fxnot blsb))
+		     (fx1+ ai)
+		     (fx1+ bi)))]
+	 [else
+	  (loop abm
+		(fxlogand bbm (fxnot blsb))
+		ai
+		(fx1+ bi))]))])))
+
+;; The CHAMP encoding makes this rather more annoying
+;; than with a plain HAMT. It can be done without the
+;; case analysis, but that requires a bunch of popcounts.
 (define (bnode-keys-subset? a b shift)
   (cond
    [(bnode? b)
-    (let ([akm (bnode-keymap a)]
-	  [bkm (bnode-keymap b)]
-	  [acm (bnode-childmap a)]
-	  [bcm (bnode-childmap b)])
-
+    (let* ([akm (bnode-keymap a)]
+	   [acm (bnode-childmap a)]
+	   [bkm (bnode-keymap b)]
+	   [bcm (bnode-childmap b)]
+	   [abm (fxior akm acm)]
+	   [bbm (fxior bkm bcm)])
       (and
+       (fx= (fxlogand abm bbm) abm)
+
+       ;; child/key comparison (trivially false)
+       (fxzero? (fxlogand acm bkm))
+
+       ;; key/key comparison
        (array-keys-subset?
 	(lambda (ai bi)
 	  (key=? a (key-ref a ai) (key-ref b bi)))
-	a akm b bkm)
+	(fxlogand akm bkm) bkm)
 
+       ;; key/child comparison
        (array-keys-subset?
 	(lambda (ai bi)
-	  (node-keys-subset? (child-ref a ai)
-			     (child-ref b bi)
-			     (down shift)))
-	a acm b bcm)))]
+	  (let ([k (key-ref a ai)])
+	    (node-has-key? (child-ref b bi) k (hash-code a k) (down shift))))
+	(fxlogand akm bcm) bcm)
+
+       ;; child/child comparison
+       (array-keys-subset?
+	(lambda (ai bi)
+	  (node-keys-subset? (child-ref a ai) (child-ref b bi) (down shift)))
+	(fxlogand acm bcm) bcm)))]
 
    [else
     (let ([keys (hnode-keys a)])
@@ -453,6 +496,9 @@
     (if ki
 	(val-ref node ki)
 	NOTHING)))
+
+(define (cnode-has-key? node key)
+  (not (not (cnode-index node key))))
 
 (define (cnode-set node key val)
   (let ([ki (cnode-index node key)])
@@ -532,8 +578,7 @@
        [(fxzero? i) #t]
        [else
 	(let ([k (key-ref a (fx1- i))])
-	  (and (not (eq? NOTHING
-			 (bnode-ref b k (hash-code a k) shift)))
+	  (and (bnode-has-key? b k (hash-code a k) shift)
 	       (loop (fx1- i))))]))]))
 
 (define (cnode=? a b eql? k)
@@ -803,20 +848,3 @@
      [(not k) #f]
      [(fx= i pop) k]
      [else (loop (fx1+ i) (f i))])))
-
-(define (array-keys-subset? f a abm b bbm)
-  (let loop ([abm abm] [bbm bbm] [ai 0] [bi 0])
-    (cond
-     [(fxzero? abm) #t]
-     [else
-      (let ([alsb (fxxor abm (fxlogand abm (fx1- abm)))]
-	    [blsb (fxxor bbm (fxlogand bbm (fx1- bbm)))])
-	(cond
-	 [(fx= alsb blsb)
-	  (and (f ai bi)
-	       (loop (fxlogand abm (fxnot alsb))
-		     (fxlogand bbm (fxnot blsb))
-		     (fx1+ ai)
-		     (fx1+ bi)))]
-	 [else
-	  (loop abm (fxlogand bbm (fxnot blsb)) ai (fx1+ bi))]))])))
