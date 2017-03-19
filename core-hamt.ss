@@ -8,13 +8,31 @@
 	  (immutable vals)]
   [nongenerative #{hnode pfwh8wvaevt3r6pcwsqn90ry8-0}])
 
-(define-record-type bnode
-  [parent hnode]
-  [fields (immutable keymap)
-	  (immutable childmap)
-	  (immutable count)]
-  [nongenerative #{bnode pfwhzqkm2ycuuyedzz2nxjx2e-0}]
-  [sealed #t])
+(meta-cond
+ [(> (most-positive-fixnum) (expt 2 48))
+  (define-record-type (bnode make-raw-bnode bnode?)
+    [parent hnode]
+    [fields (immutable bitmap)
+	    (immutable count)]
+    [nongenerative #{bnode pfwhzqkm2ycuuyedzz2nxjx2e-0}]
+    [sealed #t])
+
+  (define (make-bnode type keys vals keymap childmap count)
+    (make-raw-bnode type keys vals (fxior keymap (fxsll childmap 16)) count))
+
+  (define (bnode-keymap node)
+    (fxand #xffff (bnode-bitmap node)))
+
+  (define (bnode-childmap node)
+    (fxsrl (bnode-bitmap node) 16))]
+ [else
+  (define-record-type bnode
+    [parent hnode]
+    [fields (immutable keymap)
+	    (immutable childmap)
+	    (immutable count)]
+    [nongenerative #{bnode pfwhzqkm2ycuuyedzz2nxjx2e-0}]
+    [sealed #t])])
 
 (define-record-type cnode
   [parent hnode]
@@ -185,41 +203,41 @@
 
 (define (node-count node)
   (cond [(bnode? node) (bnode-count node)]
-	[else          (cnode-count node)]))
+	[else  (pariah (cnode-count node))]))
 
 (define (node-ref node key hash shift)
   (cond [(bnode? node) (bnode-ref node key hash shift)]
-	[else          (cnode-ref node key)]))
+	[else  (pariah (cnode-ref node key))]))
 
 (define (node-set node key val hash shift)
   (cond [(bnode? node) (bnode-set node key val hash shift)]
-	[else          (cnode-set node key val)]))
+	[else  (pariah (cnode-set node key val))]))
 
 (define (node-has-key? node key hash shift)
   (cond [(bnode? node) (bnode-has-key? node key hash shift)]
-	[else          (cnode-has-key? node key)]))
+	[else  (pariah (cnode-has-key? node key))]))
 
 (define (node-remove node key hash shift)
   (cond [(bnode? node) (bnode-remove node key hash shift)]
-	[else          (cnode-remove node key hash)]))
+	[else  (pariah (cnode-remove node key hash))]))
 
 (define (node-singleton? node)
   (cond [(bnode? node) (bnode-singleton? node)]
-	[else          (cnode-singleton? node)]))
+	[else  (pariah (cnode-singleton? node))]))
 
 (define (node-entry-at-position h pos)
   (cond [(bnode? h) (bnode-entry-at-position h pos)]
-	[else       (cnode-entry-at-position h pos)]))
+	[else (pariah (cnode-entry-at-position h pos))]))
 
 (define (node-foldk n f nil kont)
   (cond [(bnode? n) (bnode-foldk n f nil kont)]
-	[else       (cnode-foldk n f nil kont)]))
+	[else (pariah (cnode-foldk n f nil kont))]))
 
 (define (node-keys-subset? a b shift)
   (cond [(eq? a b) #t]
 	[(fx> (node-count a) (node-count b)) #f]
 	[(bnode? a) (bnode-keys-subset? a b shift)]
-	[else (cnode-keys-subset? a b shift)]))
+	[else (pariah (cnode-keys-subset? a b shift))]))
 
 (define (node-hash-code na f hc k shift)
   (cond [(bnode? na)
@@ -379,7 +397,8 @@
       (let* ([keys (hnode-keys node)]
 	     [len  (vector-length keys)])
 	(let loop ([i pop] [pos (fx- pos pop)])
-	  (cond [(fx= i len) (values #f #f)]
+	  (cond [(fx= i len)
+		 (pariah (values #f #f))]
 		[else
 		 (let* ([child (vector-ref keys i)]
 			[count (node-count child)])
