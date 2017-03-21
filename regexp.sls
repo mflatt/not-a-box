@@ -35,7 +35,7 @@
                           call-with-input-file call-with-output-file
                           format printf fprintf
                           write display newline port-name
-                          list? string-copy! substring
+                          list? equal? string-copy! substring
                           gensym symbol->string
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day

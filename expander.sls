@@ -50,7 +50,7 @@
                           member memv memq
                           sort vector-sort vector-sort!
                           filter force delay identifier?
-                          read-char peek-char
+                          equal? read-char peek-char
                           close-output-port open-input-file open-output-file
                           make-input-port make-output-port
                           close-input-port

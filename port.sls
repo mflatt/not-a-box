@@ -97,7 +97,7 @@
                           apply procedure?
                           memv memq member
                           output-port-buffer-mode
-                          list? input-port? output-port?
+                          list? equal? input-port? output-port?
                           open-input-file open-output-file abort
                           current-output-port current-input-port current-error-port
                           port-name string-copy! substring
