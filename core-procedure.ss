@@ -13,7 +13,7 @@
 (define (procedure? v)
   (or (chez:procedure? v)
       (and (record? v)
-           (struct-property-ref prop:procedure (record-rtd v) #f))))
+           (hashtable-ref (struct-type-prop-table prop:procedure) (record-rtd v) #f))))
 
 (define apply
   (case-lambda
@@ -40,7 +40,8 @@
 (define (try-extract-procedure f)
   (cond
    [(record? f)
-    (let* ([v (struct-property-ref prop:procedure (record-rtd f) #f)])
+    (let* ([rtd (record-rtd f)]
+           [v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f)])
       (cond
        [(procedure? v) (case-lambda
                          [(a) (v f a)]
@@ -73,7 +74,8 @@
          [else
           (raise-argument-error 'procedure-arity-includes? "exact-nonnegative-integer?" orig-n)])]
        [(record? f)
-        (let* ([v (struct-property-ref prop:procedure (record-rtd f) #f)])
+        (let* ([rtd (record-rtd f)]
+               [v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f)])
           (cond
            [(fixnum? v)
             (arity-includes? (unsafe-struct-ref f v) n)]
@@ -95,7 +97,7 @@
         (mask->arity (bitwise-arithmetic-shift-right (procedure-arity-mask f) shift))]
        [(record? f)
         (let* ([rtd (record-rtd f)]
-               [v (struct-property-ref prop:procedure rtd #f)])
+               [v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f)])
           (cond
            [(fixnum? v)
             (proc-arity (unsafe-struct-ref f v) shift)]
@@ -123,7 +125,7 @@
   (cond
    [(record? f)
     (let* ([rtd (record-rtd f)]
-           [v (struct-property-ref prop:procedure rtd #f)])
+           [v (hashtable-ref (struct-type-prop-table prop:procedure) rtd #f)])
       (cond
        [(fixnum? v)
         (let ([v (unsafe-struct-ref f v)])
@@ -137,18 +139,18 @@
 ;; ----------------------------------------
 
 (define (set-primitive-applicables!)
-  (struct-property-set! prop:procedure
-                        (record-type-descriptor position-based-accessor)
-                        (lambda (pba s p)
-                          (if (and (record? s (position-based-accessor-rtd pba))
-                                   (< p (position-based-accessor-field-count pba)))
-                              (unsafe-struct-ref s (+ p (position-based-accessor-offset pba)))
-                              (error 'struct-ref "bad access"))))
+  (hashtable-set! (struct-type-prop-table prop:procedure)
+                  (record-type-descriptor position-based-accessor)
+                  (lambda (pba s p)
+                    (if (and (record? s (position-based-accessor-rtd pba))
+                             (< p (position-based-accessor-field-count pba)))
+                        (unsafe-struct-ref s (+ p (position-based-accessor-offset pba)))
+                        (error 'struct-ref "bad access"))))
 
-  (struct-property-set! prop:procedure
-                        (record-type-descriptor position-based-mutator)
-                        (lambda (pbm s p v)
-                          (if (and (record? s (position-based-mutator-rtd pbm))
-                                   (< p (position-based-mutator-field-count pbm)))
-                              (unsafe-struct-set! s (+ p (position-based-mutator-offset pbm)) v)
-                              (error 'struct-set! "bad assignment")))))
+  (hashtable-set! (struct-type-prop-table prop:procedure)
+                  (record-type-descriptor position-based-mutator)
+                  (lambda (pbm s p v)
+                    (if (and (record? s (position-based-mutator-rtd pbm))
+                             (< p (position-based-mutator-field-count pbm)))
+                        (unsafe-struct-set! s (+ p (position-based-mutator-offset pbm)) v)
+                        (error 'struct-set! "bad assignment")))))
