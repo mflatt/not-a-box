@@ -71,11 +71,6 @@ Dumping linklets and schemified linklets:
 
 Status and thoughts on various Racket subsystems:
 
- * Immutable vectors, string, and byte strings are a problem. The
-   current implementation keeps a weak hash table of all immutable
-   objects, and every checked `vector-set!`, `string-set!`, or
-   `bytes-set!` consults the table.
-
  * "core-struct.ss" is half an implementation of Racket structures,
    with structure-type properties, applicable structs,
    `gen:equal+hash`, and so on in terms of Chez records. Applicable
