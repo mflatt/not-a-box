@@ -1,7 +1,7 @@
 ;; To support iteration and locking, we wrap Chez's mutable hash
 ;; tables in a `mutable-hash` record:
-(define-record mutable-hash (ht keys keys-stale?))
-(define (create-mutable-hash ht) (make-mutable-hash ht '#() #t))
+(define-record mutable-hash (ht keys keys-stale? lock))
+(define (create-mutable-hash ht) (make-mutable-hash ht '#() #t (make-lock)))
 
 (define (hash? v) (or (hamt? v) (mutable-hash? v) (weak-equal-hash? v)))
 
@@ -15,30 +15,47 @@
 (define (hash-set! ht k v)
   (cond
    [(mutable-hash? ht)
+    (lock-acquire (mutable-hash-lock ht))
     (set-mutable-hash-keys-stale?! ht #t)
-    (hashtable-set! (mutable-hash-ht ht) k v)]
+    (hashtable-set! (mutable-hash-ht ht) k v)
+    (lock-release (mutable-hash-lock ht))]
    [(weak-equal-hash? ht) (weak-hash-set! ht k v)]
    [else (raise-argument-error 'hash-set! "(and/c hash? (not/c immutable?))" ht)]))
 
 (define (hash-remove! ht k)
   (cond
    [(mutable-hash? ht)
+    (lock-acquire (mutable-hash-lock ht))
     (set-mutable-hash-keys-stale?! ht #t)
-    (hashtable-delete! (mutable-hash-ht ht) k)]
+    (hashtable-delete! (mutable-hash-ht ht) k)
+    (lock-release (mutable-hash-lock ht))]
    [(weak-equal-hash? ht) (weak-hash-remove! ht k)]
    [else (raise-argument-error 'hash-remove! "(and/c hash? (not/c immutable?))" ht)]))
 
+#|
+ hash-clear! procedures do not use the table’s semaphore to guard the traversal as a whole. 
+ Changes by one thread to a hash table can affect the keys and values seen by another thread 
+ part-way through its traversal of the same hash table.
+
+ Maybe lock isn't needed even for set-mutable-hash-keys! ?
+|#
 (define (hash-clear! ht)
   (cond
    [(mutable-hash? ht)
+    (lock-acquire (mutable-hash-lock ht))
     (set-mutable-hash-keys! ht '#())
-    (hashtable-clear! (mutable-hash-ht ht))]
+    (hashtable-clear! (mutable-hash-ht ht))
+    (lock-release (mutable-hash-lock ht))]
    [(weak-equal-hash? ht) (weak-hash-clear! ht)]
    [else (raise-argument-error 'hash-clear! "(and/c hash? (not/c immutable?))" ht)]))
 
 (define (hash-copy ht)
   (cond
-   [(mutable-hash? ht) (create-mutable-hash (hashtable-copy (mutable-hash-ht ht) #t))]
+   [(mutable-hash? ht)
+    (lock-acquire (mutable-hash-lock ht))
+    (let ([new-ht (create-mutable-hash (hashtable-copy (mutable-hash-ht ht) #t))])
+      (lock-release (mutable-hash-lock ht))
+      new-ht)]
    [(weak-equal-hash? ht) (weak-hash-copy ht)]
    [(hamt? ht)
     (let ([ht (cond
@@ -264,8 +281,10 @@
                      [key (vector-ref vec i)])
                 (vector-set! vec i (weak-cons key #f))
                 (loop i))))
+	  (lock-acquire (mutable-hash-lock ht))
           (set-mutable-hash-keys! ht vec)
           (set-mutable-hash-keys-stale?! ht #f)
+	  (lock-release (mutable-hash-lock ht))
           vec))))
 
 (define (hash-iterate-first ht)

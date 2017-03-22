@@ -72,6 +72,7 @@ CORE_SRCS = core-constant.ss \
             core-procedure.ss \
             core-hamt.ss \
             core-hash.ss \
+	    core-lock.ss \
             core-thread-cell.ss \
             core-parameter.ss \
             core-control.ss \

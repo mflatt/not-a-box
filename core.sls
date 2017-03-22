@@ -322,6 +322,7 @@
   (include "core-procedure.ss")
   (include "core-hamt.ss")
   (include "core-hash.ss")
+  (include "core-lock.ss")
   (include "core-thread-cell.ss")
   (include "core-control.ss")
   (include "core-parameter.ss")
