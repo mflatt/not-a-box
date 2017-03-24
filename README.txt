@@ -1,5 +1,8 @@
 Work-in-progress for running Racket on Chez Scheme.
 
+ [Requires the current development version of Chez Scheme
+  from https://github.com/cisco/ChezScheme]
+
 The files:
 
  *.sls - Chez Scheme libraries that provide implementations of Racket

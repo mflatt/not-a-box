@@ -101,9 +101,8 @@
                 (hashtable-ref rtd-props parent-rtd '())
                 '())])
        (when (not parent-rtd)
-         (record-equal+hash rtd
-                            default-struct-equal?
-                            default-struct-hash))
+         (record-type-equal-procedure rtd default-struct-equal?)
+         (record-type-hash-procedure rtd default-struct-hash))
        ;; Record properties implemented by this type:
        (hashtable-set! rtd-props rtd (let ([props (append (map car props) parent-props)])
                                        (if proc-spec
@@ -136,7 +135,8 @@
                                                  #f)))
                                   val))])
                        (when (eq? prop prop:equal+hash)
-                         (record-equal+hash rtd (car val) (cadr val)))
+                         (record-type-equal-procedure rtd (car val))
+                         (record-type-hash-procedure rtd (cadr val)))
                        (struct-property-set! prop rtd guarded-val)
                        (for-each (lambda (super)
                                    (loop (car super)
@@ -379,9 +379,8 @@
                ...
                (define dummy
                  (begin
-                   (record-equal+hash struct:name
-                                      default-struct-equal?
-                                      default-struct-hash)
+                   (record-type-equal-procedure struct:name default-struct-equal?)
+                   (record-type-hash-procedure struct:name default-struct-hash)
                    (inspector-set! struct:name #f))))))])))
 
 (define-syntax define-struct

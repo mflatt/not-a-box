@@ -58,11 +58,13 @@
 (define-record cnode (array hashcode))
 
 (define ignored/hamt
-  (record-equal+hash (record-type-descriptor bnode)
-                     (lambda (a b eql?)
-                       (hamt=? a b eql?))
-                     (lambda (a hash)
-                       (hamt-hash-code a hash))))
+  (begin
+    (record-type-equal-procedure (record-type-descriptor bnode)
+                                 (lambda (a b eql?)
+                                   (hamt=? a b eql?)))
+    (record-type-hash-procedure (record-type-descriptor bnode)
+                                (lambda (a hash)
+                                  (hamt-hash-code a hash)))))
 
 ;; To more compactly represent sets, special-case an entry
 ;; that has a #t value:

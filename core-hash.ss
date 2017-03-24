@@ -634,9 +634,11 @@
 
 (define ignored/hash
   (begin
-    (record-equal+hash (record-type-descriptor mutable-hash)
-                       hash=?
-                       hash-hash-code)
-    (record-equal+hash (record-type-descriptor weak-equal-hash)
-                       hash=?
-                       hash-hash-code)))
+    (record-type-equal-procedure (record-type-descriptor mutable-hash)
+                                 hash=?)
+    (record-type-hash-procedure (record-type-descriptor mutable-hash)
+                                hash-hash-code)
+    (record-type-equal-procedure (record-type-descriptor weak-equal-hash)
+                                 hash=?)
+    (record-type-hash-procedure (record-type-descriptor weak-equal-hash)
+                                hash-hash-code)))
