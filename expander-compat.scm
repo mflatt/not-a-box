@@ -27,22 +27,6 @@
 (define (check-for-break) (void))
 (define break-enabled-key 'break-enabled-key)
 
-(define exception-handler-key 'exception-handler-key)
-
-(define (abort-current-continuation . args)
-  (error 'abort-current-continuation "fixme"))
-
-(define (make-continuation-prompt-tag s) (gensym))
-(define (default-continuation-prompt-tag) 'default-prompt-tag)
-(define (continuation-prompt-available? s) #t)
-
-(define call-with-continuation-prompt
-  (case-lambda
-   [(proc) (proc)]
-   [(proc tag) (proc)]
-   [(proc tag abort-handler) (proc)]
-   [(proc tag abort-handler . args) (apply proc args)]))
-
 (define (call-with-continuation-barrier proc) (proc))
 
 (define call-with-escape-continuation

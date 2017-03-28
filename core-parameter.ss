@@ -18,7 +18,8 @@
              (continuation-mark-set-first
               #f
               parameterization-key
-              empty-parameterization))
+              empty-parameterization
+              the-root-continuation-prompt-tag))
             key
             #f))
 

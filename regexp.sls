@@ -39,13 +39,11 @@
                           gensym symbol->string
                           date? make-date date-second date-minute date-hour date-day date-month date-year
                           date-week-day date-year-day
-                          random)
+                          random
+                          dynamic-wind
+                          call-with-current-continuation)
                   [void chez:void])
           (core)
           (port))
   (define (char-graphic? x) #f)
-  (define (make-continuation-prompt-tag s) (gensym))
-  (define (call-with-continuation-prompt proc . args) (proc))
-  (define (abort-current-continuation . args)
-    (error 'abort-current-continuation "fixme"))
   (include "regexp.scm"))

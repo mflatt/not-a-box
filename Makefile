@@ -1,4 +1,5 @@
 SCHEME = scheme
+OPTIMIZE = # '(optimize-level 3)'
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
@@ -65,6 +66,9 @@ hash-demo: core.so
 struct-demo: core.so
 	$(SCHEME) core.so struct-demo.ss
 
+control-demo: core.so
+	$(SCHEME) core.so control-demo.ss
+
 CORE_SRCS = core-constant.ss \
             core-hash-code.ss \
             core-struct.ss \
@@ -74,6 +78,7 @@ CORE_SRCS = core-constant.ss \
 	    core-lock.ss \
             core-thread-cell.ss \
             core-parameter.ss \
+            core-begin0.ss \
             core-control.ss \
             core-error.ss \
             core-bytes.ss \
@@ -93,7 +98,7 @@ CORE_SRCS = core-constant.ss \
             core-unsafe.ss
 
 core.so: core.sls $(CORE_SRCS)
-	$(COMP) '(optimize-level 3)' '(compile-file "core.sls")' | $(SCHEME) -q
+	$(COMP) $(OPTIMIZE) '(compile-file "core.sls")' | $(SCHEME) -q
 
 # To build various ".rktl" files from sources, which requires
 # a linklet-based Racket repo clone identified by a

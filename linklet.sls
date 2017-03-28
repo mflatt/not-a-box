@@ -36,7 +36,9 @@
                   vector-set! set-box!
                   date? make-date date-second date-minute date-hour date-day date-month date-year
                   date-week-day date-year-day
-                  void random)
+                  void random
+                  dynamic-wind
+                  call-with-current-continuation)
           (core)
           (only (port)
                 path?

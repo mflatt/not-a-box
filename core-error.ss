@@ -263,54 +263,112 @@
 (define (eprintf fmt . args)
   (apply fprintf (current-error-port) fmt args))
 
+;; ----------------------------------------
+
+(define exception-handler-key (gensym "exception-handler-key"))
+
+(define (default-uncaught-exception-handler exn)
+  (unless (exn:break:hang-up? exn)
+    ((error-display-handler) (exn->string exn) exn))
+  (when (or (exn:break:hang-up? exn)
+            (exn:break:terminate? exn))
+    (exit 1))
+  ((error-escape-handler)))
+
+(define (default-error-display-handler msg v)
+  (eprintf "~a" msg)
+  (when (or (continuation-condition? v)
+            (exn? v))
+    (eprintf "\n  context...:")
+    (let loop ([i (inspect/object (if (exn? v)
+                                      (continuation-mark-set-k (exn-continuation-marks v))
+                                      (condition-continuation v)))]
+               [n 10])
+      (unless (or (zero? n)
+                  (not (eq? (i 'type) 'continuation)))
+        (call-with-values (lambda () (i 'source-path))
+          (case-lambda
+            [()
+             (let* ([c (i 'code)]
+                    [n (c 'name)])
+               (when n
+                 (eprintf "\n   ~a" n)))]
+            [(path line col)
+             (eprintf "\n   ~a:~a:~a" path line col)]
+            [(path pos)
+             (eprintf "\n   ~a::~a" path pos)]))
+        (unless (zero? (i 'depth))
+          (loop (i 'link) (sub1 n))))))
+  (eprintf "\n"))
+
+(define (default-error-escape-handler)
+  (abort-current-continuation (default-continuation-prompt-tag) void))
+
+(define (exn->string v)
+  (format "~a~a"
+          (if (who-condition? v)
+              (format "~a: " (condition-who v))
+              "")
+          (cond
+           [(exn? v)
+            (exn-message v)]
+           [(format-condition? v)
+            (apply format
+                   (condition-message v)
+                   (condition-irritants v))]
+           [(syntax-violation? v)
+            (let ([show (lambda (s)
+                          (cond
+                           [(not s) ""]
+                           [else (format " ~s" (syntax->datum s))]))])
+              (format "~a~a~a"
+                      (condition-message v)
+                      (show (syntax-violation-form v))
+                      (show (syntax-violation-subform v))))]
+           [(message-condition? v)
+            (condition-message v)]
+           [else (format "~s" v)])))
+
+(define uncaught-exception-handler
+  (make-parameter default-uncaught-exception-handler
+                  (lambda (v)
+                    (unless (and (procedure? v)
+                                 (procedure-arity-includes? v 1))
+                      (raise-argument-error 'uncaught-exception-handler "(procedure-arity-includes?/c 1)" v))
+                    v)))
+
+(define error-display-handler
+  (make-parameter default-error-display-handler
+                  (lambda (v)
+                    (unless (and (procedure? v)
+                                 (procedure-arity-includes? v 2))
+                      (raise-argument-error 'error-display-handler "(procedure-arity-includes?/c 2)" v))
+                    v)))
+
+(define error-escape-handler
+  (make-parameter default-error-escape-handler
+                  (lambda (v)
+                    (unless (and (procedure? v)
+                                 (procedure-arity-includes? v 0))
+                      (raise-argument-error 'error-ecsape-handler "(procedure-arity-includes?/c 0)" v))
+                    v)))
+
 (define (set-base-exception-handler!)
   (base-exception-handler
    (lambda (v)
-     (eprintf "~a~a"
-              (if (who-condition? v)
-                  (format "~a: " (condition-who v))
-                  "")
-              (cond
-               [(exn? v)
-                (exn-message v)]
-               [(format-condition? v)
-                (apply format
-                       (condition-message v)
-                       (condition-irritants v))]
-               [(syntax-violation? v)
-                (let ([show (lambda (s)
-                              (cond
-                               [(not s) ""]
-                               [else (format " ~s" (syntax->datum s))]))])
-                  (format "~a~a~a"
-                          (condition-message v)
-                          (show (syntax-violation-form v))
-                          (show (syntax-violation-subform v))))]
-               [(message-condition? v)
-                (condition-message v)]
-               [else (format "~s" v)]))
-     (when (or (continuation-condition? v)
-               (exn? v))
-       (eprintf "\n  context...:")
-       (let loop ([i (inspect/object (if (exn? v)
-                                         (continuation-mark-set-k (exn-continuation-marks v))
-                                         (condition-continuation v)))]
-                  [n 10])
-         (unless (or (zero? n)
-                     (not (eq? (i 'type) 'continuation)))
-           (call-with-values (lambda () (i 'source-path))
-             (case-lambda
-               [()
-                (let* ([c (i 'code)]
-                       [n (c 'name)])
-                  (when n
-                    (eprintf "\n   ~a" n)))]
-               [(path line col)
-                (eprintf "\n   ~a:~a:~a" path line col)]
-               [(path pos)
-                (eprintf "\n   ~a::~a" path pos)]))
-           (unless (zero? (i 'depth))
-             (loop (i 'link) (sub1 n))))))
-     (eprintf "\n")
-     (when (serious-condition? v)
-       ((reset-handler))))))
+     (let ([hs (continuation-mark-set->list (current-continuation-marks the-root-continuation-prompt-tag)
+                                            exception-handler-key
+                                            the-root-continuation-prompt-tag)])
+       (let loop ([hs hs])
+         (cond
+          [(null? hs)
+           ((uncaught-exception-handler) v)]
+          [else
+           (let ([h (car hs)]
+                 [hs (cdr hs)])
+             (h v)
+             (loop hs))]))))))
+
+;;
+;; (when (serious-condition? v)
+;;  ((reset-handler))))))

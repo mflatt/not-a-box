@@ -3,8 +3,19 @@
 
           begin0
 
+          dynamic-wind
+          call-with-current-continuation
+          call-with-composable-continuation
+
+          make-continuation-prompt-tag
+          default-continuation-prompt-tag
+          call-with-continuation-prompt
+          abort-current-continuation
+          continuation-prompt-available?
+          
           with-continuation-mark
           continuation-mark-set-first
+          continuation-mark-set->list
           current-continuation-marks
 
           make-thread-cell
@@ -19,6 +30,8 @@
 
           error-print-width
           error-value->string-handler
+          exception-handler-key
+          uncaught-exception-handler
 
           current-inspector
           make-inspector
@@ -286,7 +299,9 @@
           unsafe-string-length)
   (import (rename (except (chezscheme)
                           date? make-date
-                          list?)
+                          list?
+                          dynamic-wind
+                          call-with-current-continuation)
                   [date-second chez:date-second]
                   [date-minute chez:date-minute]
                   [date-hour chez:date-hour]
@@ -319,6 +334,7 @@
   (include "core-hash.ss")
   (include "core-lock.ss")
   (include "core-thread-cell.ss")
+  (include "core-begin0.ss")
   (include "core-control.ss")
   (include "core-parameter.ss")
   (include "core-error.ss")
@@ -338,4 +354,5 @@
   (include "core-unsafe.ss")
   
   (set-base-exception-handler!)
-  (set-primitive-applicables!))
+  (set-primitive-applicables!)
+  (set-continuation-applicables!))
