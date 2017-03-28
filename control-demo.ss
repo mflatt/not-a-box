@@ -64,6 +64,29 @@
         tag1)
        'ok)
 
+;; Also shouldn't take long or use much memory:
+(check (let ([old-k (lambda (p) (p))]
+             [n 100000])
+         (call-with-continuation-prompt
+          (lambda ()
+            (let loop ()
+              ((call-with-composable-continuation
+                (lambda (k)
+                  (let ([prev-k old-k])
+                    (set! old-k k)
+                    (|#%app| prev-k (lambda ()
+                                      (call-with-composable-continuation
+                                       (lambda (k)
+                                         (cond
+                                          [(zero? n)
+                                           (lambda () 'also-ok)]
+                                          [else
+                                           (set! n (sub1 n))
+                                           loop])))))))
+                tag1))))
+          tag1))
+       'also-ok)
+
 (check (let ([syms null])
          (let ([v (dynamic-wind
                    (lambda () (set! syms (cons 'in syms)))
@@ -187,5 +210,5 @@
 (current-exception-state (create-exception-state (base-exception-handler)))
 (call-with-continuation-prompt
  (lambda ()
-   (error 'demo "oops"))
+   (error 'demo "this is an intended error"))
  tag1)

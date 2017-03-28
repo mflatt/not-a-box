@@ -13,20 +13,18 @@
 ;; A picture where the continuation grows down:
 
 ;;                   [root empty continuation]
-;;                    ---
+;;                    --- empty-k
 ;; metacontinuation  |
 ;;     frame         |
 ;;                   |--- resume-k & resume/no-wind
 ;;                   |<-- tag represents this point
 ;;                    --- empty-k
-;;                    ---
 ;; metacontinuation  |
 ;;     frame         |
 ;;                   |
 ;;                   |--- resume-k & resume/no-wind
 ;;                   |<-- tag represents this point
 ;;                    --- empty-k
-;;                    ---
 ;;   current host    |
 ;;   continuation    |
 ;;                   v
@@ -34,7 +32,8 @@
 ;; Concretely, the metacontinuation is the current host continuation
 ;; plus the frames in the list `*metacontinuation*`, where the
 ;; shallowest (= lowest in the picture above) frame is first in the
-;; list.
+;; list. The `empty-k` value of the current host continuation is
+;; in `*empty-k*`.
 
 ;; The host Scheme implementation takes care of winders from
 ;; `dynamic-wind`, which means that tings generally work if host
@@ -55,12 +54,12 @@
 ;; `#%$current-stack-link` to disconnect a fresh metacontinuation
 ;; frame's continuation from the formerly current continuation.
 
-;; A metacontinuation frame's `empty-k` continuation is used to detect
-;; when the current host continuation is empty (i.e., when it matches
-;; the `empty-k` field of the shallowest metacontinuation frame). When
-;; it's empty, then calling a composable continuation doesn't need to
-;; add a new metacontinuation frame, and the application gets the
-;; right "tail" behavior.
+;; The shallowest metacontinuation frame's `empty-k` continuation is
+;; used to detect when the current host continuation is empty (i.e.,
+;; when it matches the `*empty-k*` value). When it's empty, then
+;; calling a composable continuation doesn't need to add a new
+;; metacontinuation frame, and the application gets the right "tail"
+;; behavior.
 
 ;; A metacontinuation frame's `resume-k/no-wind` is called when
 ;; control returns or needs to escape through the frame:
@@ -100,11 +99,12 @@
 ;; ----------------------------------------
 
 (define *metacontinuation* '())
+(define *empty-k* #f)
 
 (define-record metacontinuation-frame (tag          ; continuation prompt tag or #f
                                        resume-k     ; delivers values to the prompt
                                        resume-k/no-wind ; same, but doesn't run winders jumping in
-                                       empty-k      ; just after delivery frame
+                                       empty-k      ; deepest end of this frame
                                        mark-stack   ; mark stack to restore
                                        mark-chain)) ; #f or a cached list of (cons tag mark-stack)
 
@@ -173,6 +173,7 @@
   (let ([mf (car *metacontinuation*)])
     (set! *metacontinuation* (cdr *metacontinuation*))
     (set! *mark-stack* (metacontinuation-frame-mark-stack mf))
+    (set! *empty-k* (metacontinuation-frame-empty-k mf))
     ;; resume
     (apply (metacontinuation-frame-resume-k/no-wind mf) results)))
 
@@ -188,7 +189,7 @@
             (pair? *metacontinuation*)
             (let ([current-mf (car *metacontinuation*)])
               (and (eq? tag (metacontinuation-frame-tag current-mf))
-                   (eq? k (metacontinuation-frame-empty-k current-mf))
+                   (eq? k *empty-k*)
                    current-mf)))
        =>
        (lambda (current-mf)
@@ -227,9 +228,10 @@
                                                (let ([mf (make-metacontinuation-frame tag
                                                                                       k
                                                                                       k/no-wind
-                                                                                      empty-k
+                                                                                      *empty-k*
                                                                                       *mark-stack*
                                                                                       #f)])
+                                                 (set! *empty-k* empty-k)
                                                  (set! *mark-stack* #f)
                                                  ;; push the metacontinuation:
                                                  (set! *metacontinuation* (cons mf *metacontinuation*))
@@ -309,7 +311,7 @@
 
 ;; ----------------------------------------
 
-(define-record continuation (composable? k tag mark-stack mc))
+(define-record continuation (composable? k tag mark-stack empty-k mc))
 
 (define call-with-current-continuation
   (case-lambda
@@ -328,6 +330,7 @@
                             k
                             tag
                             *mark-stack*
+                            *empty-k*
                             (extract-metacontinuation 'call-with-current-continuation tag)))))]))
 
 (define call-with-composable-continuation
@@ -346,6 +349,7 @@
                             k
                             tag
                             *mark-stack*
+                            *empty-k*
                             (extract-metacontinuation 'call-with-composable-continuation tag)))))]))
 
 ;; Applying a continuation calls this internal function:
@@ -390,6 +394,7 @@
    (continuation-mc c)
    (lambda ()
      (set! *mark-stack* (mark-stack-append (continuation-mark-stack c) *mark-stack*))
+     (set! *empty-k* (continuation-empty-k c))
      (apply (continuation-k c) args))))
 
 ;; Used as a "handler" for a prompt without a tag, which is used for
