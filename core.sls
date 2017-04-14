@@ -18,6 +18,10 @@
           continuation-mark-set->list
           current-continuation-marks
 
+          make-engine
+          engine-block
+          engine-return
+
           make-thread-cell
           thread-cell?
           thread-cell-ref
@@ -297,28 +301,12 @@
           check-not-unsafe-undefined/assign
 
           unsafe-string-length)
-  (import (rename (except (chezscheme)
-                          date? make-date
-                          list?
-                          dynamic-wind
-                          call-with-current-continuation)
-                  [date-second chez:date-second]
-                  [date-minute chez:date-minute]
-                  [date-hour chez:date-hour]
-                  [date-day chez:date-day]
-                  [date-month chez:date-month]
-                  [date-year chez:date-year]
-                  [date-week-day chez:date-week-day]
-                  [date-year-day chez:date-year-day]
-                  [make-parameter chez:make-parameter]
-                  [string-copy! chez:string-copy!]
-                  [void chez:void]
-                  [apply chez:apply]
-                  [procedure? chez:procedure?]
-                  [substring chez:substring]
-                  [gensym chez:gensym]
-                  [symbol->string chez:symbol->string]
-                  [random chez:random])
+  (import (chezpart)
+          (only (chezscheme)
+                format
+                fprintf
+                current-error-port
+                error)
           (only (chezscheme csv7)
                 record-field-accessor
                 record-field-mutator))
@@ -337,6 +325,7 @@
   (include "core-begin0.ss")
   (include "core-control.ss")
   (include "core-parameter.ss")
+  (include "core-engine.ss")
   (include "core-error.ss")
   (include "core-bytes.ss")
   (include "core-string.ss")

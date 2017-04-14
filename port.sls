@@ -92,26 +92,17 @@
            (1/peek-bytes peek-bytes)
            (1/close-output-port close-output-port)
            (1/open-output-string open-output-string)))
-  (import (core)
-          (rename (except (chezscheme)
-                          apply procedure?
-                          memv memq member
-                          output-port-buffer-mode
-                          list? input-port? output-port?
-                          open-input-file open-output-file abort
-                          current-output-port current-input-port current-error-port
-                          port-name string-copy! substring
-                          gensym symbol->string
-                          date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day
-                          random
-                          dynamic-wind
-                          call-with-current-continuation)
-                  [make-parameter chez:make-parameter]
-                  [void chez:void]
+  (import (chezpart)
+          (rename (only (chezscheme)
+                        read-char peek-char
+                        standard-input-port standard-output-port standard-error-port
+                        close-input-port close-output-port
+                        format
+                        error)
                   [standard-input-port current-input-port]
                   [standard-output-port current-output-port]
-                  [standard-error-port current-error-port]))
+                  [standard-error-port current-error-port])
+          (core))
   ;; Tie knots:
   (define (path? v) (is-path? v))
   (define (path->string v) (1/path->string v))

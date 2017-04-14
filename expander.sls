@@ -45,39 +45,7 @@
           current-library-collection-paths
           find-library-collection-paths
           flush)
-  (import (rename (except (chezscheme)
-                          apply procedure?
-                          member memv memq
-                          sort vector-sort vector-sort!
-                          filter force delay identifier?
-                          read-char peek-char
-                          close-output-port open-input-file open-output-file
-                          make-input-port make-output-port
-                          close-input-port
-                          error current-eval
-                          open-input-file
-                          error make-parameter
-                          current-input-port current-output-port
-                          open-input-string open-output-string get-output-string
-                          with-input-from-file with-output-to-file
-                          call-with-input-file call-with-output-file
-                          format printf
-                          write display newline
-                          list? input-port? output-port? port-name
-                          procedure? apply
-                          string-copy! substring
-                          gensym symbol->string
-                          date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day
-                          open-input-output-file
-                          void sleep random
-                          dynamic-wind
-                          call-with-current-continuation)
-                  [fprintf chez:fprintf]
-                  [current-error-port chez:current-error-port]
-                  [string->number chez:string->number]
-                  [file-exists? chez:file-exists?]
-                  [directory-list chez:directory-list])
+  (import (chezpart)
           (rename (core)
                   ;; These names are not public primitives, so "expander.scm"
                   ;; can define them:

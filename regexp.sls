@@ -21,28 +21,7 @@
                   (1/regexp-match regexp-match)
                   (1/byte-pregexp byte-pregexp)
                   (1/byte-pregexp? byte-pregexp?)))
-  (import (rename (except (chezscheme)
-                          apply procedure?
-                          read-char
-                          close-input-port close-output-port
-                          make-input-port make-output-port
-                          open-input-file open-output-file peek-char
-                          error make-parameter
-                          input-port? output-port?
-                          current-input-port current-output-port current-error-port
-                          open-input-string open-output-string get-output-string
-                          with-input-from-file with-output-to-file
-                          call-with-input-file call-with-output-file
-                          format printf fprintf
-                          write display newline port-name
-                          list? string-copy! substring string-set!
-                          gensym symbol->string
-                          date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day
-                          random
-                          dynamic-wind
-                          call-with-current-continuation)
-                  [void chez:void])
+  (import (chezpart)
           (core)
           (port))
   (define (char-graphic? x) #f)

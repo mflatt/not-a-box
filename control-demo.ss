@@ -1,5 +1,10 @@
 (import (core))
 
+;; Make sure there are no Chez-level exceptions handlers, especially
+;; trying the last one, but also in case we make mistakes along the
+;; way:
+(current-exception-state (create-exception-state (base-exception-handler)))
+
 (define-syntax check
   (syntax-rules ()
     [(_ a b)
@@ -205,9 +210,58 @@
              (list v syms))))
        (list (list 22 2) '(out0 out in out in in0)))
 
-;; Make sure there are no Chez-level excetions handlers when trying this
-;; last one:
-(current-exception-state (create-exception-state (base-exception-handler)))
+;; ----------------------------------------
+;; Engines
+
+(define e (make-engine (lambda () 'done) (gensym)))
+(check (cdr (e 10 list vector))
+       '(done))
+
+(define e-forever (make-engine (lambda () (let loop () (loop))) (gensym)))
+(check (vector? (e-forever 10 list vector))
+       #t)
+
+(define e-10 (make-engine (lambda () 
+                            (let loop ([n 10])
+                              (cond
+                               [(zero? n)
+                                (engine-return 1 2 3)
+                                (loop 0)]
+                               [else
+                                (engine-block)
+                                (loop (sub1 n))])))
+                          (gensym)))
+(check (let loop ([e e-10] [n 0])
+         (e 100
+            (lambda (remain a b c) (list a b c n))
+            (lambda (e)
+              (loop e (add1 n)))))
+       '(1 2 3 10))
+
+;; Check that winders are not run on engine swaps:
+(let ([pre 0]
+      [post 0])
+  (let ([e-10/dw (make-engine (lambda ()
+                                (let loop ([n 10])
+                                  (cond
+                                   [(zero? n)
+                                    (values 1 2 3 pre post)]
+                                   [else
+                                    (engine-block)
+                                    (dynamic-wind
+                                     (lambda () (set! pre (add1 pre)))
+                                     (lambda () (loop (sub1 n)))
+                                     (lambda () (set! post (add1 post))))])))
+                              (gensym))])
+    (check (let loop ([e e-10/dw] [n 0])
+             (e 100
+                (lambda (remain a b c pre t-post) (list a b c pre t-post post n))
+                (lambda (e)
+                  (loop e (add1 n)))))
+           '(1 2 3 10 0 10 10))))
+
+;; ----------------------------------------
+
 (call-with-continuation-prompt
  (lambda ()
    (error 'demo "this is an intended error"))

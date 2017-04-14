@@ -29,16 +29,8 @@
           variable-reference?
           variable-reference->instance
           variable-reference-constant?)
-  (import (except (chezscheme)
-                  apply procedure?
-                  error make-parameter list? equal? string-copy! substring
-                  gensym symbol->string string-set!
-                  vector-set! set-box!
-                  date? make-date date-second date-minute date-hour date-day date-month date-year
-                  date-week-day date-year-day
-                  void random
-                  dynamic-wind
-                  call-with-current-continuation)
+  (import (chezpart)
+          (only (chezscheme) printf)
           (core)
           (only (port)
                 path?

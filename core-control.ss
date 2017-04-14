@@ -688,3 +688,25 @@
      (lambda ()
        (set! *mark-stack* saved-mark-stack)
        (post)))))
+
+;; ----------------------------------------
+
+(define-record saved-metacontinuation (mc mark-stack))
+
+(define empty-metacontinuation (make-saved-metacontinuation '() #f))
+
+;; Similar to `call-with-current-continuation` plus
+;; applying an old continuation, but does not run winders;
+;; this operation makes sense for thread or engine context
+;; switches
+(define (swap-metacontinuation saved proc)
+  (call-in-empty-metacontinuation-frame
+   #f
+   fail-abort-to-delimit-continuation
+   (lambda ()
+     (let ([now-saved (make-saved-metacontinuation
+                       *metacontinuation*
+                       *mark-stack*)])
+       (set! *metacontinuation* (saved-metacontinuation-mc saved))
+       (set! *mark-stack* (saved-metacontinuation-mark-stack saved))
+       (proc now-saved)))))

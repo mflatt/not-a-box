@@ -639,7 +639,7 @@
                      [(not i) (values ht count)]
                      [else
                       (let-values ([(key l) (hamt-iterate-key+value ht i #f)])
-                        (let ([l (filter (lambda (p) (not (bwp-object? (car p)))) l)])
+                        (let ([l (chez:filter (lambda (p) (not (bwp-object? (car p)))) l)])
                           (loop (if (null? l)
                                     ht
                                     (hash-set ht key l))

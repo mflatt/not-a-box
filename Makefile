@@ -1,5 +1,5 @@
 SCHEME = scheme
-OPTIMIZE = # '(optimize-level 3)'
+UNSAFE = # '(optimize-level 3)'
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
@@ -10,25 +10,25 @@ SCHEMIFY_DEPS = schemify/schemify.rkt schemify/known.rkt schemify/match.rkt \
 CONVERT_DEPS = convert.rkt $(SCHEMIFY_DEPS)
 
 expander-demo: expander.so expander-demo.ss
-	$(SCHEME) core.so regexp.so port.so linklet.so expander.so expander-demo.ss
+	$(SCHEME) chezpart.so core.so regexp.so port.so linklet.so expander.so expander-demo.ss
 
 PRIMITIVES_TABLES = kernel-primitives.scm unsafe-primitives.scm flfxnum-primitives.scm
 
 expander.so: expander.sls expander.scm expander-compat.scm $(PRIMITIVES_TABLES) core.so port.so regexp.so linklet.so
-	$(COMP) '(compile-file "expander.sls")' | $(SCHEME) -q core.so port.so regexp.so linklet.so
+	$(COMP) '(compile-file "expander.sls")' | $(SCHEME) -q chezpart.so core.so port.so regexp.so linklet.so
 
 expander.scm: expander.rktl $(CONVERT_DEPS)
 	racket convert.rkt expander.rktl expander.scm
 
 
 linklet-demo: linklet.so
-	$(SCHEME) immutable-hash.so core.so regexp.so known-primitive.so schemify.so linklet.so linklet-demo.ss
+	$(SCHEME) chezpart.so core.so regexp.so known-primitive.so schemify.so linklet.so linklet-demo.ss
 
 linklet.so: linklet.sls schemify.so known-primitive.so
-	$(COMP) '(compile-file "linklet.sls")' | $(SCHEME) -q core.so regexp.so known-primitive.so schemify.so
+	$(COMP) '(compile-file "linklet.sls")' | $(SCHEME) -q chezpart.so core.so regexp.so known-primitive.so schemify.so
 
 schemify.so: schemify.sls schemify.scm known-primitive.so regexp.so
-	$(COMP) '(compile-file "schemify.sls")' | $(SCHEME) -q core.so port.so regexp.so known-primitive.so
+	$(COMP) '(compile-file "schemify.sls")' | $(SCHEME) -q chezpart.so core.so port.so regexp.so known-primitive.so
 
 schemify.scm: schemify.rktl $(CONVERT_DEPS)
 	racket convert.rkt schemify.rktl schemify.scm
@@ -41,33 +41,33 @@ known-primitive.sls: known-primitive.rkt
 
 
 regexp-demo: regexp.so regexp-demo.scm
-	$(SCHEME) core.so port.so regexp.so regexp-demo.ss
+	$(SCHEME) chezpart.so core.so port.so regexp.so regexp-demo.ss
 
 regexp.so: regexp.scm regexp.sls core.so port.so
-	$(COMP) '(compile-file "regexp.sls")' | $(SCHEME) -q core.so port.so
+	$(COMP) '(compile-file "regexp.sls")' | $(SCHEME) -q chezpart.so core.so port.so
 
 regexp.scm: regexp.rktl $(CONVERT_DEPS)
 	racket convert.rkt regexp.rktl regexp.scm
 
 
 port-demo: port.so
-	$(SCHEME) core.so port.so port-demo.ss
+	$(SCHEME) chezpart.so core.so port.so port-demo.ss
 
-port.so: port.scm port.sls core.so
-	$(COMP) '(compile-file "port.sls")' | $(SCHEME) -q core.so
+port.so: port.scm port.sls chezpart.so core.so
+	$(COMP) '(compile-file "port.sls")' | $(SCHEME) -q chezpart.so core.so
 
 port.scm: port.rktl $(CONVERT_DEPS)
 	racket convert.rkt port.rktl port.scm
 
 
 hash-demo: core.so
-	$(SCHEME) core.so hash-demo.ss
+	$(SCHEME) chezpart.so core.so hash-demo.ss
 
 struct-demo: core.so
-	$(SCHEME) core.so struct-demo.ss
+	$(SCHEME) chezpart.so core.so struct-demo.ss
 
 control-demo: core.so
-	$(SCHEME) core.so control-demo.ss
+	$(SCHEME) chezpart.so core.so control-demo.ss
 
 CORE_SRCS = core-constant.ss \
             core-hash-code.ss \
@@ -80,6 +80,7 @@ CORE_SRCS = core-constant.ss \
             core-parameter.ss \
             core-begin0.ss \
             core-control.ss \
+            core-engine.ss \
             core-error.ss \
             core-bytes.ss \
             core-string.ss \
@@ -97,8 +98,11 @@ CORE_SRCS = core-constant.ss \
             core-system.ss \
             core-unsafe.ss
 
-core.so: core.sls $(CORE_SRCS)
-	$(COMP) $(OPTIMIZE) '(compile-file "core.sls")' | $(SCHEME) -q
+core.so: chezpart.so core.sls $(CORE_SRCS)
+	$(COMP) $(UNSAFE) '(compile-file "core.sls")' | $(SCHEME) -q
+
+chezpart.so: chezpart.sls
+	$(COMP) '(compile-file "chezpart.sls")' | $(SCHEME) -q
 
 # To build various ".rktl" files from sources, which requires
 # a linklet-based Racket repo clone identified by a

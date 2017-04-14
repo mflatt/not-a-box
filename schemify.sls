@@ -2,28 +2,7 @@
   (export schemify-linklet
           schemify-body
           prim-knowns)
-  (import (rename (except (chezscheme)
-                          apply procedure?
-                          list? read-char
-                          close-input-port close-output-port
-                          make-input-port make-output-port
-                          open-input-file open-output-file peek-char
-                          error make-parameter input-port? output-port?
-                          current-input-port current-output-port current-error-port
-                          open-input-string open-output-string get-output-string
-                          with-input-from-file with-output-to-file
-                          call-with-input-file call-with-output-file
-                          format printf fprintf
-                          write display newline port-name
-                          string-copy! substring
-                          gensym symbol->string
-                          set-box!
-                          date? make-date date-second date-minute date-hour date-day date-month date-year
-                          date-week-day date-year-day
-                          random
-                          dynamic-wind
-                          call-with-current-continuation)
-                  [void chez:void])
+  (import (chezpart)
           (rename (core)
                   [correlated? core:correlated?]
                   [correlated-e core:correlated-e])
