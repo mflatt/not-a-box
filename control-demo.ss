@@ -213,11 +213,11 @@
 ;; ----------------------------------------
 ;; Engines
 
-(define e (make-engine (lambda () 'done) (gensym)))
+(define e (make-engine (lambda () 'done)))
 (check (cdr (e 10 list vector))
        '(done))
 
-(define e-forever (make-engine (lambda () (let loop () (loop))) (gensym)))
+(define e-forever (make-engine (lambda () (let loop () (loop)))))
 (check (vector? (e-forever 10 list vector))
        #t)
 
@@ -229,8 +229,7 @@
                                 (loop 0)]
                                [else
                                 (engine-block)
-                                (loop (sub1 n))])))
-                          (gensym)))
+                                (loop (sub1 n))])))))
 (check (let loop ([e e-10] [n 0])
          (e 100
             (lambda (remain a b c) (list a b c n))
@@ -251,14 +250,45 @@
                                     (dynamic-wind
                                      (lambda () (set! pre (add1 pre)))
                                      (lambda () (loop (sub1 n)))
-                                     (lambda () (set! post (add1 post))))])))
-                              (gensym))])
+                                     (lambda () (set! post (add1 post))))]))))])
     (check (let loop ([e e-10/dw] [n 0])
              (e 100
                 (lambda (remain a b c pre t-post) (list a b c pre t-post post n))
                 (lambda (e)
                   (loop e (add1 n)))))
            '(1 2 3 10 0 10 10))))
+
+;; ----------------------------------------
+;; Thread cells (which are really engine cells):
+
+(let ([ut (make-thread-cell 1)]
+      [pt (make-thread-cell 100 #t)])
+  (define (gen)
+    (define u-old (thread-cell-ref ut))
+    (define p-old (thread-cell-ref pt))
+    (thread-cell-set! ut (add1 u-old))
+    (thread-cell-set! pt (add1 p-old))
+    (list u-old
+          p-old
+          (make-engine gen)
+          (thread-cell-ref ut)
+          (thread-cell-ref pt)))
+  (define l1 ((make-engine gen)
+              100
+              (lambda (remain l) l)
+              (lambda (e) (error 'engine "oops"))))
+  (define l2 ((list-ref l1 2)
+              100
+              (lambda (remain l) l)
+              (lambda (e) (error 'engine "oops"))))
+  (check (list-ref l1 0) 1)
+  (check (list-ref l1 1) 100)
+  (check (list-ref l1 3) 2)
+  (check (list-ref l1 4) 101)
+  (check (list-ref l2 0) 1)
+  (check (list-ref l2 1) 101)
+  (check (list-ref l2 3) 2)
+  (check (list-ref l2 4) 102))
 
 ;; ----------------------------------------
 

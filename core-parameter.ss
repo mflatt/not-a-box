@@ -10,7 +10,7 @@
   (let loop ([ht (parameterization-ht p)] [args args])
     (cond
      [(null? args) (make-parameterization ht)]
-     [else (loop (hamt-set ht (car args) (make-thread-cell (cadr args)))
+     [else (loop (hamt-set ht (car args) (make-thread-cell (cadr args) #t))
                  (cddr args))])))
 
 (define (parameter-cell key)
@@ -27,7 +27,7 @@
   (case-lambda
     [(v) (make-parameter v #f)]
     [(v guard)
-     (let ([default-c (make-thread-cell v)])
+     (let ([default-c (make-thread-cell v #t)])
        (define self
          (case-lambda
            [() 
