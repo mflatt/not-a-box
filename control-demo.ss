@@ -214,11 +214,11 @@
 ;; Engines
 
 (define e (make-engine (lambda () 'done)))
-(check (cdr (e 20 list vector))
+(check (cdr (e 20 void list vector))
        '(done))
 
 (define e-forever (make-engine (lambda () (let loop () (loop)))))
-(check (vector? (e-forever 10 list vector))
+(check (vector? (e-forever 10 void list vector))
        #t)
 
 (define e-10 (make-engine (lambda () 
@@ -230,12 +230,14 @@
                                [else
                                 (engine-block)
                                 (loop (sub1 n))])))))
-(check (let loop ([e e-10] [n 0])
-         (e 100
-            (lambda (remain a b c) (list a b c n))
-            (lambda (e)
-              (loop e (add1 n)))))
-       '(1 2 3 10))
+(check (let ([started 0])
+         (let loop ([e e-10] [n 0])
+           (e 100
+              (lambda () (set! started (add1 started)))
+              (lambda (remain a b c) (list a b c n started))
+              (lambda (e)
+                (loop e (add1 n))))))
+       '(1 2 3 10 11))
 
 ;; Check that winders are not run on engine swaps:
 (let ([pre 0]
@@ -253,6 +255,7 @@
                                      (lambda () (set! post (add1 post))))]))))])
     (check (let loop ([e e-10/dw] [n 0])
              (e 100
+                void
                 (lambda (remain a b c pre t-post) (list a b c pre t-post post n))
                 (lambda (e)
                   (loop e (add1 n)))))
@@ -275,10 +278,12 @@
           (thread-cell-ref pt)))
   (define l1 ((make-engine gen)
               100
+              void
               (lambda (remain l) l)
               (lambda (e) (error 'engine "oops"))))
   (define l2 ((list-ref l1 2)
               100
+              void
               (lambda (remain l) l)
               (lambda (e) (error 'engine "oops"))))
   (check (list-ref l1 0) 1)
@@ -297,7 +302,7 @@
 (let ([e (parameterize ([my-param 'set])
            (make-engine (lambda () (my-param))))])
   (check 'init (my-param))
-  (check 'set (e 100 (lambda (remain v) v) (lambda (e) (error 'engine "oops")))))
+  (check 'set (e 100 void (lambda (remain v) v) (lambda (e) (error 'engine "oops")))))
 
 ;; ----------------------------------------
 
