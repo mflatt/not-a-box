@@ -9,6 +9,7 @@
 
           make-continuation-prompt-tag
           default-continuation-prompt-tag
+          root-continuation-prompt-tag
           call-with-continuation-prompt
           abort-current-continuation
           continuation-prompt-available?

@@ -130,12 +130,14 @@
      (create-continuation-prompt-tag name)]))
      
 (define (default-continuation-prompt-tag) the-default-continuation-prompt-tag)
+(define (root-continuation-prompt-tag) the-root-continuation-prompt-tag)
 
 ;; FIXME: add caching to avoid full traversal
 (define (continuation-prompt-available? tag)
   (unless (continuation-prompt-tag? tag)
     (raise-argument-error 'continuation-prompt-tag-available? "continuation-prompt-tag?" tag))
   (or (eq? tag the-default-continuation-prompt-tag)
+      (eq? tag the-root-continuation-prompt-tag)
       (let loop ([mc *metacontinuation*])
         (cond
          [(null? mc)
@@ -170,12 +172,15 @@
 
 (define (resume-metacontinuation results)
   ;; pop a metacontinuation frame
-  (let ([mf (car *metacontinuation*)])
-    (set! *metacontinuation* (cdr *metacontinuation*))
-    (set! *mark-stack* (metacontinuation-frame-mark-stack mf))
-    (set! *empty-k* (metacontinuation-frame-empty-k mf))
-    ;; resume
-    (apply (metacontinuation-frame-resume-k/no-wind mf) results)))
+  (cond
+   [(null? *metacontinuation*) (exit)]
+   [else
+    (let ([mf (car *metacontinuation*)])
+      (set! *metacontinuation* (cdr *metacontinuation*))
+      (set! *mark-stack* (metacontinuation-frame-mark-stack mf))
+      (set! *empty-k* (metacontinuation-frame-empty-k mf))
+      ;; resume
+      (apply (metacontinuation-frame-resume-k/no-wind mf) results))]))
 
 (define (call-in-empty-metacontinuation-frame tag handler proc)
   ;; Call `proc` in an empty metacontinuation frame, reifying the
@@ -415,7 +420,8 @@
     (let loop ([current-mc current-mc] [accum null])
       (cond
        [(null? current-mc)
-        (unless (eq? tag the-default-continuation-prompt-tag)
+        (unless (or (eq? tag the-default-continuation-prompt-tag)
+                    (eq? tag the-root-continuation-prompt-tag))
           (raise-arguments-error 'apply-continuaiton
                                  "continuation includes no prompt with the given tag"
                                  "tag" tag))

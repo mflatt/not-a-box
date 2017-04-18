@@ -11,7 +11,9 @@
 (define root-thread-cell-values (make-weak-eq-hashtable))
 
 (define (make-engine thunk)
-  (create-engine thunk (new-engine-thread-cell-values)))
+  (let ([paramz (current-parameterization)])
+    (create-engine (lambda () (with-continuation-mark parameterization-key paramz (thunk)))
+                   (new-engine-thread-cell-values))))
 
 (define (create-engine thunk thread-cell-values)
   (lambda (ticks complete expire)

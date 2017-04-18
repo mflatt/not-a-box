@@ -214,7 +214,7 @@
 ;; Engines
 
 (define e (make-engine (lambda () 'done)))
-(check (cdr (e 10 list vector))
+(check (cdr (e 20 list vector))
        '(done))
 
 (define e-forever (make-engine (lambda () (let loop () (loop)))))
@@ -289,6 +289,15 @@
   (check (list-ref l2 1) 101)
   (check (list-ref l2 3) 2)
   (check (list-ref l2 4) 102))
+
+;; ----------------------------------------
+;; Parameters:
+
+(define my-param (make-parameter 'init))
+(let ([e (parameterize ([my-param 'set])
+           (make-engine (lambda () (my-param))))])
+  (check 'init (my-param))
+  (check 'set (e 100 (lambda (remain v) v) (lambda (e) (error 'engine "oops")))))
 
 ;; ----------------------------------------
 

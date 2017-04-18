@@ -13,13 +13,16 @@
      [else (loop (hamt-set ht (car args) (make-thread-cell (cadr args) #t))
                  (cddr args))])))
 
+(define (current-parameterization)
+  (continuation-mark-set-first
+   #f
+   parameterization-key
+   empty-parameterization
+   the-root-continuation-prompt-tag))
+
 (define (parameter-cell key)
   (hamt-ref (parameterization-ht
-             (continuation-mark-set-first
-              #f
-              parameterization-key
-              empty-parameterization
-              the-root-continuation-prompt-tag))
+             (current-parameterization))
             key
             #f))
 
