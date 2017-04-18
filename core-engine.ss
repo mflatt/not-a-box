@@ -7,7 +7,7 @@
 ;; Don't mix Chez engines with this implementation, because we take
 ;; over the timer.
 
-(define-record engine-state (mc complete expire thread-cell-values))
+(define-record engine-state (mc complete expire thread-cell-values reset-handler))
 (define current-engine-state (chez:make-parameter #f))
 
 (define root-thread-cell-values (make-weak-eq-hashtable))
@@ -28,18 +28,21 @@
     (swap-metacontinuation
      empty-metacontinuation
      (lambda (saves)
-       (current-engine-state (make-engine-state saves complete expire thread-cell-values))
-       (call-with-current-continuation
-        (lambda (k)
-          (parameterize ([reset-handler (lambda () (|#%app| k))]
-                         [timer-interrupt-handler engine-block])
-            (set-timer ticks)
-            (proc prefix))))))))
+       (current-engine-state (make-engine-state saves complete expire thread-cell-values (reset-handler)))
+       (reset-handler (lambda ()
+                        (if (current-engine-state)
+                            (engine-return (void))
+                            (exit))))
+       (timer-interrupt-handler engine-block)
+       (set-timer ticks)
+       (proc prefix)))))
 
 (define (engine-block)
+  (timer-interrupt-handler void)
   (let ([es (current-engine-state)])
     (unless es
       (error 'engine-block "not currently running an engine"))
+    (reset-handler (engine-state-reset-handler es))
     ;; Extra pair of parens awround swap is to apply a prefix
     ;; function on swapping back in:
     ((swap-metacontinuation
@@ -56,9 +59,11 @@
          (engine-state-thread-cell-values es))))))))
 
 (define (engine-return . args)
+  (timer-interrupt-handler void)
   (let ([es (current-engine-state)])
     (unless es
       (error 'engine-return "not currently running an engine"))
+    (reset-handler (engine-state-reset-handler es))
     (swap-metacontinuation
      (engine-state-mc es)
      (lambda (saves)

@@ -24,9 +24,6 @@
 
 (define (chaperone-struct-unsafe-undefined v) v)
 
-(define (check-for-break) (void))
-(define break-enabled-key 'break-enabled-key)
-
 (define (call-with-continuation-barrier proc) (proc))
 
 (define call-with-escape-continuation
@@ -177,9 +174,6 @@
 (define compile-enforce-module-constants
   (make-parameter #t))
 
-(define current-thread-group
-  (make-parameter 'thread-group))
-
 (define (load-extension f) (error "no load-extension"))
 
 (define (cache-configuration id proc) (proc))
@@ -224,26 +218,10 @@
    [(cdr p) (set-cdr! p #f) #f]
    [else #f]))
 
-(define-values (prop:evt evt? evt-ref) (make-struct-type-property 'evt))
-(define (wrap-evt e v) e)
-(define always-evt 'always)
-(define (sleep . args) (void))
-(define (thread thunk) (void))
-(define (current-thread) 't)
-(define (thread-wait t) t)
 (define (kill-thread t) (void))
-(define (thread-suspend t) (void))
 (define (thread-resume t) (void))
 (define (thread-send t v) t)
 (define (thread-receive-evt t) 'thread-receive-evt)
-(define (thread-group? v) #f)
-(define (make-thread-group . args) 'thread-group)
-(define (make-semaphore) 'sema)
-(define (semaphore-post s) (void))
-(define (semaphore-wait s) (void))
-(define (sync . args) #f)
-(define (sync/timeout t . args) #f)
-(define (semaphore-peek-evt sema) 'sema-peek)
 (define filesystem-change-evt
   (case-lambda
    [(p) (error 'filesystem-change-evt "unsupported")]
@@ -254,9 +232,6 @@
    [(s proc) (proc)]
    [(s proc try-fail) (proc)]
    [(s proc try-fail . args) (apply proc args)]))
-
-(define (channel? v) #f)
-(define (channel-put-evt ch v) #f)
 
 (define (srcloc->string s)
   (and (srcloc-source s)
@@ -374,6 +349,7 @@
                          [datum->correlated datum->syntax]
                          [correlated-property syntax-property]
                          [correlated-property-symbol-keys syntax-property-symbol-keys])
+                 (thread)
                  (port)
                  (regexp)
                  (linklet)))
@@ -598,22 +574,10 @@
 
    make-ephemeron
    ephemeron-value
-   prop:evt evt? evt-ref
-   wrap-evt
-   always-evt
-   current-thread
-   thread-wait
    thread-send
-   make-semaphore
-   semaphore-post
-   sync
-   sync/timeout
-   semaphore-peek-evt
    filesystem-change-evt
    filesystem-change-evt-cancel
    call-with-semaphore
-   channel?
-   channel-put-evt
 
    srcloc->string
    

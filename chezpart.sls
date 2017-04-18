@@ -25,7 +25,7 @@
                            call-with-current-continuation
                            make-engine engine-block engine-return
                            current-eval
-                           sleep)
+                           sleep thread?)
                    [make-parameter chez:make-parameter]
                    [void chez:void]
                    [date-second chez:date-second]

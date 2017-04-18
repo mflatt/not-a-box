@@ -6,13 +6,19 @@
          "schemify/known.rkt"
          "known-primitive.rkt")
 
+(define skip-export? #f)
+
 (define-values (in-file out-file)
   (command-line
+   #:once-each
+   [("--skip-export") "Don't generate an `export` form"
+    (set! skip-export? #t)]
    #:args
    (in-file out-file)
    (values in-file out-file)))
 
-(define l (cdddr (call-with-input-file* in-file read)))
+(define content (call-with-input-file* in-file read))
+(define l (cdddr content))
 
 (define lifts (make-hash))
 (define ordered-lifts null)
@@ -162,6 +168,10 @@
    out-file
    #:exists 'truncate
    (lambda ()
+     (unless skip-export?
+       ;; Write out exports
+       (pretty-write
+        `(export (rename ,@(caddr content)))))
      ;; Write out lifted regexp and hash-table literals
      (for ([k (in-list (reverse ordered-lifts))])
        (define v (hash-ref lifts k))

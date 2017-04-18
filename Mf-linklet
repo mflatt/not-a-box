@@ -7,11 +7,12 @@ local-linklets: schemify.rktl
 
 all-linklets:
 	$(MAKE) -f Mf-linklet local-linklets
-	$(MAKE) -f Mf-linklet expander
+	$(MAKE) -f Mf-linklet thread
 	$(MAKE) -f Mf-linklet port
 	$(MAKE) -f Mf-linklet regexp
+	$(MAKE) -f Mf-linklet expander
 
-schemify.rktl: $(SCHEMIFY_DEPS)
+schemify.rktl: $(SCHEMIFY_SRC_DEPS)
 	$(LINKLET_RACKET)/racket/bin/racket $(LINKLET_RACKET)/pkgs/expander/bootstrap-run.rkt -t schemify/schemify.rkt -c compiled/cache-src ++knot read - -s -x -o schemify.rktl
 
 expander:
@@ -25,3 +26,7 @@ port:
 regexp:
 	cd $(LINKLET_RACKET)/pkgs/regexp ; $(MAKE) regexp-src
 	cp $(LINKLET_RACKET)/pkgs/regexp/compiled/regexp.rktl .
+
+thread:
+	cd $(LINKLET_RACKET)/pkgs/thread ; $(MAKE) thread-src
+	cp $(LINKLET_RACKET)/pkgs/thread/compiled/thread.rktl .

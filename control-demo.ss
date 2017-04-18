@@ -1,10 +1,5 @@
 (import (core))
 
-;; Make sure there are no Chez-level exceptions handlers, especially
-;; trying the last one, but also in case we make mistakes along the
-;; way:
-(current-exception-state (create-exception-state (base-exception-handler)))
-
 (define-syntax check
   (syntax-rules ()
     [(_ a b)

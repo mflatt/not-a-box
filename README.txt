@@ -13,8 +13,7 @@ The files:
          Racket code.
 
  core-*.ss - Part of "core.sls" (via `include`) to implement core data
-         structures (especially immutable hash tables), structs,
-         equality (with `prop:equal+hash` extension), etc.
+         structures (especially immutable hash tables), structs, etc.
 
  *.scm - Either a conversion from a ".rktl" file or a temporary
          compatibility layer to be `include`d into an ".sls" library.
@@ -82,18 +81,14 @@ Status and thoughts on various Racket subsystems:
    is not obviously a plain procedure; with the analysis in
    "schemify/schemify.rkt", the indirection is not needed often in a
    typical program, and the overhead appears to be light when it is
-   needed.
-
-   The rest of the implementation of Racket structures looks
+   needed. The rest of the implementation of Racket structures looks
    straightforward.
 
- * Delimited continuations and continuation marks can be implemented
-   in terms of Chez primitives. It looks like there's room for
-   improvement by building in some support for continuation marks,
-   though.
-
- * The thread and event layer should be relatively easy to reimplement
-   using Chez engines.
+ * Racket's delimited continuations, continuation marks, threads, and
+   events are mostly in place (see "core-control.ss",
+   "core-engine.ss", and the source for "thread.rktl"), but to
+   integrate I/O, the scheduler needs access to the OS's
+   select()/epoll()/kqueue()/WaitMultipleEvents().
 
  * The Racket FFI looks a lot like the Chez FFI, so I expect that to
    mostly work, although there may be allocation issues.
