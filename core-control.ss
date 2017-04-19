@@ -119,7 +119,7 @@
 (define-record applying (c args))   ; applying a non-composable continuation
 
 (define-record-type (continuation-prompt-tag create-continuation-prompt-tag continuation-prompt-tag?)
-  (fields name))
+  (fields (mutable name))) ; mutable => constructor generates fresh instances
 
 (define the-default-continuation-prompt-tag (create-continuation-prompt-tag 'default))
 
@@ -171,8 +171,8 @@
 (define (make-default-abort-handler tag)
   (lambda (abort-thunk)
     (unless (and (procedure? abort-thunk)
-                 (procedure-arity-includes? abort-thunk 1))
-      (raise-argument-error 'default-abort-handler "(procedure-arity-includes/c 1)" abort-thunk))
+                 (procedure-arity-includes? abort-thunk 0))
+      (raise-argument-error 'default-continuation-prompt-handler "(procedure-arity-includes/c 0)" abort-thunk))
     (call-with-continuation-prompt abort-thunk tag #f)))
 
 (define (resume-metacontinuation results)
@@ -608,12 +608,11 @@
                                   (continuation-mark-set-marks marks))
                              (current-marks))])
        (cond
-        [(null? markss)
+        [(or (null? markss)
+             (eq? (caar markss) prompt-tag))
          (if (eq? key parameterization-key)
              empty-parameterization
              none-v)]
-        [(eq? (caar markss) prompt-tag)
-         none-v]
         [else
          (let loop ([marks (cdar markss)])
            (cond

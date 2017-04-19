@@ -174,6 +174,8 @@
 (define compile-enforce-module-constants
   (make-parameter #t))
 
+(define (load s) ((current-load) s #f))
+
 (define (load-extension f) (error "no load-extension"))
 
 (define (cache-configuration id proc) (proc))
@@ -435,8 +437,8 @@
 
    primitive-table))
 
-;; Table of things temporarily defined here; since these are
-;; not put in the evaluation einvironment with `(import (core))`,
+;; Table of things temporarily defined here; since these are not put
+;; in the evaluation environment with `(import (core) (thread) ....)`,
 ;; each must be specifically defined
 (define compat-table
   (make-primitive-table
@@ -452,21 +454,9 @@
    unsafe-chaperone-procedure
    unsafe-impersonate-procedure
 
-   check-for-break
-   break-enabled-key
-   make-thread-cell
-
-   exception-handler-key
-
-   abort-current-continuation
-   make-continuation-prompt-tag
-   default-continuation-prompt-tag
-   continuation-prompt-available?
-   call-with-continuation-prompt
    call-with-continuation-barrier
    call-with-escape-continuation
 
-   box-immutable
    immutable?
 
    equal-secondary-hash-code
@@ -545,6 +535,7 @@
 
    current-compile
    current-load
+   load
    load-on-demand-enabled
 
    print-as-expression

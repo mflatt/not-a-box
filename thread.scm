@@ -1609,11 +1609,13 @@
 (define break-enabled-default-cell (make-thread-cell #t #t))
 (define current-break-enabled-cell
   (lambda ()
-    (continuation-mark-set-first
-     #f
-     1/break-enabled-key
-     break-enabled-default-cell
-     (|#%app| root-continuation-prompt-tag))))
+    (let ((or-part_2
+           (continuation-mark-set-first
+            #f
+            1/break-enabled-key
+            break-enabled-default-cell
+            (|#%app| root-continuation-prompt-tag))))
+      (if or-part_2 or-part_2 break-enabled-default-cell))))
 (define 1/check-for-break
   (lambda ()
     (let ((t_28 (1/current-thread)))
@@ -1846,9 +1848,9 @@
 (define not-matching-select-waiter
   (lambda (w+b/v_0)
     (let ((w_9 (car w+b/v_0)))
-      (let ((or-part_2 (not (channel-select-waiter? w_9))))
-        (if or-part_2
-          or-part_2
+      (let ((or-part_3 (not (channel-select-waiter? w_9))))
+        (if or-part_3
+          or-part_3
           (not
            (let ((app_4097 (1/current-thread)))
              (eq? app_4097 (channel-select-waiter-thread w_9)))))))))
@@ -1923,12 +1925,12 @@
   (lambda (who_1 timeout_0 args_0)
     (begin
       (if ((lambda (timeout_1)
-             (let ((or-part_3 (not timeout_1)))
-               (if or-part_3
-                 or-part_3
-                 (let ((or-part_4 (if (real? timeout_1) (>= timeout_1 0) #f)))
-                   (if or-part_4
-                     or-part_4
+             (let ((or-part_4 (not timeout_1)))
+               (if or-part_4
+                 or-part_4
+                 (let ((or-part_5 (if (real? timeout_1) (>= timeout_1 0) #f)))
+                   (if or-part_5
+                     or-part_5
                      (if (procedure? timeout_1)
                        (procedure-arity-includes? timeout_1 0)
                        #f))))))
@@ -1960,8 +1962,8 @@
                                  (let ((app_4102 (cdr args_1)))
                                    (loop_4
                                     app_4102
-                                    (let ((or-part_5 first_0))
-                                      (if or-part_5 or-part_5 sr_0))
+                                    (let ((or-part_6 first_0))
+                                      (if or-part_6 or-part_6 sr_0))
                                     sr_0)))))))))))
                  loop_4)
                 args_0
@@ -2303,8 +2305,8 @@
             (begin
               (begin
                 (if (if (all-threads-poll-done?) (maybe-future-work?) #f)
-                  (let ((or-part_6 (post-idle)))
-                    (if or-part_6 or-part_6 (process-sleep)))
+                  (let ((or-part_7 (post-idle)))
+                    (if or-part_7 or-part_7 (process-sleep)))
                   (void))
                 (begin
                   (let ((child_2 (thread-group-next! g_0)))
@@ -2401,11 +2403,11 @@
       (= app_4158 num-threads-in-groups))))
 (define maybe-future-work?
   (lambda ()
-    (let ((or-part_7 (positive? num-threads-in-groups)))
-      (if or-part_7
-        or-part_7
-        (let ((or-part_8 (not (is-empty? sleeping-threads))))
-          (if or-part_8 or-part_8 (any-idle-waiters?)))))))
+    (let ((or-part_8 (positive? num-threads-in-groups)))
+      (if or-part_8
+        or-part_8
+        (let ((or-part_9 (not (is-empty? sleeping-threads))))
+          (if or-part_9 or-part_9 (any-idle-waiters?)))))))
 (define process-sleep
   (lambda ()
     (let ((ts_0 (thread-group-all-threads root-thread-group null)))

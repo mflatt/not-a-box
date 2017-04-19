@@ -35,6 +35,7 @@
    box-immutable
    box?
    break-enabled-key
+   break-thread
    build-path
    byte-pregexp
    byte-pregexp?

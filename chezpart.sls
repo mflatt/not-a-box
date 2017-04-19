@@ -5,7 +5,7 @@
            (rename (except (chezscheme)
                            sort vector-sort vector-sort!
                            force delay identifier?
-                           memv memq member
+                           memv memq
                            output-port-buffer-mode
                            read-char peek-char
                            make-input-port make-output-port
@@ -24,7 +24,7 @@
                            dynamic-wind
                            call-with-current-continuation
                            make-engine engine-block engine-return
-                           current-eval
+                           current-eval load
                            sleep thread?)
                    [make-parameter chez:make-parameter]
                    [void chez:void]
@@ -48,5 +48,6 @@
                    [string->number chez:string->number]
                    [file-exists? chez:file-exists?]
                    [directory-list chez:directory-list]
-                   [filter chez:filter]))))
+                   [filter chez:filter]
+                   [member chez:member]))))
 

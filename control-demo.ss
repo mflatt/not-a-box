@@ -10,6 +10,10 @@
 (define tag1 (make-continuation-prompt-tag 'tag1))
 (define tag2 (make-continuation-prompt-tag 'tag2))
 
+(check (eq? (make-continuation-prompt-tag)
+            (make-continuation-prompt-tag))
+       #f)
+
 (check (call-with-continuation-prompt
         (lambda () 10))
        10)
@@ -86,6 +90,19 @@
                 tag1))))
           tag1))
        'also-ok)
+
+(check (let ([t (make-continuation-prompt-tag)])
+         (call-with-continuation-prompt
+          (lambda ()
+            (call-with-continuation-prompt
+             (lambda ()
+               (abort-current-continuation
+                t
+                17))
+             (make-continuation-prompt-tag)))
+          t
+          values))
+       17)
 
 (check (let ([syms null])
          (let ([v (dynamic-wind

@@ -1,6 +1,7 @@
 (define-record struct-type-prop (name guard supers))
 
 (define rtd-props (make-weak-eq-hashtable))
+(define prefabs #f)
 
 (define make-struct-type-property
   (case-lambda
@@ -27,6 +28,10 @@
 (define root-inspector (new-inspector #f))
 
 (define (inspector-superior? sup-insp sub-insp)
+  (unless (inspector? sup-insp)
+    (raise-argument-error 'inspector-superior? "inspector?" sup-insp))
+  (unless (inspector? sub-insp)
+    (raise-argument-error 'inspector-superior? "inspector?" sub-insp))
   (if (eq? sub-insp root-inspector)
       #f
       (let ([parent (inspector-parent sub-insp)])
@@ -60,21 +65,67 @@
     [(name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard)
      (make-struct-type name parent-rtd fields auto-fields auto-val props insp proc-spec immutables guard name)]
     [(name parent-rtd fields-count auto-fields auto-val props insp proc-spec immutables guard constructor-name)
+     (unless (symbol? name)
+       (raise-argument-error 'make-struct-type "symbol?" name))
+     (unless (or (not parent-rtd)
+                 (struct-type? parent-rtd))
+       (raise-argument-error 'make-struct-type "(or/c #f struct-type?)" parent-rtd))
+     (unless (exact-nonnegative-integer? fields-count)
+       (raise-argument-error 'make-struct-type "exact-nonnegative-integer?" fields-count))
+     (unless (exact-nonnegative-integer? auto-fields)
+       (raise-argument-error 'make-struct-type "exact-nonnegative-integer?" auto-fields))
      (unless (zero? auto-fields)
        (error 'make-struct-type "auto fields not supported"))
+     (when (eq? insp 'prefab)
+       (unless (or (not parent-rtd)
+                   (eq? (inspector-ref parent-rtd) 'prefab))
+         (raise-arguments-error 'make-struct-type
+                                "generative supertype disallowed for non-generative structure type"
+                                "structure type name" name)))
      (let* ([fields (let loop ([fields fields-count])
                       (if (zero? fields)
                           '()
                           (cons (string->symbol (format "a~a" fields))
                                 (loop (sub1 fields)))))]
-            [rtd (if parent-rtd
-                     (make-record-type parent-rtd (symbol->string name) fields)
-                     (make-record-type (symbol->string name) fields))]
+            [prefab-name (and (eq? insp 'prefab)
+                              (let* ([l (if parent-rtd
+                                            (getprop (record-type-uid parent-rtd) 'prefab-name)
+                                            null)]
+                                     [l (if (= (length immutables) fields-count)
+                                            l
+                                            (cons (list->vector
+                                                   (let loop ([i 0])
+                                                     (cond
+                                                      [(= i fields-count) null]
+                                                      [(chez:member i immutables) (loop (add1 i))]
+                                                      [else (cons i (loop (add1 i)))])))
+                                                  l))]
+                                     [l (if (zero? auto-fields)
+                                            l
+                                            (cons (list auto-fields l)
+                                                  l))]
+                                     [l (cons fields-count l)]
+                                     [l (cons name l)])
+                                l))]
+            [rtd (cond
+                  [(and prefab-name
+                        (begin
+                          (unless prefabs (set! prefabs (make-weak-hash)))
+                          #t)
+                        (hash-ref prefabs prefab-name #f))
+                   => (lambda (rtd) rtd)]
+                  [parent-rtd
+                   (make-record-type parent-rtd (symbol->string name) fields)]
+                  [else
+                   (make-record-type (symbol->string name) fields)])]
             [parent-count (if parent-rtd
                               (struct-type-field-count parent-rtd)
                               0)])
        (struct-type-install-properties! rtd name fields-count auto-fields parent-rtd
                                         props insp proc-spec immutables guard constructor-name)
+       (when prefab-name
+         (putprop (record-type-uid rtd) 'prefab-name prefab-name)
+         (hash-set! prefabs prefab-name rtd))
        (values rtd
                (record-constructor rtd)
                (lambda (v) (record? v rtd))
@@ -194,6 +245,7 @@
   (let ([insp (inspector-ref rtd)])
     (and (not (eq? insp none))
          (or (not insp)
+             (eq? insp 'prefab)
              (inspector-superior? (current-inspector) insp))
          (let ([p-rtd (record-type-parent rtd)])
            (or (not p-rtd)
@@ -243,6 +295,7 @@
                                 [len (vector-length (record-type-field-names rtd))])
                             (cond
                              [(or (not insp)
+                                  (eq? insp 'prefab)
                                   (and (not (eq? insp none))
                                        (inspector-superior? (current-inspector) insp)))
                               ;; A transparent region
@@ -263,6 +316,7 @@
                        [rec-pos (- rec-pos len)])
                   (cond
                    [(or (not insp)
+                        (eq? insp 'prefab)
                         (and (not (eq? insp none))
                              (inspector-superior? (current-inspector) insp)))
                     ;; Copy over a transparent region

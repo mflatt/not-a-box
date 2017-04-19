@@ -7,6 +7,8 @@
 (define empty-parameterization (make-parameterization empty-hasheq))
 
 (define (extend-parameterization p . args)
+  (unless (parameterization? p)
+    (raise-argument-error 'extend-parameterization "parameterization?" p))
   (let loop ([ht (parameterization-ht p)] [args args])
     (cond
      [(null? args) (make-parameterization ht)]

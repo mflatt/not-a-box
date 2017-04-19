@@ -1,5 +1,5 @@
 SCHEME = scheme
-UNSAFE = '(optimize-level 3)'
+UNSAFE = # '(optimize-level 3)'
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
 
