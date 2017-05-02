@@ -5,6 +5,7 @@
                         read-char peek-char
                         standard-input-port standard-output-port standard-error-port
                         close-input-port close-output-port
+                        current-directory
                         format
                         error)
                   [standard-input-port current-input-port]
@@ -50,4 +51,7 @@
   (define (object-name n) 'unknown-name)
   (define (system-path-convention-type) 'unix)
 
-  (include "port.scm"))
+  (include "port.scm")
+
+  ;; Initialize:
+  (1/current-directory (current-directory)))

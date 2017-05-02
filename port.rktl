@@ -70,6 +70,7 @@
   (1/prop:custom-write prop:custom-write)
   (1/read-bytes-avail! read-bytes-avail!)
   (1/peek-string! peek-string!)
+  (1/current-directory current-directory)
   (1/string-utf-8-length string-utf-8-length)
   (pipe-output-port? pipe-output-port?)
   (1/print print)
@@ -5528,9 +5529,17 @@
            loop_23)
          0)))))
  (define-values
+  (1/current-directory)
+  (make-parameter
+   (path1.1 #"/" (system-path-convention-type))
+   (lambda (v_41)
+     (begin
+       (if (path-string? v_41) (void) (let-values () (raise-argument-error 'current-directory "path-string?" v_41)))
+       (path->complete-path v_41)))))
+ (define-values
   (1/path->complete-path)
   (case-lambda
-   ((p_29) (let-values (((temp9_1) (current-directory)) ((temp10_0) #f)) (->complete-path5.1 temp10_0 p_29 temp9_1)))
+   ((p_29) (let-values (((temp9_1) (1/current-directory)) ((temp10_0) #f)) (->complete-path5.1 temp10_0 p_29 temp9_1)))
    ((p_30 wrt_0) (let-values (((temp13_2) #t)) (->complete-path5.1 temp13_2 p_30 wrt_0)))))
  (define-values
   (->complete-path5.1)

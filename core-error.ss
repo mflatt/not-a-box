@@ -20,6 +20,15 @@
                                             v))
                     v)))
 
+(define error-print-context-length
+  (make-parameter 16
+                  (lambda (v)
+                    (unless (exact-nonnegative-integer? v)
+                      (raise-argument-error 'error-print-context-length
+                                            "exact-nonnegative-integer?"
+                                            v))
+                    v)))
+
 ;; ----------------------------------------
 
 (define current-inspector

@@ -35,6 +35,7 @@
 
           error-print-width
           error-value->string-handler
+          error-print-context-length
           exception-handler-key
           uncaught-exception-handler
 

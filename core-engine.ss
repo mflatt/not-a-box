@@ -14,7 +14,8 @@
 
 (define (make-engine thunk)
   (let ([paramz (current-parameterization)])
-    (create-engine (lambda (prefix)
+    (create-engine empty-metacontinuation
+                   (lambda (prefix)
                      (with-continuation-mark
                          parameterization-key paramz
                          (begin
@@ -23,10 +24,10 @@
                    (new-engine-thread-cell-values))))
 
 
-(define (create-engine proc thread-cell-values)
+(define (create-engine to-saves proc thread-cell-values)
   (lambda (ticks prefix complete expire)
     (swap-metacontinuation
-     empty-metacontinuation
+     to-saves
      (lambda (saves)
        (current-engine-state (make-engine-state saves complete expire thread-cell-values (reset-handler)))
        (reset-handler (lambda ()
@@ -46,17 +47,14 @@
     ;; Extra pair of parens awround swap is to apply a prefix
     ;; function on swapping back in:
     ((swap-metacontinuation
-     (engine-state-mc es)
-     (lambda (saves)
-       (current-engine-state #f)
-       ((engine-state-expire es)
-        (create-engine
-         (lambda (prefix)
-           (swap-metacontinuation
-            saves
-            (lambda (ignored)
-              prefix)))
-         (engine-state-thread-cell-values es))))))))
+      (engine-state-mc es)
+      (lambda (saves)
+        (current-engine-state #f)
+        ((engine-state-expire es)
+         (create-engine
+          saves
+          (lambda (prefix) prefix) ; returns `prefix` to the above "(("
+          (engine-state-thread-cell-values es))))))))
 
 (define (engine-return . args)
   (timer-interrupt-handler void)

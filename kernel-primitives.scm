@@ -61,6 +61,7 @@
    bytes?
    caadr
    cache-configuration
+   call-with-composable-continuation
    call-with-continuation-barrier
    call-with-continuation-prompt
    call-with-current-continuation

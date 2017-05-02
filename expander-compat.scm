@@ -457,8 +457,6 @@
    call-with-continuation-barrier
    call-with-escape-continuation
 
-   immutable?
-
    equal-secondary-hash-code
 
    fx->fl

@@ -12,7 +12,7 @@
                            close-input-port close-output-port
                            list? input-port? output-port?
                            open-input-file open-output-file abort
-                           current-output-port current-input-port
+                           current-output-port current-input-port current-directory
                            open-input-string open-output-string get-output-string
                            open-input-output-file
                            with-input-from-file with-output-to-file

@@ -96,22 +96,20 @@
 ;; sequence of metacontinuation frames are copied out of or into the
 ;; metacontinuation, the slot is flushed and will be reset on demand.
 
+;; We're assuming for now that no handlers are installed during a
+;; nested metacontinuation.
+
 ;; ----------------------------------------
 
 (define *metacontinuation* '())
 (define *empty-k* #f)
-
-;; Assuming for now that no handlers are installed during a
-;; nested metacontinuation:
-(define chain-exn-state (create-exception-state))
 
 (define-record metacontinuation-frame (tag          ; continuation prompt tag or #f
                                        resume-k     ; delivers values to the prompt
                                        resume-k/no-wind ; same, but doesn't run winders jumping in
                                        empty-k      ; deepest end of this frame
                                        mark-stack   ; mark stack to restore
-                                       mark-chain   ; #f or a cached list of (cons tag mark-stack)
-                                       exn-state))  ; Chez handlers for this frame
+                                       mark-chain)) ; #f or a cached list of (cons tag mark-stack)
 
 ;; Messages to `resume-k[/no-wind]`:
 (define-record appending (resume))  ; composing the frame, so run "in" winders
@@ -240,11 +238,9 @@
                                                                                       k/no-wind
                                                                                       *empty-k*
                                                                                       *mark-stack*
-                                                                                      #f
-                                                                                      (current-exception-state))])
+                                                                                      #f)])
                                                  (set! *empty-k* empty-k)
                                                  (set! *mark-stack* #f)
-                                                 (current-exception-state chain-exn-state)
                                                  ;; push the metacontinuation:
                                                  (set! *metacontinuation* (cons mf *metacontinuation*))
                                                  ;; ready:
@@ -308,8 +304,7 @@
                                (metacontinuation-frame-empty-k current-mf)
                                (mark-stack-append mark-stack
                                                   (metacontinuation-frame-mark-stack current-mf))
-                               #f
-                               (metacontinuation-frame-exn-state current-mf)))
+                               #f))
 
 (define (abort-current-continuation tag . args)
   (unless (continuation-prompt-tag? tag)
@@ -704,9 +699,9 @@
 
 ;; ----------------------------------------
 
-(define-record saved-metacontinuation (mc mark-stack exn-state))
+(define-record saved-metacontinuation (mc exn-state))
 
-(define empty-metacontinuation (make-saved-metacontinuation '() #f (create-exception-state)))
+(define empty-metacontinuation (make-saved-metacontinuation '() (create-exception-state)))
 
 ;; Similar to `call-with-current-continuation` plus
 ;; applying an old continuation, but does not run winders;
@@ -719,9 +714,7 @@
    (lambda ()
      (let ([now-saved (make-saved-metacontinuation
                        *metacontinuation*
-                       *mark-stack*
                        (current-exception-state))])
        (set! *metacontinuation* (saved-metacontinuation-mc saved))
-       (set! *mark-stack* (saved-metacontinuation-mark-stack saved))
        (current-exception-state (saved-metacontinuation-exn-state saved))
        (proc now-saved)))))
