@@ -98,6 +98,7 @@ CORE_SRCS = core-constant.ss \
             core-parameter.ss \
             core-begin0.ss \
             core-control.ss \
+            core-interrupt.ss \
             core-engine.ss \
             core-error.ss \
             core-bytes.ss \

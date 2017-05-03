@@ -24,7 +24,8 @@
             sp
             nack
             now1 now2 now3
-            t tinf tdelay)
+            t tinf tdelay
+            tdw dw-s dw-pre? dw-body? dw-post?)
    
    (define-syntax define
      (syntax-rules ()
@@ -129,6 +130,27 @@
    (check tdelay (sync tdelay))
    (printf "[That break was from a thread, and it's expected]\n")
    (check #t (>= (current-inexact-milliseconds) (+ now3 0.1)))
+   
+   ;; Make sure breaks are disabled in a `dynamic-wind` post thunk
+   (define dw-s (make-semaphore))
+   (define dw-pre? #f)
+   (define dw-body? #f)
+   (define dw-post? #f)
+   (define tdw (thread
+                (lambda ()
+                  (dynamic-wind
+                   (lambda () (semaphore-wait dw-s) (set! dw-pre? #t))
+                   (lambda () (set! dw-body? #f))
+                   (lambda () (set! dw-post? #t))))))
+   (sync (system-idle-evt))
+   (check #f dw-pre?)
+   (break-thread tdw)
+   (check #f dw-pre?)
+   (semaphore-post dw-s)
+   (sync tdw)
+   (check #t dw-pre?)
+   (check #f dw-body?)
+   (check #t dw-post?)
    
    ;; Measure thread quantum:
    #;

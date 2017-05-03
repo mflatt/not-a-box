@@ -327,6 +327,7 @@
   (include "core-thread-cell.ss")
   (include "core-begin0.ss")
   (include "core-control.ss")
+  (include "core-interrupt.ss")
   (include "core-parameter.ss")
   (include "core-engine.ss")
   (include "core-error.ss")

@@ -363,6 +363,7 @@
                     v)))
 
 (define (set-base-exception-handler!)
+  (current-exception-state (create-exception-state))
   (base-exception-handler
    (lambda (v)
      (let ([hs (continuation-mark-set->list (current-continuation-marks the-root-continuation-prompt-tag)

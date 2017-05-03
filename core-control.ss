@@ -99,6 +99,14 @@
 ;; We're assuming for now that no handlers are installed during a
 ;; nested metacontinuation.
 
+;; Continuations are used to implement engines, but it's important
+;; that an engine doesn't get swapped out (or, more generally,
+;; asynchronous signals are handled at the Racket level) while we're
+;; manipulating the continuation representation. A bad time for a swap
+;; is an "interrupted" region. The `begin-uninterrupted` and
+;; `end-uninterrupted` functions bracket such regions dynamically. See
+;; also "core-engine.ss" and "core-interrupt.ss"
+
 ;; ----------------------------------------
 
 (define *metacontinuation* '())
@@ -135,7 +143,9 @@
 (define (default-continuation-prompt-tag) the-default-continuation-prompt-tag)
 (define (root-continuation-prompt-tag) the-root-continuation-prompt-tag)
 
-;; A hack to support break parameterizations:
+;; To support special treatment of break parameterizations, and also
+;; to initialize disabled breaks for `dynamic-wind` pre and post
+;; thunks:
 (define break-enabled-key (gensym 'break-enabled))
 
 ;; FIXME: add caching to avoid full traversal
@@ -163,10 +173,12 @@
        (raise-argument-error 'call-with-continuation-prompt "continuation-prompt-tag?" tag))
      (unless (or (not handler) (procedure? handler))
        (raise-argument-error 'call-with-continuation-prompt "(or/c #f procedure?)" handler))
+     (start-uninterrupted 'prompt)
      (call-in-empty-metacontinuation-frame
       tag
       (or handler (make-default-abort-handler tag))
       (lambda ()
+        (end-uninterrupted 'prompt)
         (apply proc args)))]))
 
 (define (make-default-abort-handler tag)
@@ -181,6 +193,7 @@
   (cond
    [(null? *metacontinuation*) (exit)]
    [else
+    (start-uninterrupted 'resume-mc)
     (let ([mf (car *metacontinuation*)])
       (set! *metacontinuation* (cdr *metacontinuation*))
       (set! *mark-stack* (metacontinuation-frame-mark-stack mf))
@@ -193,6 +206,7 @@
   ;; current metacontinuation as needed (i.e., if non-empty) as a new
   ;; frame on `*metacontinuations*`; if the tag is #f and the 
   ;; current metacontinuation frame is already empty, don't push more
+  (assert-in-uninterrupted)
   (call/cc
    (lambda (k)
      (cond
@@ -209,14 +223,12 @@
          ;; current one if metadata hasn't changed; we assume that
          ;; there are no new winders and the handler is the same,
          ;; otherwise the continuation would be bigger
-         (cond
-          [(not *mark-stack*)
-           (proc)]
-          [else
+         (when *mark-stack*
            ;; update metacontinuation for new mark-stack elements:
            (set! *metacontinuation*
                  (cons (metacontinuation-frame-merge current-mf *mark-stack*)
-                       (cdr *metacontinuation*)))]))]
+                       (cdr *metacontinuation*))))
+         (proc))]
       [else
        (let-values ([results
                      (call/cc
@@ -263,14 +275,14 @@
               [(eq? tag (aborting-tag r))
                ;; Found the right tag. Remove the prompt as we call the handler:
                (set! *metacontinuation* (cdr *metacontinuation*))
+               (end-uninterrupted 'handle)
                (apply handler
                       (aborting-args r))]
               [else
                ;; Aborting to an enclosing prompt, so keep going:
                (set! *metacontinuation* (cdr *metacontinuation*))
-               (apply abort-current-continuation
-                      (aborting-tag r)
-                      (aborting-args r))])]
+               (do-abort-current-continuation (aborting-tag r)
+                                              (aborting-args r))])]
             [(applying? r)
              ;; We're applying a non-composable continuation --- past
              ;; this prompt, or else we would have stopped.
@@ -281,6 +293,7 @@
             [else
              ;; We're returning normally; the metacontinuation frame has
              ;; been popped already by `resume-metacontinuation`
+             (end-uninterrupted 'resume)
              (apply values results)])))]))))
 
 (define (call/cc-no-winders proc)
@@ -313,8 +326,14 @@
   (unless (continuation-prompt-tag? tag)
     (raise-argument-error 'abort-current-continuation "continuation-prompt-tag?" tag))
   (check-prompt-tag-available 'abort-current-continuation tag)
+  (start-uninterrupted 'abort)
+  (do-abort-current-continuation tag args))
+  
+(define (do-abort-current-continuation tag args)
+  (assert-in-uninterrupted)
   (cond
    [(null? *metacontinuation*)
+    ;; A reset handler must end the uninterrupted region:
     ((reset-handler))]
    [else
     ((metacontinuation-frame-resume-k/no-wind (car *metacontinuation*))
@@ -334,15 +353,17 @@
        (raise-argument-error 'call-with-current-continuation "(procedure-arity-includes/c 1)" proc))
      (unless (continuation-prompt-tag? tag)
        (raise-argument-error 'call-with-current-continuation "continuation-prompt-tag?" tag))
-     (call/cc
-      (lambda (k)
-        (proc
-         (make-continuation #f ; => non-composable
-                            k
-                            tag
-                            *mark-stack*
-                            *empty-k*
-                            (extract-metacontinuation 'call-with-current-continuation tag)))))]))
+     (call-with-end-uninterrupted
+      (lambda ()
+        (call/cc
+         (lambda (k)
+           (proc
+            (make-continuation #f ; => non-composable
+                               k
+                               tag
+                               *mark-stack*
+                               *empty-k*
+                               (extract-metacontinuation 'call-with-current-continuation tag)))))))]))
 
 (define call-with-composable-continuation
   (case-lambda
@@ -353,18 +374,21 @@
        (raise-argument-error 'call-with-composable-continuation "(procedure-arity-includes/c 1)" p))
      (unless (continuation-prompt-tag? tag)
        (raise-argument-error 'call-with-composable-continuation "continuation-prompt-tag?" tag))
-     (call/cc
-      (lambda (k)
-        (p
-         (make-continuation #t ; => composable
-                            k
-                            tag
-                            *mark-stack*
-                            *empty-k*
-                            (extract-metacontinuation 'call-with-composable-continuation tag)))))]))
+     (call-with-end-uninterrupted
+      (lambda ()
+        (call/cc
+         (lambda (k)
+           (p
+            (make-continuation #t ; => composable
+                               k
+                               tag
+                               *mark-stack*
+                               *empty-k*
+                               (extract-metacontinuation 'call-with-composable-continuation tag)))))))]))
 
 ;; Applying a continuation calls this internal function:
 (define (apply-continuation c args)
+  (assert-in-uninterrupted)
   (cond
    [(continuation-composable? c)
     ;; To compose the metacontinuation, first make sure the current
@@ -404,7 +428,7 @@
   (call-with-appended-metacontinuation
    (continuation-mc c)
    (lambda ()
-     (set! *mark-stack* (mark-stack-append (continuation-mark-stack c) *mark-stack*))
+     (set! *mark-stack* (continuation-mark-stack c))
      (set! *empty-k* (continuation-empty-k c))
      (apply (continuation-k c) args))))
 
@@ -428,7 +452,7 @@
        [(null? current-mc)
         (unless (or (eq? tag the-default-continuation-prompt-tag)
                     (eq? tag the-root-continuation-prompt-tag))
-          (raise-arguments-error 'apply-continuaiton
+          (raise-arguments-error 'apply-continuation
                                  "continuation includes no prompt with the given tag"
                                  "tag" tag))
         (values accum null)]
@@ -464,7 +488,14 @@
   (struct-property-set! prop:procedure
                         (record-type-descriptor continuation)
                         (lambda (c . args)
+                          (start-uninterrupted 'continue)
                           (apply-continuation c args))))
+
+(define (call-with-end-uninterrupted thunk)
+  ;; Using `call/cm` with a key of `none` ensures that we have an
+  ;; `(end-uninterrupted)` in the immediate continuation, but
+  ;; keeping the illusion that `thunk` is called in tail position.
+  (call/cm none #f thunk))
 
 ;; ----------------------------------------
 
@@ -550,17 +581,22 @@
     [(_ key val body)
      (call/cm key val (lambda () body))]))
 
+;; Sets a continuation mark.
+;; Using `none` as a key ensures that a
+;; stack-restoring frame is pushed without
+;; adding a key--value mapping.
 (define (call/cm key val proc)
   (call/cc
    (lambda (k)
      (if (and *mark-stack*
               (eq? k (mark-stack-frame-k *mark-stack*)))
          (begin
-           (set-mark-stack-frame-table! *mark-stack*
-                                        (hamt-set (mark-stack-frame-table *mark-stack*)
-                                                  key
-                                                  val))
-           (set-mark-stack-frame-flat! *mark-stack* #f)
+           (unless (eq? key none)
+             (set-mark-stack-frame-table! *mark-stack*
+                                          (hamt-set (mark-stack-frame-table *mark-stack*)
+                                                    key
+                                                    val))
+             (set-mark-stack-frame-flat! *mark-stack* #f))
            (proc))
          (begin0
           (call/cc
@@ -568,10 +604,26 @@
              (set! *mark-stack*
                    (make-mark-stack-frame *mark-stack*
                                           k
-                                          (hasheq key val)
+                                          (if (eq? key none)
+                                              empty-hasheq
+                                              (hasheq key val))
                                           #f))
              (proc)))
-          (set! *mark-stack* (mark-stack-frame-prev *mark-stack*)))))))
+          (set! *mark-stack* (mark-stack-frame-prev *mark-stack*))
+          ;; To support existing a uninterrupted region on resumption of
+          ;; a continuation (see `call-with-end-uninterrupted`):
+          (when in-uninterrupted?
+            (pariah (end-uninterrupted 'cm))))))))
+
+;; For internal use, such as `dynamic-wind` pre thunks:
+(define (call/cm/nontail key val proc)
+  (set! *mark-stack*
+        (make-mark-stack-frame *mark-stack*
+                               #f
+                               (hasheq key val)
+                               #f))
+  (proc)
+  (set! *mark-stack* (mark-stack-frame-prev *mark-stack*)))
 
 (define (current-marks)
   (get-current-marks *mark-stack* *metacontinuation*))
@@ -696,21 +748,51 @@
 
 ;; ----------------------------------------
 
-;; Wrap `dynamic-wind` to set the mark stack on entry and exit to the
-;; saved mark stack. The saved mark stack is confined to the current
-;; continuation frame, so it's ok to use it if the current
-;; continuation is later applied to a different metacontinuation.
+;; Wrap `dynamic-wind` for three tasks:
+
+;; 1. set the mark stack on entry and exit to the saved mark stack.
+;;    The saved mark stack is confined to the current continuation
+;;    frame, so it's ok to use it if the current continuation is later
+;;    applied to a different metacontinuation.
+
+;; 2. Start and end uninterrupted regions on the boundaries of
+;;    transitions between thunks.
+
+;; 3. Perform a built-in `(parameterize-break #f ...)` around the pre
+;;    and post thunks. This break parameterization needs to be built
+;;    in so that it's put in place before exiting the uninterrupted region,
+;;    but it assumes a particular implementation of break
+;;    parameterizations.
 
 (define (dynamic-wind pre thunk post)
   (let ([saved-mark-stack *mark-stack*])
-    (#%dynamic-wind
-     (lambda ()
-       (set! *mark-stack* saved-mark-stack)
-       (pre))
-     thunk
-     (lambda ()
-       (set! *mark-stack* saved-mark-stack)
-       (post)))))
+    (define-syntax with-saved-mark-stack/non-break
+      (syntax-rules ()
+        [(_ who e ...)
+         (let ([dest-mark-stack *mark-stack*])
+           (set! *mark-stack* saved-mark-stack)
+           (call/cm/nontail
+            break-enabled-key (make-thread-cell #f #t)
+            (lambda ()
+              (end-uninterrupted who)
+              e ...
+              (start-uninterrupted who)))
+           (set! *mark-stack* dest-mark-stack))]))
+    (start-uninterrupted 'dw)
+    (begin0
+     (#%dynamic-wind
+      (lambda ()
+        (with-saved-mark-stack/non-break 'dw-pre
+          (pre)))
+      (lambda ()
+        (end-uninterrupted 'dw-body)
+        (begin0
+         (thunk)
+         (start-uninterrupted 'dw-body)))
+      (lambda ()
+        (with-saved-mark-stack/non-break 'dw-post
+          (post))))
+     (end-uninterrupted 'dw))))
 
 ;; ----------------------------------------
 
