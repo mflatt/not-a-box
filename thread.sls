@@ -26,7 +26,9 @@
                      'make-engine core:make-engine
                      'engine-block core:engine-block
                      'engine-return core:engine-return
-                     'root-continuation-prompt-tag core:root-continuation-prompt-tag)]
+                     'root-continuation-prompt-tag core:root-continuation-prompt-tag
+                     'break-enabled-key break-enabled-key
+                     'exn:break/non-engine exn:break)]
       [else #f]))
 
   (include "thread.scm"))

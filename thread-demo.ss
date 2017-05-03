@@ -12,7 +12,8 @@
      (syntax-rules ()
        [(_ a b)
         (unless (equal? a b)
-          (error 'failed "~s: ~e vs. ~e" 'b a b))]))
+          (printf "~s: ~s vs. ~s\n" 'b a b)
+          (error 'check "failed"))]))
    
    (declare s t0 t1 t2
             ch ct1 ct2

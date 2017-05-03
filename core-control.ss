@@ -135,6 +135,9 @@
 (define (default-continuation-prompt-tag) the-default-continuation-prompt-tag)
 (define (root-continuation-prompt-tag) the-root-continuation-prompt-tag)
 
+;; A hack to support break parameterizations:
+(define break-enabled-key (gensym 'break-enabled))
+
 ;; FIXME: add caching to avoid full traversal
 (define (continuation-prompt-available? tag)
   (unless (continuation-prompt-tag? tag)
@@ -592,7 +595,14 @@
   (case-lambda
     [(marks key) (continuation-mark-set-first marks key #f)]
     [(marks key none-v)
-     (continuation-mark-set-first marks key none-v the-default-continuation-prompt-tag)]
+     (continuation-mark-set-first marks key none-v
+                                  ;; Treat `break-enabled-key` and `parameterization-key`, specially
+                                  ;; so that things like `current-break-parameterization` works without
+                                  ;; referencing the root continuation prompt tag
+                                  (if (or (eq? key break-enabled-key)
+                                          (eq? key parameterization-key))
+                                      the-root-continuation-prompt-tag
+                                      the-default-continuation-prompt-tag))]
     [(marks key none-v prompt-tag)
      (unless (or (not marks)
                  (continuation-mark-set? marks))
@@ -605,9 +615,14 @@
        (cond
         [(or (null? markss)
              (eq? (caar markss) prompt-tag))
-         (if (eq? key parameterization-key)
-             empty-parameterization
-             none-v)]
+         ;; More special treatment of built-in keys
+         (cond
+          [(eq? key parameterization-key)
+           empty-parameterization]
+          [(eq? key break-enabled-key)
+           (current-engine-init-break-enabled-cell none-v)]
+          [else
+           none-v])]
         [else
          (let loop ([marks (cdar markss)])
            (cond

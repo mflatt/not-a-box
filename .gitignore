@@ -3,6 +3,7 @@ compiled/
 
 # Generated from .rktl:
 expander.scm
+thread.scm
 path.scm
 port.scm
 regexp.scm

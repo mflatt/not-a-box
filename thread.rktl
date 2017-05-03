@@ -32,6 +32,7 @@
   (1/sleep sleep)
   (1/break-thread break-thread)
   (1/semaphore-post semaphore-post)
+  (1/kill-thread kill-thread)
   (1/make-channel make-channel)
   (1/thread-dead? thread-dead?)
   (1/sync/timeout sync/timeout)
@@ -149,7 +150,7 @@
   (internal-error)
   (lambda (s_0) (raise (exn:fail (string-append "internal error: " s_0) (current-continuation-marks)))))
  (define-values
-  (make-engine engine-block engine-return root-continuation-prompt-tag)
+  (make-engine engine-block engine-return root-continuation-prompt-tag 1/break-enabled-key exn:break/non-engine)
   (let-values (((ht_2) (primitive-table '#%engine)))
     (begin
       (if ht_2 (void) (let-values () (internal-error "engines not provided by host")))
@@ -157,7 +158,9 @@
        (hash-ref ht_2 'make-engine)
        (hash-ref ht_2 'engine-block)
        (hash-ref ht_2 'engine-return)
-       (hash-ref ht_2 'root-continuation-prompt-tag)))))
+       (hash-ref ht_2 'root-continuation-prompt-tag)
+       (hash-ref ht_2 'break-enabled-key)
+       (hash-ref ht_2 'exn:break/non-engine)))))
  (define-values
   (struct:node$2 node1.1 node?$2 node-key node-val node-height node-left node-right)
   (let-values (((struct:_0 make-_0 ?_0 -ref_0 -set!_0)
@@ -420,28 +423,36 @@
                      'handle-evt)))))
     (values struct:_6 make-_6 ?_6)))
  (define-values
-  (struct:nack-evt nack-evt8.1 nack-evt? nack-evt-evt nack-evt-nack-proc)
+  (struct:control-state-evt
+   control-state-evt8.1
+   control-state-evt?
+   control-state-evt-evt
+   control-state-evt-interrupt-proc
+   control-state-evt-abandon-proc
+   control-state-evt-retry-proc)
   (let-values (((struct:_7 make-_7 ?_7 -ref_7 -set!_7)
                 (let-values ()
                   (let-values ()
                     (make-struct-type
-                     'nack-evt
+                     'control-state-evt
                      #f
-                     2
+                     4
                      0
                      #f
                      (list (cons 1/prop:evt (poller1.1 (lambda (self_4 poll-ctx_4) (values #f self_4)))))
                      (current-inspector)
                      #f
-                     '(0 1)
+                     '(0 1 2 3)
                      #f
-                     'nack-evt)))))
+                     'control-state-evt)))))
     (values
      struct:_7
      make-_7
      ?_7
      (make-struct-field-accessor -ref_7 0 'evt)
-     (make-struct-field-accessor -ref_7 1 'nack-proc))))
+     (make-struct-field-accessor -ref_7 1 'interrupt-proc)
+     (make-struct-field-accessor -ref_7 2 'abandon-proc)
+     (make-struct-field-accessor -ref_7 3 'retry-proc))))
  (define-values
   (struct:guard-evt guard-evt9.1 guard-evt? guard-evt-proc)
   (let-values (((struct:_8 make-_8 ?_8 -ref_8 -set!_8)
@@ -501,7 +512,9 @@
     (let-values (((suspend_0) suspend!2_0))
       (let-values (((resume_0) resume!3_0)) (let-values () (waiter-methods1.1 suspend_0 resume_0))))))
  (define-values (waiter-resume!) (lambda (w_0 s_1) ((waiter-methods-resume (waiter-ref w_0)) w_0 s_1)))
- (define-values (waiter-suspend!) (lambda (w_1 cb_0) ((waiter-methods-suspend (waiter-ref w_1)) w_1 cb_0)))
+ (define-values
+  (waiter-suspend!)
+  (lambda (w_1 interrupt-cb_0 retry-cb_0) ((waiter-methods-suspend (waiter-ref w_1)) w_1 interrupt-cb_0 retry-cb_0)))
  (define-values
   (struct:select-waiter select-waiter9.1 select-waiter? select-waiter-proc)
   (let-values (((struct:_10 make-_10 ?_10 -ref_10 -set!_10)
@@ -516,8 +529,9 @@
                      (list
                       (cons
                        prop:waiter
-                       (let-values (((void12_0) void) ((temp13_0) (lambda (w_2 s_2) ((select-waiter-proc w_2)))))
-                         (make-waiter-methods6.1 temp13_0 void12_0))))
+                       (let-values (((temp12_0) (lambda args_0 (internal-error "should not suspend a select-waiter")))
+                                    ((temp13_0) (lambda (w_2 s_2) ((select-waiter-proc w_2)))))
+                         (make-waiter-methods6.1 temp13_0 temp12_0))))
                      (current-inspector)
                      #f
                      '(0)
@@ -750,9 +764,14 @@
                    (let-values (((w_7) (1/current-thread)))
                      (let-values (((q_6) (semaphore-queue s_7)))
                        (let-values (((n_3) (queue-add! q_6 w_7)))
-                         (waiter-suspend! w_7 (lambda () (queue-remove-node! q_6 n_3))))))))))
-           (end-atomic))))
-      (void))))
+                         ((letrec-values (((retry_0)
+                                           (lambda ()
+                                             (waiter-suspend!
+                                              w_7
+                                              (lambda () (queue-remove-node! q_6 n_3))
+                                              (lambda () (1/semaphore-wait s_7))))))
+                            retry_0)))))))))
+           (end-atomic)))))))
  (define-values
   (semaphore-wait/poll14.1)
   (lambda (peek?8_0 peek?10_0 result9_0 result11_0 s12_0 poll-ctx13_0)
@@ -772,14 +791,25 @@
                     (let-values ()
                       (let-values (((w_8)
                                     (if peek?_0
-                                      (select-waiter9.1 (poll-ctx-select-proc poll-ctx_9))
-                                      (semaphore-peek-select-waiter3.1 (poll-ctx-select-proc poll-ctx_9)))))
+                                      (semaphore-peek-select-waiter3.1 (poll-ctx-select-proc poll-ctx_9))
+                                      (select-waiter9.1 (poll-ctx-select-proc poll-ctx_9)))))
                         (let-values (((q_7) (semaphore-queue s_8)))
                           (let-values (((n_4) (queue-add! q_7 w_8)))
                             (values
                              #f
                              (wrap-evt6.1
-                              (nack-evt8.1 the-async-evt (lambda () (queue-remove-node! q_7 n_4)))
+                              (control-state-evt8.1
+                               the-async-evt
+                               (lambda () (queue-remove-node! q_7 n_4))
+                               void
+                               (lambda ()
+                                 (let-values (((c_2) (semaphore-count s_8)))
+                                   (if (positive? c_2)
+                                     (let-values ()
+                                       (begin
+                                         (if peek?_0 (void) (let-values () (set-semaphore-count! s_8 (sub1 c_2))))
+                                         (values result_0 #t)))
+                                     (let-values () (begin (set! n_4 (queue-add! q_7 w_8)) (values #f #f)))))))
                               (lambda (v_19) result_0)))))))))))))))))
  (define-values
   (struct:thread-group
@@ -795,8 +825,7 @@
    set-thread-group-chain-end!)
   (let-values (((struct:_0 make-_0 ?_0 -ref_0 -set!_0)
                 (let-values ()
-                  (let-values ()
-                    (make-struct-type 'thread-group #f 5 0 #f null (current-inspector) #f '(0 1) #f 'thread-group)))))
+                  (let-values () (make-struct-type 'thread-group #f 5 0 #f null #f #f '(0 1) #f 'thread-group)))))
     (values
      struct:_0
      make-_0
@@ -868,15 +897,21 @@
       (start-atomic)
       (begin0
         (let-values ()
-          (let-values (((t_7) (thread-group-chain-end parent_1)))
-            (let-values (((n_7) (node2.1 child_0 t_7 #f)))
-              (begin
-                (if t_7 (set-node-next! t_7 n_7) (set-thread-group-chain-start! parent_1 n_7))
-                (set-thread-group-chain-end! parent_1 n_7)
-                (hash-set! (thread-group-children parent_1) child_0 n_7)
-                (if (1/thread-group? child_0)
-                  (void)
-                  (let-values () (set! num-threads-in-groups (add1 num-threads-in-groups))))))))
+          (let-values ((()
+                        (begin
+                          (if (hash-ref (thread-group-children parent_1) child_0 #f)
+                            (let-values () (internal-error "adding a thread that is already added"))
+                            (void))
+                          (values))))
+            (let-values (((t_7) (thread-group-chain-end parent_1)))
+              (let-values (((n_7) (node2.1 child_0 t_7 #f)))
+                (begin
+                  (if t_7 (set-node-next! t_7 n_7) (set-thread-group-chain-start! parent_1 n_7))
+                  (set-thread-group-chain-end! parent_1 n_7)
+                  (hash-set! (thread-group-children parent_1) child_0 n_7)
+                  (if (1/thread-group? child_0)
+                    (void)
+                    (let-values () (set! num-threads-in-groups (add1 num-threads-in-groups)))))))))
         (end-atomic)))))
  (define-values
   (thread-group-remove!)
@@ -958,20 +993,24 @@
    thread-sleep-until
    thread-sched-info
    thread-suspend-to-kill?
-   thread-kill-callback
+   thread-kill-callbacks
+   thread-interrupt-callback
    thread-dead-sema
    1/thread-dead-evt
    thread-suspended?
    thread-suspended-sema
+   thread-delay-break-for-retry?
    thread-pending-break?
    set-thread-engine!
    set-thread-sleep-until!
    set-thread-sched-info!
-   set-thread-kill-callback!
+   set-thread-kill-callbacks!
+   set-thread-interrupt-callback!
    set-thread-dead-sema!
    set-thread-dead-evt!
    set-thread-suspended?!
    set-thread-suspended-sema!
+   set-thread-delay-break-for-retry?!
    set-thread-pending-break?!)
   (let-values (((struct:_0 make-_0 ?_0 -ref_0 -set!_0)
                 (let-values ()
@@ -979,16 +1018,21 @@
                     (make-struct-type
                      'thread
                      #f
-                     12
+                     14
                      0
                      #f
                      (list
                       (cons 1/prop:evt (lambda (t_13) (wrap-evt6.1 (get-thread-dead-evt t_13) (lambda (v_21) t_13))))
                       (cons
                        prop:waiter
-                       (let-values (((temp17_0) (lambda (t_14 cb_1) (thread-internal-suspend! t_14 #f cb_1)))
-                                    ((temp18_0) (lambda (t_15 v_22) (begin (thread-internal-resume! t_15) v_22))))
-                         (make-waiter-methods6.1 temp18_0 temp17_0))))
+                       (let-values (((temp23_1)
+                                     (lambda (t_14 i-cb_0 r-cb_0) (thread-internal-suspend! t_14 #f i-cb_0 r-cb_0)))
+                                    ((temp24_0)
+                                     (lambda (t_15 v_22)
+                                       (begin
+                                         (let-values (((t25_0) t_15)) (thread-internal-resume!15.1 #f #f t25_0))
+                                         v_22))))
+                         (make-waiter-methods6.1 temp24_0 temp23_1))))
                      (current-inspector)
                      #f
                      '(0 2 5)
@@ -1004,21 +1048,25 @@
      (make-struct-field-accessor -ref_0 3 'sleep-until)
      (make-struct-field-accessor -ref_0 4 'sched-info)
      (make-struct-field-accessor -ref_0 5 'suspend-to-kill?)
-     (make-struct-field-accessor -ref_0 6 'kill-callback)
-     (make-struct-field-accessor -ref_0 7 'dead-sema)
-     (make-struct-field-accessor -ref_0 8 'dead-evt)
-     (make-struct-field-accessor -ref_0 9 'suspended?)
-     (make-struct-field-accessor -ref_0 10 'suspended-sema)
-     (make-struct-field-accessor -ref_0 11 'pending-break?)
+     (make-struct-field-accessor -ref_0 6 'kill-callbacks)
+     (make-struct-field-accessor -ref_0 7 'interrupt-callback)
+     (make-struct-field-accessor -ref_0 8 'dead-sema)
+     (make-struct-field-accessor -ref_0 9 'dead-evt)
+     (make-struct-field-accessor -ref_0 10 'suspended?)
+     (make-struct-field-accessor -ref_0 11 'suspended-sema)
+     (make-struct-field-accessor -ref_0 12 'delay-break-for-retry?)
+     (make-struct-field-accessor -ref_0 13 'pending-break?)
      (make-struct-field-mutator -set!_0 1 'engine)
      (make-struct-field-mutator -set!_0 3 'sleep-until)
      (make-struct-field-mutator -set!_0 4 'sched-info)
-     (make-struct-field-mutator -set!_0 6 'kill-callback)
-     (make-struct-field-mutator -set!_0 7 'dead-sema)
-     (make-struct-field-mutator -set!_0 8 'dead-evt)
-     (make-struct-field-mutator -set!_0 9 'suspended?)
-     (make-struct-field-mutator -set!_0 10 'suspended-sema)
-     (make-struct-field-mutator -set!_0 11 'pending-break?))))
+     (make-struct-field-mutator -set!_0 6 'kill-callbacks)
+     (make-struct-field-mutator -set!_0 7 'interrupt-callback)
+     (make-struct-field-mutator -set!_0 8 'dead-sema)
+     (make-struct-field-mutator -set!_0 9 'dead-evt)
+     (make-struct-field-mutator -set!_0 10 'suspended?)
+     (make-struct-field-mutator -set!_0 11 'suspended-sema)
+     (make-struct-field-mutator -set!_0 12 'delay-break-for-retry?)
+     (make-struct-field-mutator -set!_0 13 'pending-break?))))
  (define-values
   (do-make-thread8.1)
   (lambda (initial?2_0 initial?4_0 suspend-to-kill?3_0 suspend-to-kill?5_0 who6_0 proc7_0)
@@ -1035,23 +1083,25 @@
                                 (let-values () (raise-argument-error who_0 "(procedure-arity-includes?/c 0)" proc_1)))
                               (values))))
                 (let-values (((p_0) (1/current-thread-group)))
-                  (let-values (((bc_0) (if initial?_0 break-enabled-default-cell (current-break-enabled-cell))))
-                    (let-values (((e_1)
-                                  (make-engine (lambda () (with-continuation-mark 1/break-enabled-key bc_0 (proc_1))))))
-                      (let-values (((t_16) (thread1.1 (gensym) e_1 p_0 #f #f suspend-to-kill?_0 #f #f #f #f #f #f)))
-                        (begin (thread-group-add! p_0 t_16) t_16)))))))))))))
+                  (let-values (((e_1)
+                                (make-engine
+                                 proc_1
+                                 (if initial?_0 break-enabled-default-cell (current-break-enabled-cell)))))
+                    (let-values (((t_16)
+                                  (thread1.1 (gensym) e_1 p_0 #f #f suspend-to-kill?_0 null #f #f #f #f #f #f #f)))
+                      (begin (thread-group-add! p_0 t_16) t_16))))))))))))
  (define-values
   (make-thread)
   (let-values (((thread_0)
                 (lambda (proc_3)
-                  (let-values (((temp19_0) 'thread) ((proc20_0) proc_3))
-                    (do-make-thread8.1 #f #f #f #f temp19_0 proc20_0)))))
+                  (let-values (((temp26_0) 'thread) ((proc27_0) proc_3))
+                    (do-make-thread8.1 #f #f #f #f temp26_0 proc27_0)))))
     thread_0))
  (define-values
   (make-initial-thread)
   (lambda (thunk_0)
-    (let-values (((temp24_0) 'thread) ((thunk25_0) thunk_0) ((temp26_0) #t))
-      (do-make-thread8.1 temp26_0 #t #f #f temp24_0 thunk25_0))))
+    (let-values (((temp31_0) 'thread) ((thunk32_0) thunk_0) ((temp33_0) #t))
+      (do-make-thread8.1 temp33_0 #t #f #f temp31_0 thunk32_0))))
  (define-values
   (1/thread-running?)
   (lambda (t_17)
@@ -1070,14 +1120,58 @@
     (begin
       (set-thread-engine! t_19 'done)
       (if (thread-dead-sema t_19) (let-values () (semaphore-post-all (thread-dead-sema t_19))) (void))
-      (thread-group-remove! (thread-parent t_19) t_19)
-      (remove-from-sleeping-threads! t_19))))
+      (let-values (((c1_0) (thread-interrupt-callback t_19)))
+        (if c1_0
+          ((lambda (interrupt_0) (begin (set-thread-interrupt-callback! t_19 void) (interrupt_0))) c1_0)
+          (let-values () (thread-group-remove! (thread-parent t_19) t_19))))
+      (remove-from-sleeping-threads! t_19)
+      (run-kill-callbacks! t_19))))
+ (define-values
+  (thread-push-kill-callback!)
+  (lambda (cb_0)
+    (let-values (((t_20) (1/current-thread)))
+      (set-thread-kill-callbacks! t_20 (cons cb_0 (thread-kill-callbacks t_20))))))
+ (define-values
+  (thread-pop-kill-callback!)
+  (lambda ()
+    (let-values (((t_21) (1/current-thread))) (set-thread-kill-callbacks! t_21 (cdr (thread-kill-callbacks t_21))))))
+ (define-values
+  (1/kill-thread)
+  (lambda (t_22)
+    (begin
+      (if (1/thread? t_22) (void) (let-values () (raise-argument-error 'kill-thread "thread?" t_22)))
+      (start-atomic)
+      (begin0 (let-values () (if (1/thread-dead? t_22) (void) (let-values () (thread-dead! t_22)))) (end-atomic))
+      (if (eq? t_22 (1/current-thread)) (let-values () (engine-block)) (void)))))
+ (define-values
+  (run-kill-callbacks!)
+  (lambda (t_23)
+    (begin
+      (let-values (((lst_0) (thread-kill-callbacks t_23)))
+        (begin
+          (check-list lst_0)
+          ((letrec-values (((for-loop_0)
+                            (lambda (lst_1)
+                              (if (pair? lst_1)
+                                (let-values (((cb_1) (unsafe-car lst_1)) ((rest_0) (unsafe-cdr lst_1)))
+                                  (let-values ((()
+                                                (let-values ()
+                                                  (let-values ((()
+                                                                (let-values ()
+                                                                  (begin (let-values () (cb_1)) (values)))))
+                                                    (values)))))
+                                    (if (not #f) (for-loop_0 rest_0) (values))))
+                                (values)))))
+             for-loop_0)
+           lst_0)))
+      (void)
+      (set-thread-kill-callbacks! t_23 null))))
  (define-values
   (1/thread-wait)
-  (lambda (t_20)
+  (lambda (t_24)
     (begin
-      (if (1/thread? t_20) (void) (let-values () (raise-argument-error 'thread-wait "thread?" t_20)))
-      (1/semaphore-wait (get-thread-dead-sema t_20)))))
+      (if (1/thread? t_24) (void) (let-values () (raise-argument-error 'thread-wait "thread?" t_24)))
+      (1/semaphore-wait (get-thread-dead-sema t_24)))))
  (define-values
   (struct:dead-evt dead-evt11.1 dead-evt? dead-evt-sema)
   (let-values (((struct:_15 make-_15 ?_15 -ref_15 -set!_15)
@@ -1099,43 +1193,43 @@
  (define-values
   (get-thread-dead-evt)
   (let-values (((thread-dead-evt_0)
-                (lambda (t_21)
+                (lambda (t_25)
                   (begin
-                    (if (1/thread? t_21) (void) (let-values () (raise-argument-error 'thread-dead-evt "thread?" t_21)))
+                    (if (1/thread? t_25) (void) (let-values () (raise-argument-error 'thread-dead-evt "thread?" t_25)))
                     (start-atomic)
                     (begin0
                       (let-values ()
-                        (if (1/thread-dead-evt t_21)
+                        (if (1/thread-dead-evt t_25)
                           (void)
-                          (let-values () (set-thread-dead-evt! t_21 (dead-evt11.1 (get-thread-dead-sema t_21))))))
+                          (let-values () (set-thread-dead-evt! t_25 (dead-evt11.1 (get-thread-dead-sema t_25))))))
                       (end-atomic))
-                    (1/thread-dead-evt t_21)))))
+                    (1/thread-dead-evt t_25)))))
     thread-dead-evt_0))
  (define-values
   (get-thread-dead-sema)
-  (lambda (t_22)
+  (lambda (t_26)
     (begin
       (start-atomic)
       (begin0
         (let-values ()
-          (if (thread-dead-sema t_22)
+          (if (thread-dead-sema t_26)
             (void)
             (let-values ()
               (begin
-                (set-thread-dead-sema! t_22 (1/make-semaphore 0))
-                (if (eq? 'done (thread-engine t_22))
-                  (let-values () (semaphore-post-all (thread-dead-sema t_22)))
+                (set-thread-dead-sema! t_26 (1/make-semaphore 0))
+                (if (eq? 'done (thread-engine t_26))
+                  (let-values () (semaphore-post-all (thread-dead-sema t_26)))
                   (void))))))
         (end-atomic))
-      (thread-dead-sema t_22))))
+      (thread-dead-sema t_26))))
  (define-values (sleeping-threads) empty-tree)
  (define-values
   (remove-from-sleeping-threads!)
-  (lambda (t_23)
-    (let-values (((sleep-until_0) (thread-sleep-until t_23)))
+  (lambda (t_27)
+    (let-values (((sleep-until_0) (thread-sleep-until t_27)))
       (if sleep-until_0
         (let-values ()
-          (let-values ((() (begin (set-thread-sleep-until! t_23 #f) (values))))
+          (let-values ((() (begin (set-thread-sleep-until! t_27 #f) (values))))
             (let-values (((threads_0) (lookup sleeping-threads sleep-until_0 <)))
               (let-values ((()
                             (begin
@@ -1143,7 +1237,7 @@
                                 (void)
                                 (let-values () (internal-error "thread not found among sleeping threads")))
                               (values))))
-                (let-values (((new-threads_0) (hash-remove threads_0 t_23)))
+                (let-values (((new-threads_0) (hash-remove threads_0 t_27)))
                   (set! sleeping-threads
                     (if (zero? (hash-count new-threads_0))
                       (delete sleeping-threads sleep-until_0 <)
@@ -1151,59 +1245,84 @@
         (void)))))
  (define-values
   (add-to-sleeping-threads!)
-  (lambda (t_24 timeout-at_2)
+  (lambda (t_28 timeout-at_2)
     (begin
-      (set-thread-sleep-until! t_24 timeout-at_2)
+      (set-thread-sleep-until! t_28 timeout-at_2)
       (set! sleeping-threads
         (insert
          sleeping-threads
          timeout-at_2
          (hash-set
           (let-values (((or-part_0) (lookup sleeping-threads timeout-at_2 <))) (if or-part_0 or-part_0 '#hasheq()))
-          t_24
+          t_28
           #t)
          <)))))
  (define-values
   (thread-internal-suspend!)
-  (lambda (t_25 timeout-at_3 kill-callback_0)
+  (lambda (t_29 timeout-at_3 interrupt-callback_0 retry-callback_0)
     (begin
       (start-atomic)
       (begin0
         (let-values ()
           (begin
-            (set-thread-kill-callback! t_25 kill-callback_0)
-            (thread-group-remove! (thread-parent t_25) t_25)
-            (if timeout-at_3 (let-values () (add-to-sleeping-threads! t_25 timeout-at_3)) (void))
-            (if (eq? t_25 (1/current-thread)) (let-values () (thread-did-work!)) (void))
-            (lambda () (if (eq? t_25 (1/current-thread)) (let-values () (engine-block)) (void)))))
+            (set-thread-interrupt-callback! t_29 interrupt-callback_0)
+            (thread-group-remove! (thread-parent t_29) t_29)
+            (if timeout-at_3 (let-values () (add-to-sleeping-threads! t_29 timeout-at_3)) (void))
+            (if (eq? t_29 (1/current-thread)) (let-values () (thread-did-work!)) (void))
+            (lambda ()
+              (if (eq? t_29 (1/current-thread))
+                (let-values () (begin (engine-block) (check-for-retrying-break t_29 retry-callback_0)))
+                (void)))))
         (end-atomic)))))
  (define-values
-  (thread-internal-resume!)
-  (lambda (t_26)
-    (begin
-      (set-thread-kill-callback! t_26 #f)
-      (remove-from-sleeping-threads! t_26)
-      (thread-group-add! (thread-parent t_26) t_26))))
+  (check-for-retrying-break)
+  (lambda (t_30 retry-callback_1)
+    ((begin
+       (start-atomic)
+       (begin0
+         (let-values ()
+           (if (thread-delay-break-for-retry? t_30)
+             (let-values ()
+               (begin
+                 (set-thread-delay-break-for-retry?! t_30 #f)
+                 (thread-did-work!)
+                 (lambda () (begin (1/check-for-break) (retry-callback_1)))))
+             (let-values () void)))
+         (end-atomic))))))
+ (define-values
+  (thread-internal-resume!15.1)
+  (lambda (undelay-break?12_0 undelay-break?13_0 t14_0)
+    (let-values (((t_31) t14_0))
+      (let-values (((undelay-break?_0) (if undelay-break?13_0 undelay-break?12_0 #t)))
+        (let-values ()
+          (begin
+            (if (1/thread-dead? t_31) (let-values () (internal-error "tried to resume a dead thread")) (void))
+            (set-thread-interrupt-callback! t_31 #f)
+            (if undelay-break?_0 (let-values () (set-thread-delay-break-for-retry?! t_31 #f)) (void))
+            (remove-from-sleeping-threads! t_31)
+            (thread-group-add! (thread-parent t_31) t_31)))))))
  (define-values
   (1/thread-suspend)
-  (lambda (t_27)
+  (lambda (t_32)
     (begin
-      (if (1/thread? t_27) (void) (let-values () (raise-argument-error 'thread-suspend "thread?" t_27)))
+      (if (1/thread? t_32) (void) (let-values () (raise-argument-error 'thread-suspend "thread?" t_32)))
       ((begin
          (start-atomic)
          (begin0
            (let-values ()
              (begin
-               (if (thread-suspended? t_27)
+               (if (thread-suspended? t_32)
                  (void)
                  (let-values ()
                    (begin
-                     (set-thread-suspended?! t_27 #t)
-                     (if (thread-suspended-sema t_27)
+                     (set-thread-suspended?! t_32 #t)
+                     (if (thread-suspended-sema t_32)
                        (let-values ()
-                         (begin (semaphore-post-all (thread-suspended-sema t_27)) (set-thread-suspended-sema! t_27 #f)))
+                         (begin (semaphore-post-all (thread-suspended-sema t_32)) (set-thread-suspended-sema! t_32 #f)))
                        (void)))))
-               (if (thread-parent t_27) (let-values () (thread-internal-suspend! t_27 #f void)) (let-values () void))))
+               (if (thread-parent t_32)
+                 (let-values () (thread-internal-suspend! t_32 #f void void))
+                 (let-values () void))))
            (end-atomic)))))))
  (define-values
   (thread-yield)
@@ -1222,61 +1341,78 @@
       (engine-block))))
  (define-values
   (1/sleep)
-  (let-values (((sleep14_0)
-                (lambda (secs12_0 secs13_0)
-                  (let-values (((secs_0) (if secs13_0 secs12_0 0)))
+  (let-values (((sleep20_0)
+                (lambda (secs18_0 secs19_0)
+                  (let-values (((secs_0) (if secs19_0 secs18_0 0)))
                     (let-values ()
-                      (begin
-                        (if ((lambda (c_2) (if (real? c_2) (>= c_2 0) #f)) secs_0)
-                          (void)
-                          (let-values () (raise-argument-error 'sleep "(>=/c 0)" secs_0)))
-                        ((thread-internal-suspend!
-                          (1/current-thread)
-                          (+ (* secs_0 1000.0) (current-inexact-milliseconds))
-                          void))))))))
-    (case-lambda (() (sleep14_0 #f #f)) ((secs12_1) (sleep14_0 secs12_1 #t)))))
+                      (let-values ((()
+                                    (begin
+                                      (if ((lambda (c_3) (if (real? c_3) (>= c_3 0) #f)) secs_0)
+                                        (void)
+                                        (let-values () (raise-argument-error 'sleep "(>=/c 0)" secs_0)))
+                                      (values))))
+                        (let-values (((until-msecs_0) (+ (* secs_0 1000.0) (current-inexact-milliseconds))))
+                          ((letrec-values (((loop_4)
+                                            (lambda ()
+                                              ((thread-internal-suspend!
+                                                (1/current-thread)
+                                                until-msecs_0
+                                                void
+                                                (lambda () (loop_4)))))))
+                             loop_4)))))))))
+    (case-lambda (() (sleep20_0 #f #f)) ((secs18_1) (sleep20_0 secs18_1 #t)))))
  (define-values (poll-done-threads) '#hasheq())
  (define-values
   (thread-did-no-work!)
-  (lambda () (set! poll-done-threads (hash-set poll-done-threads (1/current-thread)))))
+  (lambda () (set! poll-done-threads (hash-set poll-done-threads (1/current-thread) #t))))
  (define-values (thread-did-work!) (lambda () (set! poll-done-threads '#hasheq())))
- (define-values (1/break-enabled-key) (gensym))
  (define-values (break-enabled-default-cell) (make-thread-cell #t #t))
  (define-values
   (current-break-enabled-cell)
   (lambda ()
-    (let-values (((or-part_2)
-                  (continuation-mark-set-first
-                   #f
-                   1/break-enabled-key
-                   break-enabled-default-cell
-                   (root-continuation-prompt-tag))))
-      (if or-part_2 or-part_2 break-enabled-default-cell))))
+    (continuation-mark-set-first #f 1/break-enabled-key break-enabled-default-cell (root-continuation-prompt-tag))))
  (define-values
   (1/check-for-break)
   (lambda ()
-    (let-values (((t_28) (1/current-thread)))
-      (if (thread-pending-break? t_28)
-        (let-values ()
-          (if (thread-cell-ref (current-break-enabled-cell))
-            (let-values ()
-              (begin
-                (set-thread-pending-break?! t_28 #f)
-                (call-with-escape-continuation
-                 (lambda (k_0) (raise (exn:break "user break" (current-continuation-marks) k_0))))))
-            (void)))
-        (void)))))
+    (let-values (((t_33) (1/current-thread)))
+      ((begin
+         (start-atomic)
+         (begin0
+           (let-values ()
+             (if (if (thread-pending-break? t_33)
+                   (if (thread-cell-ref (current-break-enabled-cell)) (not (thread-delay-break-for-retry? t_33)) #f)
+                   #f)
+               (let-values ()
+                 (begin
+                   (set-thread-pending-break?! t_33 #f)
+                   (lambda ()
+                     (call-with-escape-continuation
+                      (lambda (k_0) (raise (exn:break/non-engine "user break" (current-continuation-marks) k_0)))))))
+               (let-values () void)))
+           (end-atomic)))))))
  (define-values
   (1/break-thread)
-  (lambda (t_29)
+  (lambda (t_34)
     (begin
-      (if (1/thread? t_29) (void) (let-values () (raise-argument-error 'break-thread "thread?" t_29)))
-      (if (thread-pending-break? t_29)
-        (void)
+      (if (1/thread? t_34) (void) (let-values () (raise-argument-error 'break-thread "thread?" t_34)))
+      (start-atomic)
+      (begin0
         (let-values ()
-          (begin
-            (set-thread-pending-break?! t_29 #t)
-            (if (eq? t_29 (1/current-thread)) (let-values () (1/check-for-break)) (void))))))))
+          (if (thread-pending-break? t_34)
+            (void)
+            (let-values ()
+              (begin
+                (set-thread-pending-break?! t_34 #t)
+                (let-values (((c2_0) (thread-interrupt-callback t_34)))
+                  (if c2_0
+                    ((lambda (interrupt-callback_1)
+                       (begin
+                         (let-values (((temp36_0) #f)) (thread-internal-resume!15.1 temp36_0 #t t_34))
+                         (interrupt-callback_1)))
+                     c2_0)
+                    (void)))))))
+        (end-atomic))
+      (if (eq? t_34 (1/current-thread)) (let-values () (1/check-for-break)) (void)))))
  (define-values
   (struct:channel channel1.1 1/channel? channel-get-queue channel-put-queue)
   (let-values (((struct:_0 make-_0 ?_0 -ref_0 -set!_0)
@@ -1357,41 +1493,65 @@
                     (values))))
       (let-values (((b_0) (box #f)))
         (begin
-          ((begin
-             (start-atomic)
-             (begin0
-               (let-values ()
-                 (let-values (((pw+v_0) (queue-remove! (channel-put-queue ch_1))))
-                   (let-values (((gw_0) (1/current-thread)))
-                     (if (not pw+v_0)
-                       (let-values ()
-                         (let-values (((gq_0) (channel-get-queue ch_1)))
-                           (let-values (((n_7) (queue-add! gq_0 (cons gw_0 b_0))))
-                             (waiter-suspend! gw_0 (lambda () (queue-remove-node! gq_0 n_7))))))
-                       (let-values () (begin (set-box! b_0 (cdr pw+v_0)) (waiter-resume! (car pw+v_0) (void)) void))))))
-               (end-atomic))))
+          ((letrec-values (((receive_0)
+                            (lambda ()
+                              ((begin
+                                 (start-atomic)
+                                 (begin0
+                                   (let-values ()
+                                     (let-values (((pw+v_0) (queue-remove! (channel-put-queue ch_1))))
+                                       (let-values (((gw_0) (1/current-thread)))
+                                         (if (not pw+v_0)
+                                           (let-values ()
+                                             (let-values (((gq_0) (channel-get-queue ch_1)))
+                                               (let-values (((n_10) (queue-add! gq_0 (cons gw_0 b_0))))
+                                                 (waiter-suspend!
+                                                  gw_0
+                                                  (lambda () (queue-remove-node! gq_0 n_10))
+                                                  (lambda () (receive_0))))))
+                                           (let-values ()
+                                             (begin
+                                               (set-box! b_0 (cdr pw+v_0))
+                                               (waiter-resume! (car pw+v_0) (void))
+                                               void))))))
+                                   (end-atomic)))))))
+             receive_0))
           (unbox b_0))))))
  (define-values
   (channel-get/poll)
   (lambda (ch_2 poll-ctx_12)
-    (let-values (((pw+v_1) (queue-fremove! (channel-put-queue ch_2) not-matching-select-waiter)))
-      (if pw+v_1
-        (let-values () (begin (waiter-resume! (car pw+v_1) (void)) (values (list (cdr pw+v_1)) #f)))
-        (if (poll-ctx-poll? poll-ctx_12)
-          (let-values () (values #f the-never-evt))
-          (let-values ()
-            (let-values (((b_1) (box #f)))
-              (let-values (((gq_1) (channel-get-queue ch_2)))
-                (let-values (((gw_1) (channel-select-waiter3.1 (poll-ctx-select-proc poll-ctx_12) (1/current-thread))))
-                  (let-values (((n_10) (queue-add! gq_1 (cons gw_1 b_1))))
-                    (values
-                     #f
-                     (wrap-evt6.1
-                      (nack-evt8.1 the-async-evt (lambda () (queue-remove-node! gq_1 n_10)))
-                      (lambda (v_23) (unbox b_1))))))))))))))
+    (let-values (((pq_0) (channel-put-queue ch_2)))
+      (let-values (((pw+v_1) (queue-fremove! pq_0 not-matching-select-waiter)))
+        (if pw+v_1
+          (let-values () (begin (waiter-resume! (car pw+v_1) (void)) (values (list (cdr pw+v_1)) #f)))
+          (if (poll-ctx-poll? poll-ctx_12)
+            (let-values () (values #f the-never-evt))
+            (let-values ()
+              (let-values (((b_1) (box #f)))
+                (let-values (((gq_1) (channel-get-queue ch_2)))
+                  (let-values (((gw_1)
+                                (channel-select-waiter3.1 (poll-ctx-select-proc poll-ctx_12) (1/current-thread))))
+                    (let-values (((n_11) (queue-add! gq_1 (cons gw_1 b_1))))
+                      (values
+                       #f
+                       (wrap-evt6.1
+                        (control-state-evt8.1
+                         the-async-evt
+                         (lambda () (queue-remove-node! gq_1 n_11))
+                         void
+                         (lambda ()
+                           (let-values (((pw+v_2) (queue-fremove! pq_0 not-matching-select-waiter)))
+                             (if pw+v_2
+                               (let-values ()
+                                 (begin
+                                   (waiter-resume! (car pw+v_2) (void))
+                                   (set-box! b_1 (cdr pw+v_2))
+                                   (values #t #t)))
+                               (let-values () (begin (set! n_11 (queue-add! gq_1 (cons gw_1 b_1))) (values #f #f)))))))
+                        (lambda (v_23) (unbox b_1)))))))))))))))
  (define-values
   (channel-put)
-  (lambda (ch_3 v_24)
+  (lambda (ch_3 v_21)
     (begin
       (if (1/channel? ch_3) (void) (let-values () (raise-argument-error 'channel-put "channel?" ch_3)))
       ((begin
@@ -1402,36 +1562,51 @@
                (let-values (((pw_0) (1/current-thread)))
                  (if (not gw+b_0)
                    (let-values ()
-                     (let-values (((pq_0) (channel-put-queue ch_3)))
-                       (let-values (((n_11) (queue-add! pq_0 (cons pw_0 v_24))))
-                         (waiter-suspend! pw_0 (lambda () (queue-remove-node! pq_0 n_11))))))
-                   (let-values () (begin (set-box! (cdr gw+b_0) v_24) (waiter-resume! (car gw+b_0) v_24) void))))))
-           (end-atomic))))
-      (void))))
+                     (let-values (((pq_1) (channel-put-queue ch_3)))
+                       (let-values (((n_12) (queue-add! pq_1 (cons pw_0 v_21))))
+                         (waiter-suspend!
+                          pw_0
+                          (lambda () (queue-remove-node! pq_1 n_12))
+                          (lambda () (channel-put ch_3 v_21))))))
+                   (let-values () (begin (set-box! (cdr gw+b_0) v_21) (waiter-resume! (car gw+b_0) v_21) void))))))
+           (end-atomic)))))))
  (define-values
   (channel-put/poll)
-  (lambda (ch_4 v_25 result_1 poll-ctx_13)
-    (let-values (((gw+b_1) (queue-fremove! (channel-get-queue ch_4) not-matching-select-waiter)))
-      (if (not gw+b_1)
-        (let-values ()
-          (let-values (((pq_1) (channel-put-queue ch_4)))
-            (let-values (((pw_1) (channel-select-waiter3.1 (poll-ctx-select-proc poll-ctx_13) (1/current-thread))))
-              (let-values (((n_12) (queue-add! pq_1 (cons pw_1 v_25))))
-                (values
-                 #f
-                 (wrap-evt6.1
-                  (nack-evt8.1 the-async-evt (lambda () (queue-remove-node! pq_1 n_12)))
-                  (lambda (v_26) result_1)))))))
-        (if (poll-ctx-poll? poll-ctx_13)
-          (let-values () (values #f the-async-evt))
+  (lambda (ch_4 v_24 result_1 poll-ctx_9)
+    (let-values (((gq_2) (channel-get-queue ch_4)))
+      (let-values (((gw+b_1) (queue-fremove! gq_2 not-matching-select-waiter)))
+        (if (not gw+b_1)
           (let-values ()
-            (begin (set-box! (cdr gw+b_1) v_25) (waiter-resume! (car gw+b_1) v_25) (values (list result_1) #f))))))))
+            (let-values (((pq_2) (channel-put-queue ch_4)))
+              (let-values (((pw_1) (channel-select-waiter3.1 (poll-ctx-select-proc poll-ctx_9) (1/current-thread))))
+                (let-values (((n_13) (queue-add! pq_2 (cons pw_1 v_24))))
+                  (values
+                   #f
+                   (wrap-evt6.1
+                    (control-state-evt8.1
+                     the-async-evt
+                     (lambda () (queue-remove-node! pq_2 n_13))
+                     void
+                     (lambda ()
+                       (let-values (((gw+b_2) (queue-fremove! gq_2 not-matching-select-waiter)))
+                         (if gw+b_2
+                           (let-values ()
+                             (begin
+                               (set-box! (cdr gw+b_2) v_24)
+                               (waiter-resume! (car gw+b_2) v_24)
+                               (values result_1 #t)))
+                           (let-values () (begin (set! n_13 (queue-add! pq_2 (cons pw_1 v_24))) (values #f #f)))))))
+                    (lambda (v_25) result_1)))))))
+          (if (poll-ctx-poll? poll-ctx_9)
+            (let-values () (values #f the-async-evt))
+            (let-values ()
+              (begin (set-box! (cdr gw+b_1) v_24) (waiter-resume! (car gw+b_1) v_24) (values (list result_1) #f)))))))))
  (define-values
   (not-matching-select-waiter)
   (lambda (w+b/v_0)
     (let-values (((w_9) (car w+b/v_0)))
-      (let-values (((or-part_3) (not (channel-select-waiter? w_9))))
-        (if or-part_3 or-part_3 (not (eq? (1/current-thread) (channel-select-waiter-thread w_9))))))))
+      (let-values (((or-part_2) (not (channel-select-waiter? w_9))))
+        (if or-part_2 or-part_2 (not (eq? (1/current-thread) (channel-select-waiter-thread w_9))))))))
  (define-values
   (struct:syncing
    syncing1.1
@@ -1461,44 +1636,57 @@
    syncer?
    syncer-evt
    syncer-wraps
-   syncer-nacks
+   syncer-interrupted?
+   syncer-interrupts
+   syncer-abandons
+   syncer-retries
    syncer-prev
    syncer-next
    set-syncer-evt!
    set-syncer-wraps!
-   set-syncer-nacks!
+   set-syncer-interrupted?!
+   set-syncer-interrupts!
+   set-syncer-abandons!
+   set-syncer-retries!
    set-syncer-prev!
    set-syncer-next!)
   (let-values (((struct:_18 make-_18 ?_18 -ref_18 -set!_18)
                 (let-values ()
-                  (let-values () (make-struct-type 'syncer #f 5 0 #f null (current-inspector) #f '() #f 'syncer)))))
+                  (let-values () (make-struct-type 'syncer #f 8 0 #f null (current-inspector) #f '() #f 'syncer)))))
     (values
      struct:_18
      make-_18
      ?_18
      (make-struct-field-accessor -ref_18 0 'evt)
      (make-struct-field-accessor -ref_18 1 'wraps)
-     (make-struct-field-accessor -ref_18 2 'nacks)
-     (make-struct-field-accessor -ref_18 3 'prev)
-     (make-struct-field-accessor -ref_18 4 'next)
+     (make-struct-field-accessor -ref_18 2 'interrupted?)
+     (make-struct-field-accessor -ref_18 3 'interrupts)
+     (make-struct-field-accessor -ref_18 4 'abandons)
+     (make-struct-field-accessor -ref_18 5 'retries)
+     (make-struct-field-accessor -ref_18 6 'prev)
+     (make-struct-field-accessor -ref_18 7 'next)
      (make-struct-field-mutator -set!_18 0 'evt)
      (make-struct-field-mutator -set!_18 1 'wraps)
-     (make-struct-field-mutator -set!_18 2 'nacks)
-     (make-struct-field-mutator -set!_18 3 'prev)
-     (make-struct-field-mutator -set!_18 4 'next))))
- (define-values (none-syncer) (syncer2.1 #f null null #f #f))
+     (make-struct-field-mutator -set!_18 2 'interrupted?)
+     (make-struct-field-mutator -set!_18 3 'interrupts)
+     (make-struct-field-mutator -set!_18 4 'abandons)
+     (make-struct-field-mutator -set!_18 5 'retries)
+     (make-struct-field-mutator -set!_18 6 'prev)
+     (make-struct-field-mutator -set!_18 7 'next))))
+ (define-values (make-syncer) (lambda (arg_0 last_0) (syncer2.1 arg_0 null #f null null null last_0 #f)))
+ (define-values (none-syncer) (make-syncer #f #f))
  (define-values
   (do-sync)
-  (lambda (who_1 timeout_0 args_0)
+  (lambda (who_1 timeout_0 args_1)
     (let-values ((()
                   (begin
                     (if ((lambda (timeout_1)
-                           (let-values (((or-part_4) (not timeout_1)))
-                             (if or-part_4
-                               or-part_4
-                               (let-values (((or-part_5) (if (real? timeout_1) (>= timeout_1 0) #f)))
-                                 (if or-part_5
-                                   or-part_5
+                           (let-values (((or-part_3) (not timeout_1)))
+                             (if or-part_3
+                               or-part_3
+                               (let-values (((or-part_4) (if (real? timeout_1) (>= timeout_1 0) #f)))
+                                 (if or-part_4
+                                   or-part_4
                                    (if (procedure? timeout_1) (procedure-arity-includes? timeout_1 0) #f))))))
                          timeout_0)
                       (void)
@@ -1506,69 +1694,81 @@
                         (raise-argument-error who_1 "(or/c #f (and/c real? (not/c negative?)) (-> any))" timeout_0)))
                     (values))))
       (let-values (((syncers_0)
-                    ((letrec-values (((loop_4)
-                                      (lambda (args_1 first_0 last_0)
-                                        (if (null? args_1)
+                    ((letrec-values (((loop_5)
+                                      (lambda (args_2 first_0 last_1)
+                                        (if (null? args_2)
                                           (let-values () first_0)
                                           (let-values ()
-                                            (let-values (((arg_0) (car args_1)))
+                                            (let-values (((arg_1) (car args_2)))
                                               (let-values ((()
                                                             (begin
-                                                              (if (1/evt? arg_0)
+                                                              (if (1/evt? arg_1)
                                                                 (void)
                                                                 (let-values ()
-                                                                  (raise-argument-error who_1 "evt?" arg_0)))
+                                                                  (raise-argument-error who_1 "evt?" arg_1)))
                                                               (values))))
-                                                (let-values (((sr_0) (syncer2.1 arg_0 null null last_0 #f)))
+                                                (let-values (((sr_0) (make-syncer arg_1 last_1)))
                                                   (begin
-                                                    (if last_0 (let-values () (set-syncer-next! last_0 sr_0)) (void))
-                                                    (loop_4
-                                                     (cdr args_1)
-                                                     (let-values (((or-part_6) first_0)) (if or-part_6 or-part_6 sr_0))
+                                                    (if last_1 (let-values () (set-syncer-next! last_1 sr_0)) (void))
+                                                    (loop_5
+                                                     (cdr args_2)
+                                                     (let-values (((or-part_5) first_0)) (if or-part_5 or-part_5 sr_0))
                                                      sr_0))))))))))
-                       loop_4)
-                     args_0
+                       loop_5)
+                     args_1
                      #f
                      #f)))
-        (let-values (((s_10) (syncing1.1 #f syncers_0 void)))
-          (if (if (real? timeout_0) (zero? timeout_0) #f)
-            (let-values ()
-              (let-values (((temp15_0) (lambda (sched-info_2) #f)) ((temp16_0) #t))
-                (sync-poll9.1 #f #f temp16_0 #t s_10 temp15_0)))
-            (if (procedure? timeout_0)
-              (let-values ()
-                (let-values (((temp18_1) (lambda (sched-info_3) (timeout_0))) ((temp19_1) #t))
-                  (sync-poll9.1 #f #f temp19_1 #t s_10 temp18_1)))
-              (let-values ()
-                (let-values (((timeout-at_4) (if timeout_0 (+ (* timeout_0 1000) (current-inexact-milliseconds)) #f)))
-                  ((letrec-values (((loop_5)
-                                    (lambda (did-work?_1)
-                                      (if (if timeout_0 (>= timeout_0 (current-inexact-milliseconds)) #f)
-                                        (let-values () (begin (syncing-done! s_10 none-syncer) #f))
-                                        (if (if (all-asynchronous? s_10) (not (syncing-selected s_10)) #f)
-                                          (let-values () (begin (suspend-syncing-thread s_10 timeout-at_4) (loop_5 #f)))
-                                          (let-values ()
-                                            (let-values (((did-work?21_0) did-work?_1)
-                                                         ((temp22_0)
-                                                          (lambda (sched-info_4)
-                                                            (begin
-                                                              (if timeout-at_4
-                                                                (let-values ()
-                                                                  (schedule-info-add-timeout-at!
-                                                                   sched-info_4
-                                                                   timeout-at_4))
-                                                                (void))
-                                                              (thread-yield sched-info_4)
-                                                              (loop_5 #f)))))
-                                              (sync-poll9.1 did-work?21_0 #t #f #f s_10 temp22_0))))))))
-                     loop_5)
-                   #t))))))))))
- (define-values (1/sync) (lambda args_2 (do-sync 'sync #f args_2)))
- (define-values (1/sync/timeout) (lambda (timeout_2 . args_3) (do-sync 'sync/timeout timeout_2 args_3)))
+        (let-values (((s_7) (syncing1.1 #f syncers_0 void)))
+          (dynamic-wind
+           (lambda ()
+             (begin
+               (start-atomic)
+               (begin0 (let-values () (thread-push-kill-callback! (lambda () (syncing-abandon! s_7)))) (end-atomic))))
+           (lambda ()
+             (if (if (real? timeout_0) (zero? timeout_0) #f)
+               (let-values ()
+                 (let-values (((temp15_0) (lambda (sched-info_2) #f)) ((temp16_0) #t))
+                   (sync-poll9.1 #f #f temp16_0 #t s_7 temp15_0)))
+               (if (procedure? timeout_0)
+                 (let-values ()
+                   (let-values (((temp18_0) (lambda (sched-info_3) (timeout_0))) ((temp19_0) #t))
+                     (sync-poll9.1 #f #f temp19_0 #t s_7 temp18_0)))
+                 (let-values ()
+                   (let-values (((timeout-at_4)
+                                 (if timeout_0 (+ (* timeout_0 1000) (current-inexact-milliseconds)) #f)))
+                     ((letrec-values (((loop_6)
+                                       (lambda (did-work?_1)
+                                         (if (if timeout_0 (>= timeout_0 (current-inexact-milliseconds)) #f)
+                                           (let-values () (begin (syncing-done! s_7 none-syncer) #f))
+                                           (if (if (all-asynchronous? s_7) (not (syncing-selected s_7)) #f)
+                                             (let-values ()
+                                               (begin (suspend-syncing-thread s_7 timeout-at_4) (loop_6 #f)))
+                                             (let-values ()
+                                               (let-values (((did-work?21_0) did-work?_1)
+                                                            ((temp22_0)
+                                                             (lambda (sched-info_4)
+                                                               (begin
+                                                                 (if timeout-at_4
+                                                                   (let-values ()
+                                                                     (schedule-info-add-timeout-at!
+                                                                      sched-info_4
+                                                                      timeout-at_4))
+                                                                   (void))
+                                                                 (thread-yield sched-info_4)
+                                                                 (loop_6 #f)))))
+                                                 (sync-poll9.1 did-work?21_0 #t #f #f s_7 temp22_0))))))))
+                        loop_6)
+                      #t))))))
+           (lambda ()
+             (begin
+               (start-atomic)
+               (begin0 (let-values () (begin (thread-pop-kill-callback!) (syncing-abandon! s_7))) (end-atomic))))))))))
+ (define-values (1/sync) (lambda args_3 (do-sync 'sync #f args_3)))
+ (define-values (1/sync/timeout) (lambda (timeout_2 . args_4) (do-sync 'sync/timeout timeout_2 args_4)))
  (define-values
   (sync-poll9.1)
   (lambda (did-work?4_1 did-work?6_0 just-poll?3_0 just-poll?5_0 s7_0 none-k8_0)
-    (let-values (((s_11) s7_0))
+    (let-values (((s_10) s7_0))
       (let-values (((none-k_0) none-k8_0))
         (let-values (((just-poll?_0) (if just-poll?5_0 just-poll?3_0 #f)))
           (let-values (((did-work?_2) (if did-work?6_0 did-work?4_1 #f)))
@@ -1576,20 +1776,20 @@
               (let-values (((sched-info_5)
                             (let-values (((did-work?23_0) did-work?_2))
                               (make-schedule-info6.1 did-work?23_0 #t #f #f))))
-                ((letrec-values (((loop_6)
+                ((letrec-values (((loop_7)
                                   (lambda (sr_1)
                                     ((begin
                                        (start-atomic)
                                        (begin0
                                          (let-values ()
-                                           (let-values (((c1_0) (syncing-selected s_11)))
-                                             (if c1_0
-                                               ((lambda (sr_2) (make-result-thunk sr_2 (list (syncer-evt sr_2)))) c1_0)
+                                           (let-values (((c1_1) (syncing-selected s_10)))
+                                             (if c1_1
+                                               ((lambda (sr_2) (make-result-thunk sr_2 (list (syncer-evt sr_2)))) c1_1)
                                                (if (not sr_1)
                                                  (let-values ()
                                                    (begin
                                                      (if just-poll?_0
-                                                       (let-values () (syncing-done! s_11 none-syncer))
+                                                       (let-values () (syncing-done! s_10 none-syncer))
                                                        (void))
                                                      (lambda () (none-k_0 sched-info_5))))
                                                  (let-values ()
@@ -1598,12 +1798,12 @@
                                                                   (syncer-evt sr_1)
                                                                   (poll-ctx2.1
                                                                    just-poll?_0
-                                                                   (lambda () (syncing-done! s_11 sr_1))
+                                                                   (lambda () (syncing-done! s_10 sr_1))
                                                                    sched-info_5))))
                                                      (if results_0
                                                        (let-values ()
                                                          (begin
-                                                           (syncing-done! s_11 sr_1)
+                                                           (syncing-done! s_10 sr_1)
                                                            (make-result-thunk sr_1 results_0)))
                                                        (if (wrap-evt? new-evt_0)
                                                          (let-values ()
@@ -1617,17 +1817,27 @@
                                                                    (list values)
                                                                    l_1))))
                                                              (set-syncer-evt! sr_1 (wrap-evt-evt new-evt_0))
-                                                             (lambda () (loop_6 sr_1))))
-                                                         (if (nack-evt? new-evt_0)
+                                                             (lambda () (loop_7 sr_1))))
+                                                         (if (control-state-evt? new-evt_0)
                                                            (let-values ()
                                                              (begin
-                                                               (set-syncer-nacks!
+                                                               (set-syncer-interrupts!
                                                                 sr_1
                                                                 (cons
-                                                                 (nack-evt-nack-proc new-evt_0)
-                                                                 (syncer-nacks sr_1)))
-                                                               (set-syncer-evt! sr_1 (nack-evt-evt new-evt_0))
-                                                               (lambda () (loop_6 sr_1))))
+                                                                 (control-state-evt-interrupt-proc new-evt_0)
+                                                                 (syncer-interrupts sr_1)))
+                                                               (set-syncer-abandons!
+                                                                sr_1
+                                                                (cons
+                                                                 (control-state-evt-abandon-proc new-evt_0)
+                                                                 (syncer-abandons sr_1)))
+                                                               (set-syncer-retries!
+                                                                sr_1
+                                                                (cons
+                                                                 (control-state-evt-retry-proc new-evt_0)
+                                                                 (syncer-retries sr_1)))
+                                                               (set-syncer-evt! sr_1 (control-state-evt-evt new-evt_0))
+                                                               (lambda () (loop_7 sr_1))))
                                                            (if (guard-evt? new-evt_0)
                                                              (let-values ()
                                                                (lambda ()
@@ -1641,9 +1851,9 @@
                                                                         (wrap-evt6.1
                                                                          the-always-evt
                                                                          (lambda (a_0) generated_0))))
-                                                                     (loop_6 sr_1)))))
+                                                                     (loop_7 sr_1)))))
                                                              (if (if (never-evt? new-evt_0)
-                                                                   (null? (syncer-nacks sr_1))
+                                                                   (null? (syncer-interrupts sr_1))
                                                                    #f)
                                                                (let-values ()
                                                                  (begin
@@ -1651,45 +1861,45 @@
                                                                      (set-syncer-next!
                                                                       (syncer-prev sr_1)
                                                                       (syncer-next sr_1))
-                                                                     (set-syncing-syncers! s_11 (syncer-next sr_1)))
+                                                                     (set-syncing-syncers! s_10 (syncer-next sr_1)))
                                                                    (if (syncer-next sr_1)
                                                                      (let-values ()
                                                                        (set-syncer-prev!
                                                                         (syncer-next sr_1)
                                                                         (syncer-prev sr_1)))
                                                                      (void))
-                                                                   (lambda () (loop_6 (syncer-next sr_1)))))
+                                                                   (lambda () (loop_7 (syncer-next sr_1)))))
                                                                (let-values ()
                                                                  (begin
                                                                    (set-syncer-evt! sr_1 new-evt_0)
-                                                                   (lambda () (loop_6 (syncer-next sr_1))))))))))))))))
+                                                                   (lambda () (loop_7 (syncer-next sr_1))))))))))))))))
                                          (end-atomic)))))))
-                   loop_6)
-                 (syncing-syncers s_11))))))))))
+                   loop_7)
+                 (syncing-syncers s_10))))))))))
  (define-values
   (make-result-thunk)
   (lambda (sr_3 results_1)
     (let-values (((wraps_0) (syncer-wraps sr_3)))
       (lambda ()
-        ((letrec-values (((loop_7)
+        ((letrec-values (((loop_8)
                           (lambda (wraps_1 results_2)
                             (if (null? wraps_1)
                               (let-values () (apply values results_2))
                               (if (null? (cdr wraps_1))
                                 (let-values () (apply (car wraps_1) results_2))
                                 (let-values ()
-                                  (loop_7
+                                  (loop_8
                                    (cdr wraps_1)
                                    (call-with-values (lambda () (apply (car wraps_1) results_2)) list))))))))
-           loop_7)
+           loop_8)
          wraps_0
          results_1)))))
  (define-values
   (syncing-done!)
-  (lambda (s_12 selected-sr_0)
+  (lambda (s_11 selected-sr_0)
     (begin
-      (set-syncing-selected! s_12 selected-sr_0)
-      ((letrec-values (((loop_8)
+      (set-syncing-selected! s_11 selected-sr_0)
+      ((letrec-values (((loop_9)
                         (lambda (sr_4)
                           (if sr_4
                             (let-values ()
@@ -1698,70 +1908,215 @@
                                   (void)
                                   (let-values ()
                                     (begin
-                                      (let-values (((lst_0) (syncer-nacks sr_4)))
+                                      (if (syncer-interrupted? sr_4)
+                                        (void)
+                                        (let-values ()
+                                          (begin
+                                            (let-values (((lst_2) (syncer-interrupts sr_4)))
+                                              (begin
+                                                (check-list lst_2)
+                                                ((letrec-values (((for-loop_1)
+                                                                  (lambda (lst_3)
+                                                                    (if (pair? lst_3)
+                                                                      (let-values (((interrupt_1) (unsafe-car lst_3))
+                                                                                   ((rest_1) (unsafe-cdr lst_3)))
+                                                                        (let-values ((()
+                                                                                      (let-values ()
+                                                                                        (let-values ((()
+                                                                                                      (let-values ()
+                                                                                                        (begin
+                                                                                                          (let-values ()
+                                                                                                            (interrupt_1))
+                                                                                                          (values)))))
+                                                                                          (values)))))
+                                                                          (if (not #f) (for-loop_1 rest_1) (values))))
+                                                                      (values)))))
+                                                   for-loop_1)
+                                                 lst_2)))
+                                            (void))))
+                                      (let-values (((lst_4) (syncer-abandons sr_4)))
                                         (begin
-                                          (check-list lst_0)
-                                          ((letrec-values (((for-loop_0)
-                                                            (lambda (lst_1)
-                                                              (if (pair? lst_1)
-                                                                (let-values (((nack_0) (unsafe-car lst_1))
-                                                                             ((rest_0) (unsafe-cdr lst_1)))
+                                          (check-list lst_4)
+                                          ((letrec-values (((for-loop_2)
+                                                            (lambda (lst_5)
+                                                              (if (pair? lst_5)
+                                                                (let-values (((abandon_0) (unsafe-car lst_5))
+                                                                             ((rest_2) (unsafe-cdr lst_5)))
                                                                   (let-values ((()
                                                                                 (let-values ()
                                                                                   (let-values ((()
                                                                                                 (let-values ()
                                                                                                   (begin
                                                                                                     (let-values ()
-                                                                                                      (nack_0))
+                                                                                                      (abandon_0))
                                                                                                     (values)))))
                                                                                     (values)))))
-                                                                    (if (not #f) (for-loop_0 rest_0) (values))))
+                                                                    (if (not #f) (for-loop_2 rest_2) (values))))
                                                                 (values)))))
-                                             for-loop_0)
-                                           lst_0)))
+                                             for-loop_2)
+                                           lst_4)))
                                       (void))))
-                                (loop_8 (syncer-next sr_4))))
+                                (loop_9 (syncer-next sr_4))))
                             (void)))))
-         loop_8)
-       (syncing-syncers s_12))
-      ((syncing-wakeup s_12)))))
+         loop_9)
+       (syncing-syncers s_11))
+      ((syncing-wakeup s_11)))))
+ (define-values
+  (syncing-abandon!)
+  (lambda (s_12) (if (syncing-selected s_12) (void) (let-values () (syncing-done! s_12 none-syncer)))))
+ (define-values
+  (syncing-interrupt!)
+  (lambda (s_13)
+    ((letrec-values (((loop_10)
+                      (lambda (sr_5)
+                        (if sr_5
+                          (let-values ()
+                            (begin
+                              (if (syncer-interrupted? sr_5)
+                                (let-values () (internal-error "interrupting an already-interrupted syncer"))
+                                (void))
+                              (set-syncer-interrupted?! sr_5 #t)
+                              (let-values (((lst_6) (syncer-interrupts sr_5)))
+                                (begin
+                                  (check-list lst_6)
+                                  ((letrec-values (((for-loop_3)
+                                                    (lambda (lst_7)
+                                                      (if (pair? lst_7)
+                                                        (let-values (((interrupt_2) (unsafe-car lst_7))
+                                                                     ((rest_3) (unsafe-cdr lst_7)))
+                                                          (let-values ((()
+                                                                        (let-values ()
+                                                                          (let-values ((()
+                                                                                        (let-values ()
+                                                                                          (begin
+                                                                                            (let-values ()
+                                                                                              (interrupt_2))
+                                                                                            (values)))))
+                                                                            (values)))))
+                                                            (if (not #f) (for-loop_3 rest_3) (values))))
+                                                        (values)))))
+                                     for-loop_3)
+                                   lst_6)))
+                              (void)
+                              (loop_10 (syncer-next sr_5))))
+                          (void)))))
+       loop_10)
+     (syncing-syncers s_13))))
+ (define-values
+  (syncing-retry!)
+  (lambda (s_14)
+    ((letrec-values (((loop_11)
+                      (lambda (sr_6 done?_0)
+                        (if (if sr_6 (not (syncing-selected s_14)) #f)
+                          (let-values ()
+                            (begin
+                              (if (syncer-interrupted? sr_6)
+                                (void)
+                                (let-values () (internal-error "retrying a non-interrupted syncer")))
+                              (set-syncer-interrupted?! sr_6 #f)
+                              (let-values (((lst_8) (syncer-retries sr_6)))
+                                (begin
+                                  (check-list lst_8)
+                                  ((letrec-values (((for-loop_4)
+                                                    (lambda (lst_9)
+                                                      (if (pair? lst_9)
+                                                        (let-values (((retry_1) (unsafe-car lst_9))
+                                                                     ((rest_4) (unsafe-cdr lst_9)))
+                                                          (let-values ((()
+                                                                        (let-values ()
+                                                                          (let-values ((()
+                                                                                        (let-values ()
+                                                                                          (begin
+                                                                                            (let-values ()
+                                                                                              (let-values (((result_2
+                                                                                                             ready?_0)
+                                                                                                            (retry_1)))
+                                                                                                (if ready?_0
+                                                                                                  (let-values ()
+                                                                                                    (begin
+                                                                                                      (set-syncer-wraps!
+                                                                                                       sr_6
+                                                                                                       (cons
+                                                                                                        (lambda args_5
+                                                                                                          result_2)
+                                                                                                        (syncer-wraps
+                                                                                                         sr_6)))
+                                                                                                      (syncing-done!
+                                                                                                       s_14
+                                                                                                       sr_6)))
+                                                                                                  (void))))
+                                                                                            (values)))))
+                                                                            (values)))))
+                                                            (if (not #f) (for-loop_4 rest_4) (values))))
+                                                        (values)))))
+                                     for-loop_4)
+                                   lst_8)))
+                              (void)))
+                          (void)))))
+       loop_11)
+     (syncing-syncers s_14)
+     #f)))
  (define-values
   (all-asynchronous?)
-  (lambda (s_13)
+  (lambda (s_15)
     (begin
       (start-atomic)
       (begin0
         (let-values ()
-          ((letrec-values (((loop_9)
-                            (lambda (sr_5)
-                              (if (not sr_5)
+          ((letrec-values (((loop_12)
+                            (lambda (sr_7)
+                              (if (not sr_7)
                                 (let-values () #t)
-                                (if (async-evt? (syncer-evt sr_5))
-                                  (let-values () (loop_9 (syncer-next sr_5)))
-                                  (let-values () #f))))))
-             loop_9)
-           (syncing-syncers s_13)))
+                                (let-values ()
+                                  (let-values (((e_2) (syncer-evt sr_7)))
+                                    (if (let-values (((or-part_6) (async-evt? e_2)))
+                                          (if or-part_6 or-part_6 (never-evt? e_2)))
+                                      (loop_12 (syncer-next sr_7))
+                                      #f)))))))
+             loop_12)
+           (syncing-syncers s_15)))
         (end-atomic)))))
  (define-values
   (suspend-syncing-thread)
-  (lambda (s_14 timeout-at_5)
+  (lambda (s_16 timeout-at_5)
     ((begin
        (start-atomic)
        (begin0
          (let-values ()
-           (if (syncing-selected s_14)
-             (let-values () void)
-             (let-values ()
-               (let-values (((t_30) (1/current-thread)))
-                 (begin
-                   (set-syncing-wakeup!
-                    s_14
-                    (lambda () (begin (set-syncing-wakeup! s_14 void) (thread-internal-resume! t_30))))
-                   (thread-internal-suspend!
-                    t_30
-                    timeout-at_5
-                    (lambda ()
-                      (if (syncing-selected s_14) (void) (let-values () (syncing-done! s_14 none-syncer))))))))))
+           ((letrec-values (((retry_2)
+                             (lambda ()
+                               (if (syncing-selected s_16)
+                                 (let-values () void)
+                                 (let-values ()
+                                   (let-values (((t_35) (1/current-thread)))
+                                     (begin
+                                       (set-syncing-wakeup!
+                                        s_16
+                                        (lambda ()
+                                          (begin
+                                            (set-syncing-wakeup! s_16 void)
+                                            (let-values (((t24_0) t_35)) (thread-internal-resume!15.1 #f #f t24_0)))))
+                                       (thread-internal-suspend!
+                                        t_35
+                                        timeout-at_5
+                                        (lambda ()
+                                          (begin
+                                            (set-syncing-wakeup! s_16 void)
+                                            (if (syncing-selected s_16)
+                                              (void)
+                                              (let-values () (syncing-interrupt! s_16)))))
+                                        (lambda ()
+                                          (begin
+                                            (start-atomic)
+                                            (begin0
+                                              (let-values ()
+                                                (begin
+                                                  (if (syncing-selected s_16)
+                                                    (void)
+                                                    (let-values () (syncing-retry! s_16)))
+                                                  (retry_2)))
+                                              (end-atomic))))))))))))
+              retry_2)))
          (end-atomic))))))
  (define-values (idle-sema) (1/make-semaphore))
  (define-values (wrapped-idle-sema) (wrap-evt6.1 idle-sema void))
@@ -1794,7 +2149,7 @@
  (define-values
   (select-thread!)
   (lambda ()
-    ((letrec-values (((loop_10)
+    ((letrec-values (((loop_13)
                       (lambda (g_0 none-k_1)
                         (let-values ((() (begin (check-timeouts) (values))))
                           (let-values ((()
@@ -1810,39 +2165,39 @@
                                 (let-values () (none-k_1))
                                 (if (1/thread? child_2)
                                   (let-values () (swap-in-thread child_2))
-                                  (let-values () (loop_10 child_2 (lambda () (loop_10 g_0 none-k_1))))))))))))
-       loop_10)
+                                  (let-values () (loop_13 child_2 (lambda () (loop_13 g_0 none-k_1))))))))))))
+       loop_13)
      root-thread-group
      maybe-done)))
  (define-values
   (swap-in-thread)
-  (lambda (t_31)
-    (let-values (((e_2) (thread-engine t_31)))
+  (lambda (t_36)
+    (let-values (((e_3) (thread-engine t_36)))
       (begin
-        (set-thread-engine! t_31 'running)
-        (set-thread-sched-info! t_31 #f)
-        (1/current-thread t_31)
-        ((letrec-values (((loop_11)
-                          (lambda (e_3)
-                            (e_3
+        (set-thread-engine! t_36 'running)
+        (set-thread-sched-info! t_36 #f)
+        (1/current-thread t_36)
+        ((letrec-values (((loop_14)
+                          (lambda (e_4)
+                            (e_4
                              TICKS
                              (lambda () (1/check-for-break))
-                             (lambda args_4
+                             (lambda args_6
                                (begin
                                  (1/current-thread #f)
                                  (if (zero? (current-atomic))
                                    (void)
                                    (let-values () (internal-error "terminated in atomic mode!")))
-                                 (thread-dead! t_31)
+                                 (thread-dead! t_36)
                                  (thread-did-work!)
                                  (select-thread!)))
-                             (lambda (e_4)
+                             (lambda (e_5)
                                (if (zero? (current-atomic))
                                  (let-values ()
-                                   (begin (1/current-thread #f) (set-thread-engine! t_31 e_4) (select-thread!)))
-                                 (let-values () (loop_11 e_4))))))))
-           loop_11)
-         e_2)))))
+                                   (begin (1/current-thread #f) (set-thread-engine! t_36 e_5) (select-thread!)))
+                                 (let-values () (loop_14 e_5))))))))
+           loop_14)
+         e_3)))))
  (define-values
   (maybe-done)
   (lambda ()
@@ -1865,22 +2220,26 @@
                     (let-values (((ht_3) threads_1))
                       (begin
                         (check-in-hash-keys ht_3)
-                        ((letrec-values (((for-loop_1)
+                        ((letrec-values (((for-loop_5)
                                           (lambda (i_0)
                                             (if i_0
-                                              (let-values (((t_32) (hash-iterate-key ht_3 i_0)))
+                                              (let-values (((t_37) (hash-iterate-key ht_3 i_0)))
                                                 (let-values ((()
                                                               (let-values ()
                                                                 (let-values ((()
                                                                               (let-values ()
                                                                                 (begin
                                                                                   (let-values ()
-                                                                                    (thread-internal-resume! t_32))
+                                                                                    (let-values (((t1_0) t_37))
+                                                                                      (thread-internal-resume!15.1
+                                                                                       #f
+                                                                                       #f
+                                                                                       t1_0)))
                                                                                   (values)))))
                                                                   (values)))))
-                                                  (if (not #f) (for-loop_1 (hash-iterate-next ht_3 i_0)) (values))))
+                                                  (if (not #f) (for-loop_5 (hash-iterate-next ht_3 i_0)) (values))))
                                               (values)))))
-                           for-loop_1)
+                           for-loop_5)
                          (hash-iterate-first ht_3))))
                     (void)
                     (thread-did-work!)))))
@@ -1902,20 +2261,21 @@
                       (distant-future)
                       (let-values (((timeout-at_7 threads_2) (min-key+value sleeping-threads))) timeout-at_7))))
         (let-values (((timeout-at_8)
-                      (let-values (((lst_2) ts_0))
+                      (let-values (((lst_10) ts_0))
                         (begin
-                          (check-list lst_2)
-                          ((letrec-values (((for-loop_2)
-                                            (lambda (timeout-at_9 lst_3)
-                                              (if (pair? lst_3)
-                                                (let-values (((t_33) (unsafe-car lst_3)) ((rest_1) (unsafe-cdr lst_3)))
+                          (check-list lst_10)
+                          ((letrec-values (((for-loop_6)
+                                            (lambda (timeout-at_9 lst_11)
+                                              (if (pair? lst_11)
+                                                (let-values (((t_38) (unsafe-car lst_11))
+                                                             ((rest_5) (unsafe-cdr lst_11)))
                                                   (let-values (((timeout-at_10)
                                                                 (let-values (((timeout-at_11) timeout-at_9))
                                                                   (let-values (((timeout-at_12)
                                                                                 (let-values ()
                                                                                   (let-values (((sched-info_6)
                                                                                                 (thread-sched-info
-                                                                                                 t_33)))
+                                                                                                 t_38)))
                                                                                     (let-values (((t-timeout-at_0)
                                                                                                   (if sched-info_6
                                                                                                     (schedule-info-timeout-at
@@ -1928,11 +2288,11 @@
                                                                                            timeout-at_11
                                                                                            t-timeout-at_0))))))))
                                                                     (values timeout-at_12)))))
-                                                    (if (not #f) (for-loop_2 timeout-at_10 rest_1) timeout-at_10)))
+                                                    (if (not #f) (for-loop_6 timeout-at_10 rest_5) timeout-at_10)))
                                                 timeout-at_9))))
-                             for-loop_2)
+                             for-loop_6)
                            sleep-timeout_0
-                           lst_2)))))
+                           lst_10)))))
           (begin (sleep (/ (- timeout-at_8 (current-inexact-milliseconds)) 1000.0)) (thread-did-work!)))))))
  (define-values (distant-future) (lambda () (+ (current-inexact-milliseconds) (* 1000.0 60 60 24 365))))
  (define-values
@@ -1953,7 +2313,7 @@
   (guard-evt)
   (lambda (proc_6)
     (begin
-      (if ((lambda (v_27) (if (procedure? v_27) (procedure-arity-includes? v_27 0) #f)) proc_6)
+      (if ((lambda (v_26) (if (procedure? v_26) (procedure-arity-includes? v_26 0) #f)) proc_6)
         (void)
         (let-values () (raise-argument-error 'guard-evt "(procedure-arity-includes?/c 0)" proc_6)))
       (guard-evt9.1 proc_6))))
@@ -1961,16 +2321,20 @@
   (1/nack-guard-evt)
   (lambda (proc_7)
     (begin
-      (if ((lambda (v_28) (if (procedure? v_28) (procedure-arity-includes? v_28 1) #f)) proc_7)
+      (if ((lambda (v_27) (if (procedure? v_27) (procedure-arity-includes? v_27 1) #f)) proc_7)
         (void)
         (let-values () (raise-argument-error 'nack-guard-evt "(procedure-arity-includes?/c 1)" proc_7)))
       (guard-evt9.1
        (lambda ()
-         (let-values (((s_15) (1/make-semaphore)))
-           (let-values (((v_29) (proc_7 (semaphore-peek-evt2.1 s_15))))
-             (nack-evt8.1
-              (if (1/evt? v_29) v_29 (1/wrap-evt the-always-evt (lambda () v_29)))
-              (lambda () (1/semaphore-post s_15))))))))))
+         (let-values (((s_17) (1/make-semaphore)))
+           (control-state-evt8.1
+            (guard-evt9.1
+             (lambda ()
+               (let-values (((v_28) (proc_7 (semaphore-peek-evt2.1 s_17))))
+                 (if (1/evt? v_28) v_28 (1/wrap-evt the-always-evt (lambda () v_28))))))
+            void
+            (lambda () (1/semaphore-post s_17))
+            void)))))))
  (define-values
   (1/channel-put-evt)
   (lambda (ch_5 v_18)
@@ -1979,7 +2343,7 @@
       (channel-put-evt2.1 ch_5 v_18))))
  (define-values
   (1/semaphore-peek-evt)
-  (lambda (s_16)
+  (lambda (s_18)
     (begin
-      (if (1/semaphore? s_16) (void) (let-values () (raise-argument-error 'semaphore-peek-evt "semaphore?" s_16)))
-      (semaphore-peek-evt2.1 s_16)))))
+      (if (1/semaphore? s_18) (void) (let-values () (raise-argument-error 'semaphore-peek-evt "semaphore?" s_18)))
+      (semaphore-peek-evt2.1 s_18)))))

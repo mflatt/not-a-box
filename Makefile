@@ -1,4 +1,5 @@
-SCHEME = scheme
+#SCHEME = scheme
+SCHEME = /Users/mflatt/repo/ChezScheme/a6osx/bin/scheme -b /Users/mflatt/repo/ChezScheme/a6osx/boot/a6osx/petite.boot -b /Users/mflatt/repo/ChezScheme/a6osx/boot/a6osx/scheme.boot
 UNSAFE = # '(optimize-level 3)'
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'

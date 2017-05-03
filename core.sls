@@ -13,6 +13,7 @@
           call-with-continuation-prompt
           abort-current-continuation
           continuation-prompt-available?
+          break-enabled-key
           
           with-continuation-mark
           continuation-mark-set-first

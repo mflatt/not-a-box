@@ -7,12 +7,12 @@
 ;; Don't mix Chez engines with this implementation, because we take
 ;; over the timer.
 
-(define-record engine-state (mc complete expire thread-cell-values reset-handler))
+(define-record engine-state (mc complete expire thread-cell-values init-break-enabled-cell reset-handler))
 (define current-engine-state (chez:make-parameter #f))
 
 (define root-thread-cell-values (make-weak-eq-hashtable))
 
-(define (make-engine thunk)
+(define (make-engine thunk init-break-enabled-cell)
   (let ([paramz (current-parameterization)])
     (create-engine empty-metacontinuation
                    (lambda (prefix)
@@ -21,15 +21,17 @@
                          (begin
                            (prefix)
                            (call-with-values thunk engine-return))))
-                   (new-engine-thread-cell-values))))
+                   (new-engine-thread-cell-values)
+                   init-break-enabled-cell)))
 
 
-(define (create-engine to-saves proc thread-cell-values)
+(define (create-engine to-saves proc thread-cell-values init-break-enabled-cell)
   (lambda (ticks prefix complete expire)
     (swap-metacontinuation
      to-saves
      (lambda (saves)
-       (current-engine-state (make-engine-state saves complete expire thread-cell-values (reset-handler)))
+       (current-engine-state (make-engine-state saves complete expire thread-cell-values
+                                                init-break-enabled-cell (reset-handler)))
        (reset-handler (lambda ()
                         (if (current-engine-state)
                             (engine-return (void))
@@ -54,7 +56,8 @@
          (create-engine
           saves
           (lambda (prefix) prefix) ; returns `prefix` to the above "(("
-          (engine-state-thread-cell-values es))))))))
+          (engine-state-thread-cell-values es)
+          (engine-state-init-break-enabled-cell es))))))))
 
 (define (engine-return . args)
   (timer-interrupt-handler void)
@@ -85,3 +88,9 @@
          (when (thread-cell-preserved? c)
            (hashtable-set! new-t c v)))))
     new-t))
+
+(define (current-engine-init-break-enabled-cell none-v)
+  (let ([es (current-engine-state)])
+    (if es
+        (engine-state-init-break-enabled-cell es)
+        none-v)))
