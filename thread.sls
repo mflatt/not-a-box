@@ -6,6 +6,7 @@
                         printf)
                   [sleep chez:sleep])
           (rename (core)
+                  [core:break-enabled-key break-enabled-key]
                   ;; These are extracted via `#%linklet`:
                   [make-engine core:make-engine]
                   [engine-block core:engine-block]

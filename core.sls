@@ -13,7 +13,7 @@
           call-with-continuation-prompt
           abort-current-continuation
           continuation-prompt-available?
-          break-enabled-key
+          (rename [break-enabled-key core:break-enabled-key])
           
           with-continuation-mark
           continuation-mark-set-first

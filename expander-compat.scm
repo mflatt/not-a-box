@@ -220,7 +220,6 @@
    [(cdr p) (set-cdr! p #f) #f]
    [else #f]))
 
-(define (kill-thread t) (void))
 (define (thread-resume t) (void))
 (define (thread-send t v) t)
 (define (thread-receive-evt t) 'thread-receive-evt)
