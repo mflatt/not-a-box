@@ -1,3 +1,9 @@
+Moved to
+
+   https://github.com/racket/racket7
+
+----------------------------------------
+
 Work-in-progress for running Racket on Chez Scheme.
 
  [Requires the current development version of Chez Scheme
