@@ -51,7 +51,7 @@
   (define (object-name n) 'unknown-name)
   (define (system-path-convention-type) 'unix)
 
-  (include "port.scm")
+  (include "linklet/port.scm")
 
   ;; Initialize:
   (1/current-directory (current-directory)))

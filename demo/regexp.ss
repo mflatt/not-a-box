@@ -2,4 +2,4 @@
         (regexp)
         (port))
 
-(include "regexp-demo.scm")
+(include "demo/regexp.scm")

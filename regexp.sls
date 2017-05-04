@@ -4,4 +4,4 @@
           (core)
           (port))
   (define (char-graphic? x) #f)
-  (include "regexp.scm"))
+  (include "linklet/regexp.scm"))

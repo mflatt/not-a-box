@@ -25,5 +25,5 @@
           (port)
           (linklet))
   (include "expander-compat.scm")
-  (include "expander.scm")
+  (include "linklet/expander.scm")
   (fill-environment!))

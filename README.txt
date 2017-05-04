@@ -7,37 +7,44 @@ The files:
 
  *.sls - Chez Scheme libraries that provide implementations of Racket
          primitives, building up to the Racket expander. The
-         "core.sls" library is implemented directly in Chez. In other
-         cases, a corresponding "*.scm" file contains the
-         implementation extracted from from expanded and flattened
+         "core.sls" library is implemented directly in Chez. For most
+         other cases, a corresponding "linklet/*.scm" file contains
+         the implementation extracted from from expanded and flattened
          Racket code.
 
- core-*.ss - Part of "core.sls" (via `include`) to implement core data
+ core/*.ss - Part of "core.sls" (via `include`) to implement core data
          structures (especially immutable hash tables), structs, etc.
 
- *.scm - Either a conversion from a ".rktl" file or a temporary
-         compatibility layer to be `include`d into an ".sls" library.
+ *.scm - a temporary compatibility layer to be `include`d into an
+         ".sls" library.
 
- *.rktl - A Racket library (e.g., to implement regexps) that has been
-         fully macro expanded and flattened into a linklet. A
+ linklet/*.scm - A conversion from a ".rktl" file to be `included`d
+         into an ".sls" library.
+
+ linklet/*.rktl - A Racket library (e.g., to implement regexps) that
+         has been fully macro expanded and flattened into a linklet. A
          linklet's only free variables are "primitives" that will be
          implemented by various ".sls" libraries in layers. See
          "Builing linklets from source" below for more information.
 
- convert.rkt - A stop-gap linklet-to-library-body compiler, which is
-         used to convert a ".rktl" file to a ".sls" file.
+ primitive/*.scm - for "expander.sls", tables of bindings for
+         primitive linklet instances.
 
- *-demo.ss - Chez scripts to check that a library basically works. For
-         example "regexp-demo.ss" runs the regexp matcher on a few
-         examples.
+ convert.rkt - A linklet-to-library-body compiler, which is used to
+         convert a ".rktl" file to a ".scm" file to inclusion in an
+         ".sls" library.
+
+ demo/*.ss - Chez scripts to check that a library basically works. For
+         example "demo/regexp.ss" runs the regexp matcher on a few
+         examples. To run "demo/*.ss", use `make *-demo`.
 
  schemify/schemify.rkt - Source to "schemify.scm", which is part of
          the implementation of linklets --- specifically, for
          compiling a Racket linklet to a Chez procedure.
 
  other *.rkt - Racket scripts like "convert.rkt" or comparisions like
-         "regexp-demo.rkt". For example, you can run "regexp-demo.rkt"
-         and compare the reported timing to "regexp-demo.ss".
+         "demo/regexp.rkt". For example, you can run "demo/regexp.rkt"
+         and compare the reported timing to "demo/regexp.ss".
 
 
 Building linklets from source:
@@ -47,9 +54,9 @@ Building linklets from source:
 
             https://github.com/mflatt/racket
 
- For example, "regexp.rktl" is generated from `make regexp-src` in the
- "pkgs/regexp". The "schemify.rktl" linklet is generated from
- "schemify/schemify.rkt" here, though.
+ For example, "linklet/regexp.rktl" is generated from `make
+ regexp-src` in the "pkgs/regexp". The "linklet/schemify.rktl" linklet
+ is generated from "schemify/schemify.rkt" here, though.
 
  To rebuild those sources, set the `LINKLET_RACKET` environment
  variable to a built git clone of the "linklet" branch (it's probably
@@ -57,7 +64,7 @@ Building linklets from source:
  all-linklets`.
 
 
-Running "expander-demo.ss":
+Running "demo/expander.ss":
 
  A `make expander-demo` builds and tries the expander on simple
  examples. If `LINKLET_RACKET` is set as for building linklets, the

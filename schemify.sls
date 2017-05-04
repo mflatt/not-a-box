@@ -15,7 +15,7 @@
     (hash 'syntax? core:correlated?
           'syntax-e core:correlated-e))
 
-  (include "schemify.scm")
+  (include "linklet/schemify.scm")
 
   (define (add-known ht syms extract known)
     (let loop ([ht ht] [syms syms])

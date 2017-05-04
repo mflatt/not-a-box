@@ -30,4 +30,4 @@
                      'exn:break/non-engine exn:break)]
       [else #f]))
 
-  (include "thread.scm"))
+  (include "linklet/thread.scm"))

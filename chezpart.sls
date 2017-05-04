@@ -1,3 +1,6 @@
+;; Reexports from `chezscheme` bindings that won't be replaced
+;; by Racket-specific implementations.
+
 (library (chezpart)
   (export)
   (import (chezscheme))

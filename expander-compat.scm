@@ -392,9 +392,9 @@
        ...
        ht)]))
 
-(include "kernel-primitives.scm")
-(include "unsafe-primitives.scm")
-(include "flfxnum-primitives.scm")
+(include "primitive/kernel.scm")
+(include "primitive/unsafe.scm")
+(include "primitive/flfxnum.scm")
 
 (define linklet-table
   (make-primitive-table
