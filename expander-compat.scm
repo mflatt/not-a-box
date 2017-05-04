@@ -24,11 +24,6 @@
 
 (define (chaperone-struct-unsafe-undefined v) v)
 
-(define (call-with-continuation-barrier proc) (proc))
-
-(define call-with-escape-continuation
-  call-with-current-continuation)
-
 (define (equal-secondary-hash-code v) (equal-hash-code v))
 
 (define fx->fl fixnum->flonum)
@@ -452,9 +447,6 @@
 
    unsafe-chaperone-procedure
    unsafe-impersonate-procedure
-
-   call-with-continuation-barrier
-   call-with-escape-continuation
 
    equal-secondary-hash-code
 

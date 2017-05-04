@@ -49,5 +49,5 @@
                    [file-exists? chez:file-exists?]
                    [directory-list chez:directory-list]
                    [filter chez:filter]
-                   [member chez:member]))))
-
+                   [member chez:member]
+                   [raise chez:raise]))))

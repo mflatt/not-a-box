@@ -1,4 +1,16 @@
 
+(define raise
+  (case-lambda
+    [(v) (raise v #t)]
+    [(v barrier?)
+     (if barrier?
+         (call-with-continuation-barrier
+          (lambda ()
+            (chez:raise v)))
+         (chez:raise v))]))
+
+;; ----------------------------------------
+
 (define error-print-width
   (make-parameter 256
                   (lambda (v)

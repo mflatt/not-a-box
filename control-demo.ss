@@ -7,6 +7,29 @@
        (unless (equal? v b)
          (error 'check (format "failed ~s => ~s" 'a v))))]))
 
+(define check-abort-tag (make-continuation-prompt-tag 'check-abort))
+
+(define-syntax check-error
+  (syntax-rules ()
+    [(_ a s)
+     (let ([v (call-with-continuation-prompt
+               (lambda ()
+                 (with-continuation-mark
+                     exception-handler-key
+                   (lambda (exn)
+                     (if (exn? exn)
+                         (abort-current-continuation
+                          check-abort-tag
+                          (lambda () (exn-message exn)))
+                         exn))
+                   a))
+               check-abort-tag)]
+           [es s])
+       (unless (and (string? v)
+                    (>= (string-length v) (string-length es))
+                    (string=? es (substring v 0 (string-length es))))
+         (error 'check (format "failed ~s != ~s" v es))))]))
+
 (define tag1 (make-continuation-prompt-tag 'tag1))
 (define tag2 (make-continuation-prompt-tag 'tag2))
 
@@ -220,6 +243,69 @@
                       (lambda () (set! syms (cons 'out0 syms))))))])
              (list v syms))))
        (list (list 22 2) '(out0 out in out in in0)))
+
+;; ----------------------------------------
+;; Escape continuations
+
+(check (call-with-escape-continuation
+        (lambda (k)
+          (+ 1 (|#%app| k 'esc))))
+       'esc)
+
+(check (let-values ([(k ek)
+                     (call-with-continuation-prompt
+                      (lambda ()
+                        (with-continuation-mark 'x 'y
+                        (call-with-escape-continuation
+                         (lambda (ek)
+                           (let-values ([(k0 ek0)
+                                         ((call-with-composable-continuation
+                                           (lambda (k)
+                                             (lambda () (values k ek)))))])
+                             (values k0 (box ek0))))))))])
+         (let-values ([(k2 ek2)
+                       (|#%app| k (lambda () (|#%app| (unbox ek) 'none 'skip)))])
+           ek2))
+       'skip)
+
+(check-error (|#%app| (call-with-escape-continuation
+                       (lambda (k) k)))
+             "continuation application: attempt to jump into an escape continuation")
+         
+;; ----------------------------------------
+;; Barriers
+
+(check (call-with-continuation-barrier
+        (lambda ()
+          'ok))
+       'ok)
+
+(check-error (call-with-continuation-prompt
+              (lambda ()
+                (call-with-continuation-barrier
+                 (lambda ()
+                   (call-with-composable-continuation
+                    (lambda (k)
+                      k)
+                    (make-continuation-prompt-tag))))))
+             "call-with-composable-continuation: continuation includes no prompt with the given tag")
+
+(check-error (call-with-continuation-prompt
+              (lambda ()
+                (call-with-continuation-barrier
+                 (lambda ()
+                   (call-with-composable-continuation
+                    (lambda (k)
+                      k))))))
+             "call-with-composable-continuation: cannot capture past continuation barrier")
+
+(check-error (let ([k (call-with-continuation-barrier
+                       (lambda ()
+                         (call-with-current-continuation
+                          (lambda (k)
+                            k))))])
+               (|#%app| k void))
+             "continuation application: attempt to cross a continuation barrier")
 
 ;; ----------------------------------------
 ;; Engines

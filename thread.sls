@@ -12,8 +12,6 @@
                   [engine-block core:engine-block]
                   [engine-return core:engine-return]
                   [root-continuation-prompt-tag core:root-continuation-prompt-tag]))
-  
-  (define call-with-escape-continuation call-with-current-continuation)
 
   (define (sleep secs)
     (define isecs (inexact->exact (floor secs)))

@@ -6,11 +6,13 @@
           dynamic-wind
           call-with-current-continuation
           call-with-composable-continuation
+          call-with-escape-continuation
 
           make-continuation-prompt-tag
           default-continuation-prompt-tag
           root-continuation-prompt-tag
           call-with-continuation-prompt
+          call-with-continuation-barrier
           abort-current-continuation
           continuation-prompt-available?
           (rename [break-enabled-key core:break-enabled-key])
@@ -34,6 +36,7 @@
           extend-parameterization
           parameterization?
 
+          raise
           error-print-width
           error-value->string-handler
           error-print-context-length
