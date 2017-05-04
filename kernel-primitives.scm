@@ -53,6 +53,9 @@
    bytes-append
    bytes-copy!
    bytes-length
+   bytes-open-converter
+   bytes-convert
+   path->directory-path
    bytes-ref
    bytes-set!
    bytes-utf-8-length
@@ -169,6 +172,13 @@
    file-exists?
    file-or-directory-modify-seconds
    file-position
+
+   file-stream-buffer-mode
+   logger-name
+   file-truncate
+   flush-output
+   link-exists?
+   
    filesystem-change-evt
    filesystem-change-evt-cancel
    find-system-path
@@ -224,6 +234,7 @@
    inspector?
    integer->char
    integer->integer-bytes
+   integer-bytes->integer
    integer?
    interned-char?
    kill-thread
