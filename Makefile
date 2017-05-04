@@ -1,5 +1,4 @@
-#SCHEME = scheme
-SCHEME = /Users/mflatt/repo/ChezScheme/a6osx/bin/scheme -b /Users/mflatt/repo/ChezScheme/a6osx/boot/a6osx/petite.boot -b /Users/mflatt/repo/ChezScheme/a6osx/boot/a6osx/scheme.boot
+SCHEME = scheme
 UNSAFE = # '(optimize-level 3)'
 
 COMP = echo '(reset-handler abort) (keyboard-interrupt-handler abort)'
@@ -132,5 +131,5 @@ all-linklets:
 	$(MAKE) -f Mf-linklet all-linklets SCHEMIFY_SRC_DEPS="$(SCHEMIFY_SRC_DEPS)"
 
 clean:
-	rm -f core.so regexp.so port.so immutable-hash.so linklet.so known-primitive.so linklet.so expander.so schemify.so
+	rm -f chezpart.so core.so regexp.so port.so immutable-hash.so linklet.so known-primitive.so linklet.so expander.so schemify.so
 	rm -f expander.scm port.scm regexp.scm schemify.scm
