@@ -101,10 +101,7 @@ Status and thoughts on various Racket subsystems:
    advantage of threads with thread-unsafe primitives wrapped to
    divert to a barrier when called in a future.
 
- * Ephemerons probably require support from Chez. I think an
-   allocaiton space can be created and managed much like the weak-pair
-   space, but with an extra loop in the GC implementation before the
-   guardian loop to find the fixpoint of ephemeron references.
+ * Ephemerons require support from Chez. (Pull request submitted.)
 
  * GC-based memory accounting similarly seems to require new support,
    but that can wait a while.
