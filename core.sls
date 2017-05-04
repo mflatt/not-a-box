@@ -18,10 +18,13 @@
           (rename [break-enabled-key core:break-enabled-key])
           
           with-continuation-mark
+          call-with-immediate-continuation-mark
           continuation-mark-set-first
           continuation-mark-set->list
+          continuation-mark-set->list*
           current-continuation-marks
           continuation-marks
+          continuation-mark-set?
 
           make-engine
           engine-block

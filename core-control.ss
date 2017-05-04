@@ -751,6 +751,26 @@
 (define-record elem+cache (elem cache))
 (define (elem+cache-strip t) (if (elem+cache? t) (elem+cache-elem t) t))
 
+(define call-with-immediate-continuation-mark
+  (case-lambda
+    [(key proc) (call-with-immediate-continuation-mark key proc #f)]
+    [(key proc default-v)
+     (unless (and (procedure? proc)
+                  (procedure-arity-includes? proc 1))
+       (raise-argument-error 'call-with-immediate-continuation-mark "(procedure-arity-includes/c 1)" proc))
+     (cond
+      [(not *mark-stack*) (proc default-v)]
+      [else
+       (call/cc (lambda (k)
+                  (if (eq? k (mark-stack-frame-k *mark-stack*))
+                      (proc (let ([v (hamt-ref (mark-stack-frame-table *mark-stack*)
+                                               key
+                                               none)])
+                              (if (eq? v none)
+                                  default-v
+                                  v)))
+                      (proc default-v))))])]))
+
 (define continuation-mark-set-first
   (case-lambda
     [(marks key) (continuation-mark-set-first marks key #f)]
@@ -778,6 +798,7 @@
                               (eq? (mark-chain-frame-tag mcf) prompt-tag))
                             ;; elem-ref:
                             (lambda (mcf key none)
+                              ;; Search within a metacontinuation frame
                               (let ([marks (mark-chain-frame-marks mcf)])
                                 (marks-search marks
                                               key
@@ -786,9 +807,17 @@
                                               ;; elem-ref:
                                               hamt-ref
                                               ;; fail-k:
-                                              (lambda () none))))
+                                              (lambda () none)
+                                              ;; strip & combine:
+                                              (lambda (v) v)
+                                              (lambda (v old) v))))
                             ;; fail-k:
-                            (lambda () none))])
+                            (lambda () none)
+                            ;; strip & combine --- cache results at the metafunction
+                            ;; level should depend on the prompt tag, so make the cache
+                            ;; value another table level mapping the prompt tag to the value:
+                            (lambda (v) (hash-ref v prompt-tag none2))
+                            (lambda (v old) (hamt-set (if (eq? old none2) empty-hasheq old) prompt-tag v)))])
        (cond
         [(eq? v none)
          ;; More special treatment of built-in keys
@@ -803,13 +832,14 @@
 
 ;; To make `continuation-mark-set-first` constant-time, if we traverse
 ;; N elements to get an answer, then cache the answer at N/2 elements.
-(define (marks-search elems key elem-stop? elem-ref fail-k)
+(define (marks-search elems key elem-stop? elem-ref fail-k
+                      strip-cache-result combine-cache-result)
   (let loop ([elems elems] [elems/cache-pos elems] [cache-step? #f])
     (cond
      [(or (null? elems)
           (elem-stop? (elem+cache-strip (car elems))))
       ;; Not found
-      (cache-result! elems elems/cache-pos key none)
+      (cache-result! elems elems/cache-pos key none combine-cache-result)
       (fail-k)]
      [else
       (let ([t (car elems)])
@@ -823,7 +853,7 @@
                     (not cache-step?))]
              [else
               ;; Found it
-              (cache-result! elems elems/cache-pos key v)
+              (cache-result! elems elems/cache-pos key v combine-cache-result)
               v])))
         (cond
          [(elem+cache? t)
@@ -832,21 +862,27 @@
              [(eq? v none2)
               ;; No mapping in cache, so try the element and continue:
               (check-elem (elem+cache-elem t))]
-             [(eq? v none)
-              ;; The cache records that it's not in the rest:
-              (cache-result! elems elems/cache-pos key none)
-              (fail-k)]
              [else
-              ;; The cache provides a value from the rest:
-              (cache-result! elems elems/cache-pos key v)
-              v]))]
+              (let ([v (strip-cache-result v)])
+                (cond
+                 [(eq? v none2)
+                  ;; Strip filtered this cache entry away, so try the element:
+                  (check-elem (elem+cache-elem t))]
+                 [(eq? v none)
+                  ;; The cache records that it's not in the rest:
+                  (cache-result! elems elems/cache-pos key none combine-cache-result)
+                  (fail-k)]
+                 [else
+                  ;; The cache provides a value from the rest:
+                  (cache-result! elems elems/cache-pos key v combine-cache-result)
+                  v]))]))]
          [else
           ;; Try the element:
           (check-elem t)]))])))
 
 ;; To make `continuation-mark-set-first` constant-time, cache
 ;; a key--value mapping at a point that's half-way in
-(define (cache-result! marks marks/cache-pos key v)
+(define (cache-result! marks marks/cache-pos key v combine-cache-result)
   (unless (eq? marks marks/cache-pos)
     (let* ([t (car marks/cache-pos)]
            [new-t (if (elem+cache? t)
@@ -854,7 +890,10 @@
                       (make-elem+cache t empty-hasheq))])
       (unless (eq? t new-t)
         (set-car! marks/cache-pos new-t))
-      (set-elem+cache-cache! new-t (hamt-set (elem+cache-cache new-t) key v)))))
+      (let ([old (hamt-ref (elem+cache-cache new-t) key none2)])
+        (set-elem+cache-cache! new-t (hamt-set (elem+cache-cache new-t)
+                                               key
+                                               (combine-cache-result v old)))))))
 
 (define continuation-mark-set->list
   (case-lambda
@@ -882,11 +921,59 @@
                 [(null? marks)
                  (chain-loop (cdr mark-chain))]
                 [else
-                 (let* ([t (car marks)]
-                        [v (hamt-ref (elem+cache-strip t) key none)])
+                 (let* ([v (hamt-ref (elem+cache-strip (car marks)) key none)])
                    (if (eq? v none)
                        (loop (cdr marks))
                        (cons v (loop (cdr marks)))))]))]))]))]))
+
+(define continuation-mark-set->list*
+  (case-lambda
+    [(marks keys) (continuation-mark-set->list* marks keys the-default-continuation-prompt-tag #f)]
+    [(marks keys prompt-tag) (continuation-mark-set->list* marks keys prompt-tag #f)]
+    [(marks keys prompt-tag none-v)
+     (unless (or (not marks)
+                 (continuation-mark-set? marks))
+       (raise-argument-error 'continuation-mark-set->list "(or/c continuation-mark-set? #f)" marks))
+     (unless (list? keys)
+       (raise-argument-error 'continuation-mark-set->list "list?" keys))
+     (unless (continuation-prompt-tag? prompt-tag)
+       (raise-argument-error 'continuation-mark-set->list "continuation-prompt-tag?" prompt-tag))
+     (let* ([n (length keys)]
+            [tmp (make-vector n)])
+       (let chain-loop ([mark-chain (or (and marks
+                                             (continuation-mark-set-mark-chain marks))
+                                        (current-mark-chain))])
+         (cond
+          [(null? mark-chain)
+           null]
+          [else
+           (let* ([mcf (elem+cache-strip (car mark-chain))])
+             (cond
+              [(eq? (mark-chain-frame-tag mcf) prompt-tag)
+               null]
+              [else
+               (let loop ([marks (mark-chain-frame-marks mcf)])
+                 (cond
+                  [(null? marks)
+                   (chain-loop (cdr mark-chain))]
+                  [else
+                   (let ([t (elem+cache-strip (car marks))])
+                     (let key-loop ([keys keys] [i 0] [found? #f])
+                       (cond
+                        [(null? keys)
+                         (if found?
+                             (let ([vec (vector-copy tmp)])
+                               (cons vec (loop (cdr marks))))
+                             (loop (cdr marks)))]
+                        [else
+                         (let ([v (hamt-ref t (car keys) none)])
+                           (cond
+                            [(eq? v none)
+                             (vector-set! tmp i none-v)
+                             (key-loop (cdr keys) (add1 i) found?)]
+                            [else
+                             (vector-set! tmp i v)
+                             (key-loop (cdr keys) (add1 i) #t)]))])))]))]))])))]))
 
 (define current-continuation-marks
   (case-lambda

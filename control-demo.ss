@@ -343,7 +343,7 @@
          (- N)))
 
 ;; Caching across metacontinuation frames
-(let ([N 100000])
+(let ([N 10000])
   (check (let loop ([n N])
            (cond
             [(zero? n)
@@ -364,6 +364,67 @@
          (- N)))
 
 (printf "Done.\n")
+
+(check (call-with-immediate-continuation-mark
+        'not-there
+        (lambda (v) v))
+       #f)
+(check (call-with-immediate-continuation-mark
+        'not-there
+        (lambda (v) v)
+        'no)
+       'no)
+(check (with-continuation-mark
+           'there 1
+           (call-with-immediate-continuation-mark
+            'there
+            (lambda (v) v)))
+       1)
+(check (with-continuation-mark
+           'there 1
+           (list
+            (call-with-immediate-continuation-mark
+             'there
+             (lambda (v) v))))
+       '(#f))
+
+(define (non-tail v) (values v))
+
+(check (with-continuation-mark
+           'x1 1
+           (with-continuation-mark
+               'x2 1
+               (non-tail
+                (with-continuation-mark
+                    'x1 2
+                    (non-tail
+                     (with-continuation-mark
+                         'x2 3
+                         (values
+                          (continuation-mark-set->list*
+                           (current-continuation-marks)
+                           '(x1 x2)
+                           (default-continuation-prompt-tag)
+                           'nope))))))))
+       '(#(nope 3) #(2 nope) #(1 1)))
+
+;; Make sure caching doesn't ignore the prompt tag
+;; for a continuation-mark lookup
+(check (with-continuation-mark
+           'x 1
+           (non-tail
+            (with-continuation-mark
+                'y 2
+                (call-with-continuation-prompt
+                 (lambda ()
+                   (call-with-continuation-prompt
+                    (lambda ()
+                      (let ([a (continuation-mark-set-first #f 'x)])
+                        (list a
+                              (continuation-mark-set-first #f 'x #f tag1))))
+                    tag2))
+                 tag1))))
+       '(1 #f))
 
 ;; ----------------------------------------
 ;; Engines
