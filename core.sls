@@ -21,6 +21,7 @@
           continuation-mark-set-first
           continuation-mark-set->list
           current-continuation-marks
+          continuation-marks
 
           make-engine
           engine-block
@@ -318,6 +319,7 @@
                 record-field-mutator))
 
   (define none (chez:gensym "none"))
+  (define none2 (chez:gensym "none2"))
 
   (include "core-constant.ss")
   (include "core-hash-code.ss")

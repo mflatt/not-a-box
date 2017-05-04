@@ -255,14 +255,13 @@
 (check (let-values ([(k ek)
                      (call-with-continuation-prompt
                       (lambda ()
-                        (with-continuation-mark 'x 'y
                         (call-with-escape-continuation
                          (lambda (ek)
                            (let-values ([(k0 ek0)
                                          ((call-with-composable-continuation
                                            (lambda (k)
                                              (lambda () (values k ek)))))])
-                             (values k0 (box ek0))))))))])
+                             (values k0 (box ek0)))))))])
          (let-values ([(k2 ek2)
                        (|#%app| k (lambda () (|#%app| (unbox ek) 'none 'skip)))])
            ek2))
@@ -271,7 +270,20 @@
 (check-error (|#%app| (call-with-escape-continuation
                        (lambda (k) k)))
              "continuation application: attempt to jump into an escape continuation")
-         
+
+(check (with-continuation-mark
+           'x 1
+           (call-with-escape-continuation
+            (lambda (k)
+              (with-continuation-mark
+                  'x 2
+                  (continuation-mark-set->list (continuation-marks k) 'x)))))
+       '(1))
+
+(check-error (continuation-marks (call-with-escape-continuation
+                                  (lambda (k) k)))
+             "continuation application: escape continuation not in the current continuation")
+
 ;; ----------------------------------------
 ;; Barriers
 
@@ -306,6 +318,52 @@
                             k))))])
                (|#%app| k void))
              "continuation application: attempt to cross a continuation barrier")
+
+;; ----------------------------------------
+;; Continuation marks
+
+(printf "Constant-time `continuation-mark-set-first` makes these tests fast...\n")
+
+;; Caching within a metacontinuation frame
+(let ([N 100000])
+  (check (let loop ([n N])
+           (cond
+            [(zero? n)
+             (check (length (continuation-mark-set->list
+                             (current-continuation-marks)
+                             'there))
+                    N)
+             n]
+            [else
+             (if (continuation-mark-set-first #f 'not-there #f)
+                 'oops
+                 (with-continuation-mark
+                     'there n
+                     (- (loop (sub1 n)) 1)))]))
+         (- N)))
+
+;; Caching across metacontinuation frames
+(let ([N 100000])
+  (check (let loop ([n N])
+           (cond
+            [(zero? n)
+             (check (length (continuation-mark-set->list
+                             (current-continuation-marks)
+                             'there))
+                    N)
+             n]
+            [else
+             (if (continuation-mark-set-first #f 'not-there #f)
+                 'oops
+                 (call-with-continuation-prompt
+                  (lambda ()
+                    (with-continuation-mark
+                        'there n
+                        (- (loop (sub1 n)) 1)))
+                  tag1))]))
+         (- N)))
+
+(printf "Done.\n")
 
 ;; ----------------------------------------
 ;; Engines

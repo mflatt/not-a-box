@@ -117,7 +117,7 @@
                                        resume-k/no-wind ; same, but doesn't run winders jumping in
                                        empty-k      ; deepest end of this frame
                                        mark-stack   ; mark stack to restore
-                                       mark-chain)) ; #f or a cached list of (cons tag mark-stack)
+                                       mark-chain)) ; #f or a cached list of mark-chain-frame or elem+cache
 
 ;; Messages to `resume-k[/no-wind]`:
 (define-record appending (resume))  ; composing the frame, so run "in" winders
@@ -364,10 +364,11 @@
 
 ;; ----------------------------------------
 
-(define-record continuation (k mark-stack empty-k mc))
-(define-record composable-continuation continuation ())
-(define-record non-composable-continuation continuation (tag))
-(define-record escape-continuation (tag))
+(define-record continuation ())
+(define-record full-continuation continuation (k mark-stack empty-k mc))
+(define-record composable-continuation full-continuation ())
+(define-record non-composable-continuation full-continuation (tag))
+(define-record escape-continuation continuation (tag))
 
 (define call-with-current-continuation
   (case-lambda
@@ -442,7 +443,7 @@
            [common-mc
             ;; We check every time, just in case control operations
             ;; change the current continuation out from under us.
-            (find-common-metacontinuation (continuation-mc c)
+            (find-common-metacontinuation (full-continuation-mc c)
                                           *metacontinuation*
                                           tag)])
       (cond
@@ -468,11 +469,11 @@
 ;; Apply a continuation within the current metacontinuation frame:
 (define (apply-immediate-continuation c args)
   (call-with-appended-metacontinuation
-   (continuation-mc c)
+   (full-continuation-mc c)
    (lambda ()
-     (set! *mark-stack* (continuation-mark-stack c))
-     (set! *empty-k* (continuation-empty-k c))
-     (apply (continuation-k c) args))))
+     (set! *mark-stack* (full-continuation-mark-stack c))
+     (set! *empty-k* (full-continuation-empty-k c))
+     (apply (full-continuation-k c) args))))
 
 ;; Used as a "handler" for a prompt without a tag, which is used for
 ;; composable continuations
@@ -631,20 +632,23 @@
    [else (let ([mf (car mc)])
            (or (metacontinuation-frame-mark-chain mf)
                (let* ([r (metacontinuation-marks (cdr mc))]
-                      [l (cons (cons (metacontinuation-frame-tag mf)
-                                     (mark-stack-to-marks
-                                      (metacontinuation-frame-mark-stack mf)))
+                      [l (cons (make-mark-chain-frame
+                                (metacontinuation-frame-tag mf)
+                                (mark-stack-to-marks
+                                 (metacontinuation-frame-mark-stack mf)))
                                r)])
                  (set-metacontinuation-frame-mark-chain! mf l)
                  l)))]))
 
 ;; ----------------------------------------
 
-(define-record continuation-mark-set (marks k))
+(define-record continuation-mark-set (mark-chain k))
 (define-record mark-stack-frame (prev   ; prev frame
                                  k      ; continuation for this frame
                                  table  ; hamt mapping keys to values
-                                 flat)) ; #f or list that contains only tables
+                                 flat)) ; #f or cached list that contains only tables and elem+caches
+
+;; A mark stack is made of marks-stack frames:
 (define *mark-stack* #f)
 
 (define-syntax with-continuation-mark
@@ -696,8 +700,8 @@
   (proc)
   (set! *mark-stack* (mark-stack-frame-prev *mark-stack*)))
 
-(define (current-marks)
-  (get-current-marks *mark-stack* *metacontinuation*))
+(define (current-mark-chain)
+  (get-current-mark-chain *mark-stack* *metacontinuation*))
 
 (define (mark-stack-to-marks mark-stack)
   (let loop ([mark-stack mark-stack])
@@ -709,10 +713,43 @@
                      (loop (mark-stack-frame-prev mark-stack)))])
         (set-mark-stack-frame-flat! mark-stack l)
         l)])))
+
+(define-record mark-chain-frame (tag marks))
   
-(define (get-current-marks mark-stack mc)
-  (cons (cons #f (mark-stack-to-marks mark-stack))
+(define (get-current-mark-chain mark-stack mc)
+  (cons (make-mark-chain-frame
+         #f ; no tag
+         (mark-stack-to-marks mark-stack))
         (metacontinuation-marks mc)))
+
+(define (prune-mark-chain-prefix tag mark-chain)
+  (cond
+   [(eq? tag (mark-chain-frame-tag (elem+cache-strip (car mark-chain))))
+    mark-chain]
+   [else
+    (prune-mark-chain-prefix tag (cdr mark-chain))]))
+
+(define (prune-mark-chain-suffix tag mark-chain)
+  (cond
+   [(null? mark-chain) null]
+   [(eq? tag (mark-chain-frame-tag (elem+cache-strip (car mark-chain))))
+    null]
+   [else
+    (let ([rest-mark-chain (prune-mark-chain-suffix tag (cdr mark-chain))])
+      (if (eq? rest-mark-chain (cdr mark-chain))
+          mark-chain
+          (cons (car mark-chain)
+                rest-mark-chain)))]))
+
+;; ----------------------------------------
+
+;; A `elem+cache` can replace a plain table in a "flat" variant of the
+;; mark stack within a metacontinuation frame, or in a mark-stack
+;; chain for a metacontinuation. The cache is a table that records
+;; results found later in the list, which allows
+;; `continuation-mark-set-first` to take amortized constant time.
+(define-record elem+cache (elem cache))
+(define (elem+cache-strip t) (if (elem+cache? t) (elem+cache-elem t) t))
 
 (define continuation-mark-set-first
   (case-lambda
@@ -720,7 +757,7 @@
     [(marks key none-v)
      (continuation-mark-set-first marks key none-v
                                   ;; Treat `break-enabled-key` and `parameterization-key`, specially
-                                  ;; so that things like `current-break-parameterization` works without
+                                  ;; so that things like `current-break-parameterization` work without
                                   ;; referencing the root continuation prompt tag
                                   (if (or (eq? key break-enabled-key)
                                           (eq? key parameterization-key))
@@ -732,12 +769,28 @@
        (raise-argument-error 'continuation-mark-set-first "(or/c continuation-mark-set? #f)" marks))
      (unless (continuation-prompt-tag? prompt-tag)
        (raise-argument-error 'continuation-mark-set-first "continuation-prompt-tag?" prompt-tag))
-     (let loops ([markss (or (and marks
-                                  (continuation-mark-set-marks marks))
-                             (current-marks))])
+     (let ([v (marks-search (or (and marks
+                                     (continuation-mark-set-mark-chain marks))
+                                (current-mark-chain))
+                            key
+                            ;; elem-stop?:
+                            (lambda (mcf)
+                              (eq? (mark-chain-frame-tag mcf) prompt-tag))
+                            ;; elem-ref:
+                            (lambda (mcf key none)
+                              (let ([marks (mark-chain-frame-marks mcf)])
+                                (marks-search marks
+                                              key
+                                              ;; elem-stop?:
+                                              (lambda (t) #f)
+                                              ;; elem-ref:
+                                              hamt-ref
+                                              ;; fail-k:
+                                              (lambda () none))))
+                            ;; fail-k:
+                            (lambda () none))])
        (cond
-        [(or (null? markss)
-             (eq? (caar markss) prompt-tag))
+        [(eq? v none)
          ;; More special treatment of built-in keys
          (cond
           [(eq? key parameterization-key)
@@ -746,16 +799,62 @@
            (current-engine-init-break-enabled-cell none-v)]
           [else
            none-v])]
-        [else
-         (let loop ([marks (cdar markss)])
-           (cond
-            [(null? marks)
-             (loops (cdr markss))]
-            [else
-             (let ([v (hamt-ref (car marks) key none)])
-               (if (eq? v none)
-                   (loop (cdr marks))
-                   v))]))]))]))
+        [else v]))]))
+
+;; To make `continuation-mark-set-first` constant-time, if we traverse
+;; N elements to get an answer, then cache the answer at N/2 elements.
+(define (marks-search elems key elem-stop? elem-ref fail-k)
+  (let loop ([elems elems] [elems/cache-pos elems] [cache-step? #f])
+    (cond
+     [(or (null? elems)
+          (elem-stop? (elem+cache-strip (car elems))))
+      ;; Not found
+      (cache-result! elems elems/cache-pos key none)
+      (fail-k)]
+     [else
+      (let ([t (car elems)])
+        (define (check-elem t)
+          (let ([v (elem-ref t key none)])
+            (cond
+             [(eq? v none)
+              ;; Not found at this point; keep looking
+              (loop (cdr elems)
+                    (if cache-step? (cdr elems/cache-pos) elems/cache-pos)
+                    (not cache-step?))]
+             [else
+              ;; Found it
+              (cache-result! elems elems/cache-pos key v)
+              v])))
+        (cond
+         [(elem+cache? t)
+          (let ([v (hamt-ref (elem+cache-cache t) key none2)])
+            (cond
+             [(eq? v none2)
+              ;; No mapping in cache, so try the element and continue:
+              (check-elem (elem+cache-elem t))]
+             [(eq? v none)
+              ;; The cache records that it's not in the rest:
+              (cache-result! elems elems/cache-pos key none)
+              (fail-k)]
+             [else
+              ;; The cache provides a value from the rest:
+              (cache-result! elems elems/cache-pos key v)
+              v]))]
+         [else
+          ;; Try the element:
+          (check-elem t)]))])))
+
+;; To make `continuation-mark-set-first` constant-time, cache
+;; a key--value mapping at a point that's half-way in
+(define (cache-result! marks marks/cache-pos key v)
+  (unless (eq? marks marks/cache-pos)
+    (let* ([t (car marks/cache-pos)]
+           [new-t (if (elem+cache? t)
+                      t
+                      (make-elem+cache t empty-hasheq))])
+      (unless (eq? t new-t)
+        (set-car! marks/cache-pos new-t))
+      (set-elem+cache-cache! new-t (hamt-set (elem+cache-cache new-t) key v)))))
 
 (define continuation-mark-set->list
   (case-lambda
@@ -766,24 +865,28 @@
        (raise-argument-error 'continuation-mark-set->list "(or/c continuation-mark-set? #f)" marks))
      (unless (continuation-prompt-tag? prompt-tag)
        (raise-argument-error 'continuation-mark-set->list "continuation-prompt-tag?" prompt-tag))
-     (let loops ([markss (or (and marks
-                                  (continuation-mark-set-marks marks))
-                             (current-marks))])
+     (let chain-loop ([mark-chain (or (and marks
+                                           (continuation-mark-set-mark-chain marks))
+                                      (current-mark-chain))])
        (cond
-        [(null? markss)
-         null]
-        [(eq? (caar markss) prompt-tag)
+        [(null? mark-chain)
          null]
         [else
-         (let loop ([marks (cdar markss)])
+         (let* ([mcf (elem+cache-strip (car mark-chain))])
            (cond
-            [(null? marks)
-             (loops (cdr markss))]
+            [(eq? (mark-chain-frame-tag mcf) prompt-tag)
+             null]
             [else
-             (let ([v (hamt-ref (car marks) key none)])
-               (if (eq? v none)
-                   (loop (cdr marks))
-                   (cons v (loop (cdr marks)))))]))]))]))
+             (let loop ([marks (mark-chain-frame-marks mcf)])
+               (cond
+                [(null? marks)
+                 (chain-loop (cdr mark-chain))]
+                [else
+                 (let* ([t (car marks)]
+                        [v (hamt-ref (elem+cache-strip t) key none)])
+                   (if (eq? v none)
+                       (loop (cdr marks))
+                       (cons v (loop (cdr marks)))))]))]))]))]))
 
 (define current-continuation-marks
   (case-lambda
@@ -794,18 +897,35 @@
      ;; For now, keep `k` for error context:
      (call/cc
       (lambda (k)
-        ;; FIXME: use `tag` to limit saved marks
-        (make-continuation-mark-set (current-marks) k)))]))
+        (make-continuation-mark-set (prune-mark-chain-suffix tag (current-mark-chain)) k)))]))
 
-(define (continuation-marks k)
-  (cond
-   [(continuation? k)
-    (get-current-marks (continuation-mark-stack k)
-                       (continuation-mc k))]
-   [(not k)
-    (make-continuation-mark-set null #f)]
-   [else
-    (raise-argument-error 'continuation-marks "(or/c continuation? #f)" k)]))
+(define continuation-marks
+  (case-lambda
+    [(k) (continuation-marks k (default-continuation-prompt-tag))]
+    [(k tag)
+     (unless (or (not k) (continuation? k))
+       (raise-argument-error 'continuation-marks "(or/c continuation? #f)" k))
+     (unless (continuation-prompt-tag? tag)
+       (raise-argument-error 'continuation-marks "continuation-prompt-tag?" tag))
+     (cond
+      [(full-continuation? k)
+       (make-continuation-mark-set
+        (prune-mark-chain-suffix
+         tag
+         (get-current-mark-chain (full-continuation-mark-stack k)
+                                 (full-continuation-mc k)))
+        k)]
+      [(escape-continuation? k)
+       (unless (continuation-prompt-available? (escape-continuation-tag k))
+         (raise-arguments-error '|continuation application|
+                                "escape continuation not in the current continuation"))
+       (make-continuation-mark-set
+        (prune-mark-chain-suffix
+         tag
+         (prune-mark-chain-prefix (escape-continuation-tag k) (current-mark-chain)))
+        k)]
+      [else
+       (make-continuation-mark-set null #f)])]))
 
 (define (mark-stack-append a b)
   (cond
